@@ -1,0 +1,37 @@
+{
+  "common": {
+    "success": "Operation successful",
+    "error": "Operation error",
+    "notFound": "Resource not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access denied",
+    "validationError": "Validation error"
+  },
+  "auth": {
+    "loginSuccess": "Login successful",
+    "loginFailed": "Invalid credentials",
+    "tokenExpired": "Token expired",
+    "tokenInvalid": "Invalid token"
+  },
+  "order": {
+    "created": "Order created successfully",
+    "notFound": "Order not found",
+    "statusUpdated": "Order status updated",
+    "invalidStatus": "Invalid status",
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "assigned": "Assigned",
+      "in_transit": "In Transit",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "failed": "Failed"
+    }
+  },
+  "payment": {
+    "success": "Payment processed successfully",
+    "failed": "Payment failed",
+    "pending": "Payment pending"
+  }
+}

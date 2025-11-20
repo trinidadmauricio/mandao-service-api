@@ -1,0 +1,287 @@
+/**
+ * Routes para Storefront API
+ */
+
+import { Router } from 'express';
+import { container } from '../../../../../config/inversify.config';
+import { TYPES } from '../../../../../config/types';
+import { StorefrontController } from '../controllers/StorefrontController';
+import { optionalAuthMiddleware } from '../../../../../shared/middleware/auth.middleware';
+
+const router = Router();
+
+// Obtener controller del container
+const controller = container.get<StorefrontController>(TYPES.StorefrontController);
+
+/**
+ * @swagger
+ * /api/v1/storefront/products:
+ *   get:
+ *     summary: Listar productos del storefront (público)
+ *     description: Obtiene la lista de productos disponibles en el storefront. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: query
+ *         name: category_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por categoría
+ *       - in: query
+ *         name: brand_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por marca
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Cantidad de resultados por página
+ *     responses:
+ *       200:
+ *         description: Lista de productos del storefront
+ */
+router.get('/products', optionalAuthMiddleware, (req, res) => controller.listProducts(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/products/{id}:
+ *   get:
+ *     summary: Obtener producto del storefront por ID (público)
+ *     description: Obtiene los detalles de un producto específico del storefront. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID del producto
+ *     responses:
+ *       200:
+ *         description: Producto encontrado
+ *       404:
+ *         description: Producto no encontrado
+ */
+router.get('/products/:id', optionalAuthMiddleware, (req, res) => controller.getProduct(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/checkout:
+ *   post:
+ *     summary: Procesar checkout (público con auth opcional)
+ *     description: Procesa un checkout y crea una orden. La autenticación es opcional pero recomendada. El tenant_id se obtiene automáticamente del tenant de la sesión o del header X-Tenant-Id.
+ *     tags: [Storefront]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - tenant_id
+ *               - items
+ *               - customer
+ *               - delivery_address
+ *               - branch_id
+ *               - estimated_delivery_at
+ *             properties:
+ *               tenant_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID del tenant (se obtiene automáticamente del tenant de la sesión o del header)
+ *                 example: 123e4567-e89b-12d3-a456-426614174000
+ *               items:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - quantity
+ *                   properties:
+ *                     product_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID del producto (opcional si se proporciona variant_id)
+ *                       example: 123e4567-e89b-12d3-a456-426614174000
+ *                     variant_id:
+ *                       type: string
+ *                       format: uuid
+ *                       description: ID de la variante del producto (opcional si se proporciona product_id)
+ *                       example: 123e4567-e89b-12d3-a456-426614174000
+ *                     quantity:
+ *                       type: integer
+ *                       minimum: 1
+ *                       description: Cantidad del producto/variante
+ *                       example: 2
+ *               customer:
+ *                 type: object
+ *                 required:
+ *                   - name
+ *                   - phone
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     minLength: 1
+ *                     description: Nombre del cliente
+ *                     example: Juan Pérez
+ *                   email:
+ *                     type: string
+ *                     format: email
+ *                     description: Email del cliente (opcional)
+ *                     example: customer@example.com
+ *                   phone:
+ *                     type: string
+ *                     minLength: 1
+ *                     description: Teléfono del cliente
+ *                     example: "+1234567890"
+ *               delivery_address:
+ *                 type: object
+ *                 required:
+ *                   - street
+ *                   - city
+ *                   - country
+ *                   - lat
+ *                   - lng
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                     minLength: 1
+ *                     description: Calle y número
+ *                     example: Calle Principal 123
+ *                   city:
+ *                     type: string
+ *                     minLength: 1
+ *                     description: Ciudad
+ *                     example: Ciudad
+ *                   state:
+ *                     type: string
+ *                     description: Estado/Provincia (opcional)
+ *                     example: Estado
+ *                   zip_code:
+ *                     type: string
+ *                     description: Código postal (opcional)
+ *                     example: "12345"
+ *                   country:
+ *                     type: string
+ *                     minLength: 1
+ *                     description: País
+ *                     example: País
+ *                   lat:
+ *                     type: number
+ *                     minimum: -90
+ *                     maximum: 90
+ *                     description: Latitud GPS de la dirección de entrega
+ *                     example: 19.432608
+ *                   lng:
+ *                     type: number
+ *                     minimum: -180
+ *                     maximum: 180
+ *                     description: Longitud GPS de la dirección de entrega
+ *                     example: -99.133209
+ *               pickup_address:
+ *                 type: object
+ *                 description: Dirección de recogida (opcional, para órdenes que requieren recogida)
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                     minLength: 1
+ *                   city:
+ *                     type: string
+ *                     minLength: 1
+ *                   state:
+ *                     type: string
+ *                   zip_code:
+ *                     type: string
+ *                   country:
+ *                     type: string
+ *                     minLength: 1
+ *                   lat:
+ *                     type: number
+ *                     minimum: -90
+ *                     maximum: 90
+ *                   lng:
+ *                     type: number
+ *                     minimum: -180
+ *                     maximum: 180
+ *               branch_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: ID de la sucursal que procesará la orden
+ *                 example: 123e4567-e89b-12d3-a456-426614174000
+ *               currency:
+ *                 type: string
+ *                 length: 3
+ *                 description: Código de moneda (ISO 4217, 3 caracteres) (opcional, usa la del tenant por defecto)
+ *                 example: USD
+ *               locale:
+ *                 type: string
+ *                 description: Código de idioma (opcional, usa la del tenant por defecto)
+ *                 example: es
+ *               special_instructions:
+ *                 type: string
+ *                 description: Instrucciones especiales para la entrega (opcional)
+ *                 example: "Dejar en la puerta"
+ *               scheduled_pickup_at:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora programada para recogida (opcional)
+ *                 example: "2024-12-25T10:00:00Z"
+ *               estimated_delivery_at:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora estimada de entrega
+ *                 example: "2024-12-25T14:00:00Z"
+ *               priority:
+ *                 type: string
+ *                 enum: [NORMAL, URGENT]
+ *                 default: NORMAL
+ *                 description: Prioridad de la orden (opcional)
+ *                 example: NORMAL
+ *     responses:
+ *       201:
+ *         description: Checkout procesado exitosamente, orden creada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order_id:
+ *                       type: string
+ *                       format: uuid
+ *                     order_number:
+ *                       type: string
+ *                     order_display_number:
+ *                       type: string
+ *                     tracking_code:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     created_at:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Error de validación o stock insuficiente
+ *       401:
+ *         description: No autenticado (si se requiere autenticación)
+ */
+router.post('/checkout', optionalAuthMiddleware, (req, res) => controller.checkout(req, res));
+
+export default router;

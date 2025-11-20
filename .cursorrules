@@ -1,0 +1,195 @@
+# Cursor Rules - Mandao Service API
+
+## Contexto del Proyecto
+
+Este es un sistema SaaS de gestión de entregas multi-tenant con soporte para Retail (E-commerce) y On-Demand (Last-Mile Delivery).
+
+### Stack Tecnológico
+- **Runtime:** Node.js 20 LTS + TypeScript 5.3
+- **Framework:** Express 4.18
+- **ORM:** Prisma 5.8 (multi-schema: shared, delivery, retail)
+- **Database:** PostgreSQL 16
+- **Cache/Queue:** Redis 7.2 + BullMQ
+- **Payments:** Stripe
+- **Logging:** Winston (console only)
+- **Testing:** Jest (unit tests only, cobertura mínima 80%)
+- **i18n:** i18next
+- **Currency:** currency.js
+- **DI:** InversifyJS
+
+## Principios Arquitectónicos
+
+### 1. Monolito Modular (Modular Monolith)
+- Estructura modular preparada para extracción futura
+- Dominios independientes con interfaces bien definidas
+- Comunicación a través de interfaces/clients, no dependencias directas
+- Cada dominio puede escalarse independientemente cuando se extraiga
+
+### 2. Clean Architecture Adaptada
+- **Domain:** Entidades, value objects, reglas de negocio
+- **Application:** Casos de uso, DTOs
+- **Infrastructure:** Adaptadores externos (DB, APIs)
+- **Presentation:** Controllers, routes
+
+### 3. Inmutabilidad en Órdenes
+- Órdenes y sus relaciones son append-only (solo INSERT, nunca UPDATE ni DELETE)
+- Todos los cambios generan nuevos registros:
+  - Cambio de driver: INSERT nuevo order_drivers (is_current = true), marcar anteriores como is_current = false
+  - Cambio de branch: INSERT nuevo order_branches (is_current = true), marcar anteriores como is_current = false
+  - Modificación de items: INSERT todos los order_items de la nueva versión completa
+  - Recalculo de totals: INSERT nuevo order_summary_totals (is_current = true), marcar anterior como is_current = false
+- Historial completo preservado para auditoría
+
+### 4. Multi-Tenancy por Schema
+- Isolation lógico en PostgreSQL
+- Schemas: `shared`, `delivery`, `retail`
+- Migración independiente por schema
+- Permisos granulares por schema
+
+### 5. Multi-Currency y Multi-Language
+- Currency almacenado en Tenant (default_currency)
+- Currency en OrderSummaryTotal, PaymentTransaction
+- Locale almacenado en Tenant (default_locale)
+- Traducciones en archivos JSON (i18n)
+- Headers Accept-Language para selección de idioma
+
+## Reglas de Código
+
+### TypeScript
+- Usar TypeScript estricto (strict mode)
+- No usar `any`, preferir tipos específicos o `unknown`
+- Usar interfaces para contratos entre dominios
+- Preferir type aliases para unions y tipos complejos
+- Usar path aliases: `@domains/*`, `@shared/*`, `@config/*`
+
+### Estructura de Archivos
+- Seguir la estructura de Clean Architecture dentro de cada dominio
+- Cada feature debe tener: domain/, application/, infrastructure/, presentation/
+- Tests unitarios en `__tests__/unit/` dentro de cada módulo
+- Usar nombres descriptivos y consistentes
+
+### SOLID Principles
+- **Single Responsibility:** Cada clase/función debe tener una sola razón para cambiar
+- **Open/Closed:** Abierto para extensión, cerrado para modificación
+- **Liskov Substitution:** Las implementaciones deben ser intercambiables
+- **Interface Segregation:** Interfaces específicas, no genéricas
+- **Dependency Inversion:** Depender de abstracciones (interfaces), no de implementaciones
+
+### Dependency Injection
+- Usar InversifyJS para DI
+- Todas las dependencias deben inyectarse, no instanciarse directamente
+- Definir interfaces antes que implementaciones
+- Usar decoradores `@injectable()` y `@inject()`
+
+### Prisma
+- Usar Prisma Client generado
+- Multi-schema: especificar schema en cada query cuando sea necesario
+- Usar transacciones para operaciones atómicas
+- Validar datos con Zod antes de insertar/actualizar
+
+### Validación
+- Usar Zod para validación de DTOs
+- Validar en la capa de presentación (validators)
+- Validar reglas de negocio en la capa de dominio
+
+### Testing (TDD Obligatorio)
+- **Cobertura mínima:** 80% con unit tests
+- Escribir tests ANTES de implementar (TDD)
+- Usar Jest como framework de testing
+- Mockear todas las dependencias externas
+- Tests deben ser rápidos, aislados y determinísticos
+- Usar `@faker-js/faker` para datos de prueba
+- Usar `nock` para mockear peticiones HTTP
+
+### Manejo de Errores
+- Usar clases de error personalizadas cuando sea apropiado
+- Retornar códigos HTTP apropiados
+- Mensajes de error traducibles (i18n)
+- Logging de errores con Winston
+
+### Logging
+- Usar Winston solo con transporte de consola (no archivos)
+- Logs estructurados con contexto relevante
+- No loggear información sensible (tokens, passwords, etc.)
+
+### Seguridad
+- Validar y sanitizar todas las entradas
+- Usar Helmet para headers de seguridad
+- Rate limiting con express-rate-limit
+- Autenticación OAuth2 propia
+- Aislamiento completo entre tenants
+
+### Performance
+- Usar índices apropiados en Prisma
+- Caching con Redis cuando sea apropiado
+- Paginación para listados grandes
+- Queries optimizadas (evitar N+1)
+
+### Código Limpio
+- Funciones pequeñas y con un solo propósito
+- Nombres descriptivos y expresivos
+- Evitar código duplicado (DRY)
+- Comentarios solo cuando sea necesario (código auto-documentado)
+- Mantener funciones cortas (< 50 líneas preferiblemente)
+
+### Git y Commits
+- Commits atómicos y descriptivos
+- Usar conventional commits cuando sea posible
+- No committear archivos sensibles (.env, etc.)
+
+## Convenciones de Nomenclatura
+
+- **Archivos:** kebab-case (ej: `order-service.ts`)
+- **Clases:** PascalCase (ej: `OrderService`)
+- **Interfaces:** PascalCase con prefijo `I` (ej: `IOrderRepository`)
+- **Funciones/Métodos:** camelCase (ej: `createOrder`)
+- **Constantes:** UPPER_SNAKE_CASE (ej: `MAX_RETRY_ATTEMPTS`)
+- **Tipos/Enums:** PascalCase (ej: `OrderStatus`)
+
+## Estructura de Dominios
+
+### Dominios Principales
+- **retail/:** E-commerce, catálogo, productos, inventario, storefront
+- **delivery/:** Órdenes, drivers, vehículos, proveedores logísticos, tracking
+- **shared/:** Auth, tenants, users, payments, subscriptions, i18n, currency
+
+### Comunicación entre Dominios
+- Usar interfaces/clients para comunicación entre dominios
+- Event bus simple (BullMQ) para comunicación asíncrona
+- Shared contracts (DTOs y tipos compartidos)
+- Retail puede extraerse cambiando solo la implementación del client de delivery
+
+## Cuando Generar Código
+
+1. **Siempre seguir TDD:** Escribir tests primero
+2. **Respetar la arquitectura:** Colocar código en la capa correcta
+3. **Usar DI:** Inyectar dependencias, no instanciar directamente
+4. **Validar datos:** Usar Zod para validación
+5. **Manejar errores:** Retornar códigos HTTP apropiados
+6. **Documentar interfaces:** Especialmente entre dominios
+7. **Considerar multi-tenancy:** Asegurar aislamiento de datos
+8. **Considerar multi-currency:** Validar currency en operaciones monetarias
+9. **Considerar i18n:** Mensajes traducibles
+10. **Mantener inmutabilidad:** En órdenes, solo INSERT, nunca UPDATE/DELETE
+
+## Anti-Patrones a Evitar
+
+- ❌ No usar `any` en TypeScript
+- ❌ No instanciar dependencias directamente (usar DI)
+- ❌ No hacer UPDATE/DELETE en órdenes (solo INSERT)
+- ❌ No acoplar dominios directamente (usar interfaces)
+- ❌ No hardcodear valores (usar config/env)
+- ❌ No loggear información sensible
+- ❌ No escribir código sin tests
+- ❌ No ignorar errores de TypeScript
+- ❌ No crear dependencias circulares
+- ❌ No violar el aislamiento de tenants
+
+## Notas Adicionales
+
+- El proyecto está preparado para extracción de Retail como servicio independiente
+- La comunicación entre dominios debe ser desacoplada
+- Preferir simplicidad sobre complejidad (KISS principle)
+- Mantener el código mantenible y testeable
+- Seguir las convenciones establecidas en la documentación del proyecto
+

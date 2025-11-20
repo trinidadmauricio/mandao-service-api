@@ -1,0 +1,8 @@
+/**
+ * Setup para tests
+ */
+
+// Mock de variables de entorno
+process.env.JWT_SECRET = 'test-secret-key-for-jwt-signing';
+process.env.NODE_ENV = 'test';
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';

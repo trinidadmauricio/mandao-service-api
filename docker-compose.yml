@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     target: production
+  #   container_name: mandao-api
+  #   ports:
+  #     - "${PORT:-3000}:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - PORT=3000
+  #     - DATABASE_URL=postgresql://mandao_user:mandao_pass@db:5432/mandao_db?schema=shared&schema=delivery&schema=retail
+  #     - REDIS_URL=redis://redis:6379
+  #     - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+  #     - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+  #     - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+  #     - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+  #   networks:
+  #     - mandao-network
+  #   healthcheck:
+  #     test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
+
+  db:
+    image: postgres:16-alpine
+    container_name: mandao-db
+    environment:
+      - POSTGRES_USER=mandao_user
+      - POSTGRES_PASSWORD=mandao_pass
+      - POSTGRES_DB=mandao_db
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - mandao-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mandao_user -d mandao_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: mandao-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - mandao-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mandao-network:
+    driver: bridge

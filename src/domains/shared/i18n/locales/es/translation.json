@@ -1,0 +1,37 @@
+{
+  "common": {
+    "success": "Operación exitosa",
+    "error": "Error en la operación",
+    "notFound": "Recurso no encontrado",
+    "unauthorized": "No autorizado",
+    "forbidden": "Acceso denegado",
+    "validationError": "Error de validación"
+  },
+  "auth": {
+    "loginSuccess": "Inicio de sesión exitoso",
+    "loginFailed": "Credenciales inválidas",
+    "tokenExpired": "Token expirado",
+    "tokenInvalid": "Token inválido"
+  },
+  "order": {
+    "created": "Orden creada exitosamente",
+    "notFound": "Orden no encontrada",
+    "statusUpdated": "Estado de orden actualizado",
+    "invalidStatus": "Estado inválido",
+    "status": {
+      "draft": "Borrador",
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "assigned": "Asignada",
+      "in_transit": "En tránsito",
+      "delivered": "Entregada",
+      "cancelled": "Cancelada",
+      "failed": "Fallida"
+    }
+  },
+  "payment": {
+    "success": "Pago procesado exitosamente",
+    "failed": "Pago fallido",
+    "pending": "Pago pendiente"
+  }
+}

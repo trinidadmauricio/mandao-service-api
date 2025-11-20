@@ -1,0 +1,28 @@
+
+Usuarios Administradores (SAAS_ADMIN)
+
+Admin del Dashboard:
+Email: admin@mandao.com
+Password: fQGKd!fV#%hwc8ptoBt3
+Rol: SAAS_ADMIN
+
+Super Admin:
+Email: superadmin@mandao.com
+Password: NBmH&%nFVbQWEX9tT9l8
+Rol: SAAS_ADMIN
+
+Clientes OAuth
+
+SaaS Admin Dashboard (para el dashboard):
+Client ID: client_8fde6b9b8743219679eca57e1a6f37af
+Client Secret: d976f77449841cbce01c2fbe0100b3261af3e0eaf19ce1507e085611cc593937
+Grant Types: authorization_code, client_credentials, refresh_token
+Scope: admin:read admin:write tenant:read tenant:write
+
+SaaS Admin API Client (para el cliente API):
+Client ID: client_c0beb54e8e00f31b17d3b7c008906bed
+Client Secret: 48994763d3d2962900af1ea2da68aaca2aaf26103eb1d2bc0e2e7b607a2d8897
+Grant Types: client_credentials, refresh_token
+Scope: admin:read admin:write
+
+Nota: Las contraseñas y los client secrets se generan aleatoriamente cada vez que se ejecutan los seeds. Si necesitas recuperar las credenciales después de una nueva ejecución, guárdalas cuando se muestren en la salida del comando, ya que están hasheadas en la base de datos y no se pueden recuperar después.
