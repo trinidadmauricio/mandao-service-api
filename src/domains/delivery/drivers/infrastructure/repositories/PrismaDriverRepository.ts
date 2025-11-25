@@ -74,19 +74,31 @@ export class PrismaDriverRepository implements IDriverRepository {
     // Búsqueda de texto (case-insensitive) en User (first_name, last_name, email), driving_license, identity_document
     if (filters.search && filters.search.trim()) {
       const searchTerm = filters.search.trim();
+      
+      // Buscar usuarios que coincidan con el término de búsqueda
+      const matchingUsers = await this.prisma.user.findMany({
+        where: {
+          OR: [
+            { first_name: { contains: searchTerm, mode: 'insensitive' } },
+            { last_name: { contains: searchTerm, mode: 'insensitive' } },
+            { email: { contains: searchTerm, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      });
+      
+      const matchingUserIds = matchingUsers.map((u) => u.id);
+      
+      // Condiciones de búsqueda: campos del driver Y user_ids encontrados
       const searchConditions: Prisma.DriverWhereInput[] = [
         { driving_license: { contains: searchTerm, mode: 'insensitive' } },
         { identity_document: { contains: searchTerm, mode: 'insensitive' } },
-        {
-          user: {
-            OR: [
-              { first_name: { contains: searchTerm, mode: 'insensitive' } },
-              { last_name: { contains: searchTerm, mode: 'insensitive' } },
-              { email: { contains: searchTerm, mode: 'insensitive' } },
-            ],
-          },
-        },
       ];
+      
+      // Si hay usuarios que coinciden, agregar condición para user_id
+      if (matchingUserIds.length > 0) {
+        searchConditions.push({ user_id: { in: matchingUserIds } });
+      }
 
       // Combinar condiciones de búsqueda con otros filtros
       if (where.AND) {
@@ -110,12 +122,9 @@ export class PrismaDriverRepository implements IDriverRepository {
     // Obtener total de registros (sin paginación)
     const total = await this.prisma.driver.count({ where });
 
-    // Obtener datos con paginación e incluir User
+    // Obtener datos con paginación
     const data = await this.prisma.driver.findMany({
       where,
-      include: {
-        user: true,
-      },
       skip,
       take: limit,
       orderBy: {
