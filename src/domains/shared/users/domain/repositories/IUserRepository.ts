@@ -3,6 +3,15 @@
  */
 
 import { User } from '../entities/User';
+import { ListUsersFiltersDto } from '../../application/dto/ListUsersFiltersDto';
+
+export interface UsersListResult {
+  data: User[];
+  total: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+}
 
 export interface CreateUserData {
   tenant_id?: string | null;
@@ -38,6 +47,7 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByTenantId(tenant_id: string): Promise<User[]>;
   findAll(): Promise<User[]>;
+  findAllWithFilters(tenant_id: string | undefined, filters: ListUsersFiltersDto): Promise<UsersListResult>;
   create(data: CreateUserData): Promise<User>;
   update(id: string, data: UpdateUserData): Promise<User>;
   delete(id: string): Promise<void>;
