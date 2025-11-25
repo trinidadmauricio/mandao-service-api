@@ -29,8 +29,17 @@ export class PrismaDriverRepository implements IDriverRepository {
     return this.toDomain(data);
   }
 
-  async findAll(logistics_provider_id?: string): Promise<Driver[]> {
-    const where = logistics_provider_id ? { logistics_provider_id } : {};
+  async findAll(logistics_provider_id?: string, availability_status?: DriverStatus): Promise<Driver[]> {
+    const where: Prisma.DriverWhereInput = {};
+    
+    if (logistics_provider_id) {
+      where.logistics_provider_id = logistics_provider_id;
+    }
+    
+    if (availability_status) {
+      where.availability_status = availability_status;
+    }
+    
     const data = await this.prisma.driver.findMany({
       where,
     });

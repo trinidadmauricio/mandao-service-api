@@ -17,6 +17,7 @@ import { RecalculateTotalsUseCase } from '../../application/use-cases/Recalculat
 import { AddDeliveryProofUseCase } from '../../application/use-cases/AddDeliveryProofUseCase';
 import { AddDeliveryRatingUseCase } from '../../application/use-cases/AddDeliveryRatingUseCase';
 import { createOnDemandOrderSchema } from '../../application/dto/CreateOnDemandOrderDto';
+import { createRetailOrderSchema } from '../../application/dto/CreateRetailOrderDto';
 import {
   updateOrderStatusSchema,
   assignDriverSchema,
@@ -29,6 +30,8 @@ import {
 import { logger } from '../../../../../shared/utils/logger';
 import { serializeForResponse } from '../../../../../shared/utils/serializer.util';
 import { TYPES } from '../../../../../config/types';
+import { PrismaClient } from '@prisma/client';
+import { IUserRepository } from '../../../../shared/users/domain/repositories/IUserRepository';
 
 @injectable()
 export class OrderController {
@@ -43,7 +46,9 @@ export class OrderController {
     @inject(TYPES.ModifyItemsUseCase) private modifyItemsUseCase: ModifyItemsUseCase,
     @inject(TYPES.RecalculateTotalsUseCase) private recalculateTotalsUseCase: RecalculateTotalsUseCase,
     @inject(TYPES.AddDeliveryProofUseCase) private addDeliveryProofUseCase: AddDeliveryProofUseCase,
-    @inject(TYPES.AddDeliveryRatingUseCase) private addDeliveryRatingUseCase: AddDeliveryRatingUseCase
+    @inject(TYPES.AddDeliveryRatingUseCase) private addDeliveryRatingUseCase: AddDeliveryRatingUseCase,
+    @inject(TYPES.PrismaClient) private prisma: PrismaClient,
+    @inject(TYPES.IUserRepository) private userRepository: IUserRepository
   ) {}
 
   async list(req: Request, res: Response): Promise<void> {
@@ -84,9 +89,128 @@ export class OrderController {
       const { id } = req.params;
       const order = await this.getOrderUseCase.execute(id);
 
+      // Obtener relaciones de la orden
+      const [orderDrivers, orderBranches, orderItems, orderSummaryTotals, orderStatusHistory] = await Promise.all([
+        this.prisma.orderDriver.findMany({
+          where: { order_id: id },
+          orderBy: { created_at: 'desc' },
+        }),
+        this.prisma.orderBranch.findMany({
+          where: { order_id: id },
+          orderBy: { created_at: 'desc' },
+        }),
+        this.prisma.orderItem.findMany({
+          where: { order_id: id },
+          orderBy: { created_at: 'asc' },
+        }),
+        this.prisma.orderSummaryTotal.findMany({
+          where: { order_id: id },
+          orderBy: { version: 'desc' },
+        }),
+        this.prisma.orderStatusHistory.findMany({
+          where: { order_id: id },
+          orderBy: { created_at: 'desc' },
+        }),
+      ]);
+
+      // Obtener información del driver actual si existe
+      const currentDriver = orderDrivers.find((od) => od.is_current);
+      let driverUser = null;
+      if (currentDriver?.driver_id) {
+        // Obtener el usuario del driver
+        const driver = await this.prisma.driver.findUnique({
+          where: { id: currentDriver.driver_id },
+          select: { user_id: true },
+        });
+        if (driver) {
+          const user = await this.userRepository.findById(driver.user_id);
+          if (user) {
+            driverUser = {
+              id: user.id,
+              email: user.email,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              phone: user.phone,
+            };
+          }
+        }
+      }
+
+      const orderResponse = {
+        id: order.id,
+        tenant_id: order.tenant_id,
+        order_number: order.order_number.toString(),
+        order_display_number: order.order_display_number,
+        order_type: order.order_type,
+        customer_id: order.customer_id,
+        customer_snapshot: order.customer_snapshot,
+        delivery_address: order.delivery_address,
+        delivery_lat: order.delivery_lat,
+        delivery_lng: order.delivery_lng,
+        pickup_address: order.pickup_address,
+        pickup_lat: order.pickup_lat,
+        pickup_lng: order.pickup_lng,
+        status: order.status,
+        cancellation_reason: order.cancellation_reason,
+        scheduled_pickup_at: order.scheduled_pickup_at?.toISOString(),
+        estimated_delivery_at: order.estimated_delivery_at.toISOString(),
+        special_instructions: order.special_instructions,
+        priority: order.priority,
+        cargo_description: order.cargo_description,
+        tracking_code: order.tracking_code,
+        created_at: order.created_at.toISOString(),
+        updated_at: order.updated_at.toISOString(),
+        order_drivers: orderDrivers.map((od) => ({
+          id: od.id,
+          driver_id: od.driver_id,
+          driver_snapshot: od.driver_snapshot,
+          is_current: od.is_current,
+          assigned_at: od.assigned_at.toISOString(),
+          created_at: od.created_at.toISOString(),
+          // Incluir información del usuario si es el driver actual
+          ...(od.is_current && driverUser ? { driver_user: driverUser } : {}),
+        })),
+        order_branches: orderBranches.map((ob) => ({
+          id: ob.id,
+          branch_snapshot: ob.branch_snapshot,
+          is_current: ob.is_current,
+          assigned_at: ob.assigned_at.toISOString(),
+          created_at: ob.created_at.toISOString(),
+        })),
+        order_items: orderItems.map((oi) => ({
+          id: oi.id,
+          product_snapshot: oi.product_snapshot,
+          quantity: oi.quantity.toString(),
+          unit_price: oi.unit_price.toString(),
+          subtotal: oi.subtotal.toString(),
+          notes: oi.notes,
+          created_at: oi.created_at.toISOString(),
+        })),
+        order_summary_totals: orderSummaryTotals.map((ost) => ({
+          id: ost.id,
+          version: ost.version,
+          subtotal: ost.subtotal.toString(),
+          tax_rate: ost.tax_rate.toString(),
+          tax_amount: ost.tax_amount.toString(),
+          delivery_fee: ost.delivery_fee.toString(),
+          discount_amount: ost.discount_amount.toString(),
+          total_amount: ost.total_amount.toString(),
+          currency: ost.currency,
+          is_current: ost.is_current,
+          created_at: ost.created_at.toISOString(),
+        })),
+        order_status_history: orderStatusHistory.map((osh) => ({
+          id: osh.id,
+          from_status: osh.from_status,
+          to_status: osh.to_status,
+          notes: osh.notes,
+          created_at: osh.created_at.toISOString(),
+        })),
+      };
+
       res.status(200).json({
         status: 'success',
-        data: serializeForResponse(order),
+        data: serializeForResponse(orderResponse),
       });
     } catch (error) {
       logger.error('Error getting order', { error });
@@ -158,11 +282,11 @@ export class OrderController {
         return;
       }
 
-      // El DTO de CreateRetailOrder viene del contrato compartido
-      const dto = {
+      // Validar y convertir el DTO usando Zod
+      const dto = createRetailOrderSchema.parse({
         ...req.body,
         tenant_id,
-      };
+      });
 
       const result = await this.createRetailOrderUseCase.execute(dto);
 

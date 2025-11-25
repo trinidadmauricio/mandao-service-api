@@ -31,6 +31,7 @@ export interface CreateOrderRequest {
   };
   items: OrderItemRequest[];
   currency: string;
+  branch_id?: string; // Opcional para compatibilidad, requerido para retail orders
   special_instructions?: string;
   scheduled_pickup_at?: Date;
   estimated_delivery_at: Date;

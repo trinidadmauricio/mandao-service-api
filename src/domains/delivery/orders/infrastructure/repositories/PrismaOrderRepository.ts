@@ -17,6 +17,17 @@ export class PrismaOrderRepository implements IOrderRepository {
   async findById(id: string): Promise<Order | null> {
     const data = await this.prisma.order.findUnique({
       where: { id },
+      include: {
+        order_drivers: true,
+        order_branches: true,
+        order_items: true,
+        order_summary_totals: true,
+        order_status_history: {
+          orderBy: {
+            created_at: 'desc',
+          },
+        },
+      },
     });
 
     if (!data) {

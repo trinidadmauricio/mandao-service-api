@@ -188,6 +188,7 @@ export class CheckoutUseCase {
         pickup_address: dto.pickup_address,
         items: orderItems,
         currency,
+        branch_id: dto.branch_id,
         special_instructions: dto.special_instructions,
         scheduled_pickup_at: dto.scheduled_pickup_at ? new Date(dto.scheduled_pickup_at) : undefined,
         estimated_delivery_at: new Date(dto.estimated_delivery_at),

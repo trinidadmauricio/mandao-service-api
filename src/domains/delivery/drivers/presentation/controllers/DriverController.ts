@@ -13,6 +13,7 @@ import { DeleteDriverUseCase } from '../../application/use-cases/DeleteDriverUse
 import { createDriverSchema, updateDriverSchema } from '../../application/dto/CreateDriverDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
+import { IUserRepository } from '../../../../shared/users/domain/repositories/IUserRepository';
 
 @injectable()
 export class DriverController {
@@ -21,7 +22,8 @@ export class DriverController {
     @inject(TYPES.GetDriverUseCase) private getUseCase: GetDriverUseCase,
     @inject(TYPES.ListDriversUseCase) private listUseCase: ListDriversUseCase,
     @inject(TYPES.UpdateDriverUseCase) private updateUseCase: UpdateDriverUseCase,
-    @inject(TYPES.DeleteDriverUseCase) private deleteUseCase: DeleteDriverUseCase
+    @inject(TYPES.DeleteDriverUseCase) private deleteUseCase: DeleteDriverUseCase,
+    @inject(TYPES.IUserRepository) private userRepository: IUserRepository
   ) {}
 
   async create(req: Request, res: Response): Promise<void> {
@@ -82,11 +84,62 @@ export class DriverController {
         ? req.user.logistics_provider_id || undefined
         : (req.query.logistics_provider_id as string | undefined);
       
-      const drivers = await this.listUseCase.execute(logistics_provider_id);
+      // Filtrar por availability_status si se proporciona en el query
+      const availability_status = req.query.availability_status as 'AVAILABLE' | 'BUSY' | 'OFFLINE' | 'SUSPENDED' | undefined;
+      
+      const drivers = await this.listUseCase.execute(logistics_provider_id, availability_status);
+
+      // Obtener los usuarios únicos para todos los drivers
+      const uniqueUserIds = [...new Set(drivers.map((driver) => driver.user_id))];
+      const users = await Promise.all(
+        uniqueUserIds.map((userId) => this.userRepository.findById(userId))
+      );
+
+      // Crear un mapa de user_id -> user para acceso rápido
+      const userMap = new Map();
+      users.forEach((user) => {
+        if (user) {
+          userMap.set(user.id, user);
+        }
+      });
+
+      // Agregar el usuario a cada driver en la respuesta
+      const driversWithUsers = drivers.map((driver) => {
+        const user = userMap.get(driver.user_id);
+        return {
+          id: driver.id,
+          logistics_provider_id: driver.logistics_provider_id,
+          user_id: driver.user_id,
+          identity_document: driver.identity_document,
+          driving_license: driver.driving_license,
+          date_of_birth: driver.date_of_birth.toISOString(),
+          emergency_contact: driver.emergency_contact,
+          has_own_vehicle: driver.has_own_vehicle,
+          vehicle_id: driver.vehicle_id,
+          work_type: driver.work_type,
+          work_zone: driver.work_zone,
+          availability_status: driver.availability_status,
+          rating_avg: driver.rating_avg,
+          total_deliveries: driver.total_deliveries,
+          documents: driver.documents,
+          created_at: driver.created_at.toISOString(),
+          updated_at: driver.updated_at.toISOString(),
+          user: user
+            ? {
+                id: user.id,
+                email: user.email,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                phone: user.phone,
+                role: user.role,
+              }
+            : undefined,
+        };
+      });
 
       res.status(200).json({
         status: 'success',
-        data: drivers,
+        data: driversWithUsers,
       });
     } catch (error) {
       logger.error('Error listing drivers', { error });

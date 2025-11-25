@@ -30,7 +30,13 @@ export class PrismaLogisticsProviderRepository implements ILogisticsProviderRepo
   }
 
   async findAll(tenant_id?: string): Promise<LogisticsProvider[]> {
-    const where = tenant_id ? { tenant_id } : {};
+    // Si hay tenant_id, incluir proveedores de ese tenant Y proveedores globales (tenant_id = null)
+    // Si no hay tenant_id, mostrar todos los proveedores
+    const where = tenant_id
+      ? {
+          OR: [{ tenant_id }, { tenant_id: null }],
+        }
+      : {};
     const data = await this.prisma.logisticsProvider.findMany({
       where,
     });

@@ -2,11 +2,11 @@
  * Interface para Driver Repository
  */
 
-import { Driver } from '../entities/Driver';
+import { Driver, DriverStatus } from '../entities/Driver';
 
 export interface IDriverRepository {
   findById(id: string): Promise<Driver | null>;
-  findAll(logistics_provider_id?: string): Promise<Driver[]>;
+  findAll(logistics_provider_id?: string, availability_status?: DriverStatus): Promise<Driver[]>;
   create(data: CreateDriverData): Promise<Driver>;
   update(id: string, data: UpdateDriverData): Promise<Driver>;
   delete(id: string): Promise<void>;
