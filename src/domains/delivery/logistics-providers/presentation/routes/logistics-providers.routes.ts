@@ -21,13 +21,42 @@ const controller = container.get<LogisticsProviderController>(TYPES.LogisticsPro
  * /api/v1/logistics-providers:
  *   get:
  *     summary: Listar proveedores logísticos
- *     description: Obtiene la lista de proveedores logísticos del tenant actual
- *     tags: [Orders]
+ *     description: Obtiene la lista de proveedores logísticos del tenant actual. Soporta filtros y búsqueda opcionales.
+ *     tags: [Logistics Providers]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Búsqueda de texto en nombre de empresa, RUC/NIT o representante (case-insensitive)
+ *         example: "Delivery Express"
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, SUSPENDED, INACTIVE]
+ *         description: Filtrar por estado del proveedor
+ *         example: "ACTIVE"
+ *       - in: query
+ *         name: verification_status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, VERIFIED, REJECTED]
+ *         description: Filtrar por estado de verificación
+ *         example: "VERIFIED"
+ *       - in: query
+ *         name: is_global
+ *         schema:
+ *           type: boolean
+ *         description: Filtrar por tipo de proveedor (true = solo globales, false = solo locales)
+ *         example: true
  *     responses:
  *       200:
  *         description: Lista de proveedores logísticos
+ *       400:
+ *         description: Parámetros de filtro inválidos
  *       401:
  *         description: No autenticado
  */

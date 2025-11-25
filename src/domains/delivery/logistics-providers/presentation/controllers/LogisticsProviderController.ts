@@ -14,17 +14,21 @@ import {
   createLogisticsProviderSchema,
   updateLogisticsProviderSchema,
 } from '../../application/dto/CreateLogisticsProviderDto';
+import { listLogisticsProvidersFiltersSchema } from '../../application/dto/ListLogisticsProvidersFiltersDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
 
 @injectable()
 export class LogisticsProviderController {
   constructor(
-    @inject(TYPES.CreateLogisticsProviderUseCase) private createUseCase: CreateLogisticsProviderUseCase,
+    @inject(TYPES.CreateLogisticsProviderUseCase)
+    private createUseCase: CreateLogisticsProviderUseCase,
     @inject(TYPES.GetLogisticsProviderUseCase) private getUseCase: GetLogisticsProviderUseCase,
     @inject(TYPES.ListLogisticsProvidersUseCase) private listUseCase: ListLogisticsProvidersUseCase,
-    @inject(TYPES.UpdateLogisticsProviderUseCase) private updateUseCase: UpdateLogisticsProviderUseCase,
-    @inject(TYPES.DeleteLogisticsProviderUseCase) private deleteUseCase: DeleteLogisticsProviderUseCase
+    @inject(TYPES.UpdateLogisticsProviderUseCase)
+    private updateUseCase: UpdateLogisticsProviderUseCase,
+    @inject(TYPES.DeleteLogisticsProviderUseCase)
+    private deleteUseCase: DeleteLogisticsProviderUseCase
   ) {}
 
   async create(req: Request, res: Response): Promise<void> {
@@ -80,7 +84,34 @@ export class LogisticsProviderController {
   async list(req: Request, res: Response): Promise<void> {
     try {
       const tenant_id = req.tenant?.id;
-      const providers = await this.listUseCase.execute(tenant_id);
+
+      // Extraer y validar filtros de query params
+      const filtersInput: Record<string, unknown> = {};
+      if (req.query.search) {
+        filtersInput.search = req.query.search as string;
+      }
+      if (req.query.status) {
+        filtersInput.status = req.query.status as string;
+      }
+      if (req.query.verification_status) {
+        filtersInput.verification_status = req.query.verification_status as string;
+      }
+      if (req.query.is_global !== undefined) {
+        const isGlobalValue = req.query.is_global;
+        // Convertir a string y luego a boolean
+        const isGlobalString = Array.isArray(isGlobalValue)
+          ? isGlobalValue[0]
+          : String(isGlobalValue);
+        filtersInput.is_global = isGlobalString === 'true' || isGlobalString === '1';
+      }
+
+      // Validar con schema Zod (solo si hay filtros)
+      const filters =
+        Object.keys(filtersInput).length > 0
+          ? listLogisticsProvidersFiltersSchema.parse(filtersInput)
+          : undefined;
+
+      const providers = await this.listUseCase.execute(tenant_id, filters);
 
       res.status(200).json({
         status: 'success',
@@ -88,6 +119,14 @@ export class LogisticsProviderController {
       });
     } catch (error) {
       logger.error('Error listing logistics providers', { error });
+      if (error instanceof Error && error.name === 'ZodError') {
+        res.status(400).json({
+          status: 'error',
+          message: 'Invalid filter parameters',
+          errors: error,
+        });
+        return;
+      }
       res.status(500).json({
         status: 'error',
         message: 'Internal server error',
@@ -143,4 +182,3 @@ export class LogisticsProviderController {
     }
   }
 }
-
