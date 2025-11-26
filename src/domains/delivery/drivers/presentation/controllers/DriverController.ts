@@ -11,6 +11,7 @@ import { ListDriversUseCase } from '../../application/use-cases/ListDriversUseCa
 import { UpdateDriverUseCase } from '../../application/use-cases/UpdateDriverUseCase';
 import { DeleteDriverUseCase } from '../../application/use-cases/DeleteDriverUseCase';
 import { createDriverSchema, updateDriverSchema } from '../../application/dto/CreateDriverDto';
+import { listDriversFiltersSchema } from '../../application/dto/ListDriversFiltersDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
 import { IUserRepository } from '../../../../shared/users/domain/repositories/IUserRepository';
@@ -80,17 +81,55 @@ export class DriverController {
     try {
       // Si el usuario es LOGISTICS_PROVIDER, filtrar automáticamente por su logistics_provider_id
       // Si no es LOGISTICS_PROVIDER, usar el query parameter si se proporciona
-      const logistics_provider_id = req.user?.role === 'LOGISTICS_PROVIDER'
+      const autoLogisticsProviderId = req.user?.role === 'LOGISTICS_PROVIDER'
         ? req.user.logistics_provider_id || undefined
-        : (req.query.logistics_provider_id as string | undefined);
-      
-      // Filtrar por availability_status si se proporciona en el query
-      const availability_status = req.query.availability_status as 'AVAILABLE' | 'BUSY' | 'OFFLINE' | 'SUSPENDED' | undefined;
-      
-      const drivers = await this.listUseCase.execute(logistics_provider_id, availability_status);
+        : undefined;
+
+      // Extraer y validar filtros de query params
+      const filtersInput: Record<string, unknown> = {};
+      if (req.query.search) {
+        filtersInput.search = req.query.search as string;
+      }
+      if (req.query.availability_status) {
+        filtersInput.availability_status = req.query.availability_status as string;
+      }
+      if (req.query.work_type) {
+        filtersInput.work_type = req.query.work_type as string;
+      }
+      if (req.query.logistics_provider_id) {
+        filtersInput.logistics_provider_id = req.query.logistics_provider_id as string;
+      }
+      if (req.query.page) {
+        filtersInput.page = req.query.page;
+      }
+      if (req.query.limit) {
+        filtersInput.limit = req.query.limit;
+      }
+
+      // Si hay autoLogisticsProviderId y no está en los filtros, agregarlo
+      if (autoLogisticsProviderId && !filtersInput.logistics_provider_id) {
+        filtersInput.logistics_provider_id = autoLogisticsProviderId;
+      }
+
+      // Validar con schema Zod (solo si hay filtros)
+      const filters =
+        Object.keys(filtersInput).length > 0
+          ? listDriversFiltersSchema.parse(filtersInput)
+          : undefined;
+
+      // Determinar logistics_provider_id para pasar al UseCase
+      const logistics_provider_id = filters?.logistics_provider_id || autoLogisticsProviderId;
+
+      // Ejecutar UseCase
+      const result = await this.listUseCase.execute(logistics_provider_id, filters);
+
+      // Verificar si el resultado es DriversListResult (con paginación) o Driver[] (sin paginación)
+      const isPaginatedResult = result && typeof result === 'object' && 'data' in result && 'total' in result;
+      const driversList = isPaginatedResult ? (result as { data: any[]; total: number }).data : (result as any[]);
+      const total = isPaginatedResult ? (result as { data: any[]; total: number }).total : driversList.length;
 
       // Obtener los usuarios únicos para todos los drivers
-      const uniqueUserIds = [...new Set(drivers.map((driver) => driver.user_id))];
+      const uniqueUserIds = [...new Set(driversList.map((driver) => driver.user_id))];
       const users = await Promise.all(
         uniqueUserIds.map((userId) => this.userRepository.findById(userId))
       );
@@ -104,7 +143,7 @@ export class DriverController {
       });
 
       // Agregar el usuario a cada driver en la respuesta
-      const driversWithUsers = drivers.map((driver) => {
+      const driversWithUsers = driversList.map((driver) => {
         const user = userMap.get(driver.user_id);
         return {
           id: driver.id,
@@ -137,12 +176,29 @@ export class DriverController {
         };
       });
 
+      // Calcular paginación
+      const page = filters?.page || 1;
+      const limit = filters?.limit || driversList.length || 10;
+      const totalPages = Math.ceil(total / limit);
+
       res.status(200).json({
         status: 'success',
         data: driversWithUsers,
+        total,
+        page,
+        limit,
+        totalPages,
       });
     } catch (error) {
       logger.error('Error listing drivers', { error });
+      if (error instanceof Error && error.name === 'ZodError') {
+        res.status(400).json({
+          status: 'error',
+          message: 'Invalid filter parameters',
+          errors: error,
+        });
+        return;
+      }
       res.status(500).json({
         status: 'error',
         message: 'Internal server error',

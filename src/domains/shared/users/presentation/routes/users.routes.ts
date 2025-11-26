@@ -20,11 +20,28 @@ const userController = container.get<UserController>(TYPES.UserController);
  * /api/v1/users:
  *   get:
  *     summary: Listar usuarios
- *     description: Obtiene la lista de usuarios del tenant actual con paginación
+ *     description: Obtiene la lista de usuarios del tenant actual con paginación y filtros
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Búsqueda de texto en nombre, apellido, email o teléfono
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [SAAS_ADMIN, SAAS_EDITOR, OWNER, SUPERVISOR, MERCHANT_USER, LOGISTICS_PROVIDER, CUSTOMER]
+ *         description: Filtrar por rol
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE, SUSPENDED]
+ *         description: Filtrar por estado
  *       - in: query
  *         name: page
  *         schema:
@@ -36,6 +53,7 @@ const userController = container.get<UserController>(TYPES.UserController);
  *         schema:
  *           type: integer
  *           default: 10
+ *           maximum: 100
  *         description: Cantidad de resultados por página
  *     responses:
  *       200:
@@ -64,6 +82,23 @@ const userController = container.get<UserController>(TYPES.UserController);
  *                         type: string
  *                       role:
  *                         type: string
+ *                       status:
+ *                         type: string
+ *                         enum: [ACTIVE, INACTIVE, SUSPENDED]
+ *                 total:
+ *                   type: integer
+ *                   description: Total de registros (solo cuando se usan filtros)
+ *                 page:
+ *                   type: integer
+ *                   description: Página actual (solo cuando se usan filtros)
+ *                 limit:
+ *                   type: integer
+ *                   description: Límite de resultados por página (solo cuando se usan filtros)
+ *                 totalPages:
+ *                   type: integer
+ *                   description: Total de páginas (solo cuando se usan filtros)
+ *       400:
+ *         description: Parámetros de filtro inválidos
  *       401:
  *         description: No autenticado
  */

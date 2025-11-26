@@ -4,13 +4,15 @@
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import {
   IUserRepository,
   CreateUserData,
   UpdateUserData,
+  UsersListResult,
 } from '../../domain/repositories/IUserRepository';
 import { User } from '../../domain/entities/User';
+import { ListUsersFiltersDto } from '../../application/dto/ListUsersFiltersDto';
 import { TYPES } from '../../../../../config/types';
 
 @injectable()
@@ -56,6 +58,67 @@ export class PrismaUserRepository implements IUserRepository {
     });
 
     return data.map((item) => this.toDomain(item));
+  }
+
+  async findAllWithFilters(
+    tenant_id: string | undefined,
+    filters: ListUsersFiltersDto
+  ): Promise<UsersListResult> {
+    const where: Prisma.UserWhereInput = {};
+
+    // Filtro por tenant_id
+    if (tenant_id) {
+      where.tenant_id = tenant_id;
+    }
+
+    // Filtro por role
+    if (filters.role) {
+      where.role = filters.role;
+    }
+
+    // Filtro por status
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    // Búsqueda de texto (case-insensitive) en first_name, last_name, email, phone
+    if (filters.search && filters.search.trim()) {
+      const searchTerm = filters.search.trim();
+      where.OR = [
+        { first_name: { contains: searchTerm, mode: 'insensitive' } },
+        { last_name: { contains: searchTerm, mode: 'insensitive' } },
+        { email: { contains: searchTerm, mode: 'insensitive' } },
+        { phone: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+    }
+
+    // Paginación
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit;
+
+    // Obtener total de registros (sin paginación)
+    const total = await this.prisma.user.count({ where });
+
+    // Obtener datos con paginación
+    const data = await this.prisma.user.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: data.map((item) => this.toDomain(item)),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async create(data: CreateUserData): Promise<User> {

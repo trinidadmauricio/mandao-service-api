@@ -9,8 +9,10 @@ import {
   IDriverRepository,
   CreateDriverData,
   UpdateDriverData,
+  DriversListResult,
 } from '../../domain/repositories/IDriverRepository';
 import { Driver, WorkType, DriverStatus } from '../../domain/entities/Driver';
+import { ListDriversFiltersDto } from '../../application/dto/ListDriversFiltersDto';
 import { TYPES } from '../../../../../config/types';
 
 @injectable()
@@ -45,6 +47,95 @@ export class PrismaDriverRepository implements IDriverRepository {
     });
 
     return data.map((item) => this.toDomain(item));
+  }
+
+  async findAllWithFilters(
+    logistics_provider_id: string | undefined,
+    filters: ListDriversFiltersDto
+  ): Promise<DriversListResult> {
+    const where: Prisma.DriverWhereInput = {};
+
+    // Filtro por logistics_provider_id (puede venir del parámetro o del filtro)
+    const providerId = filters.logistics_provider_id || logistics_provider_id;
+    if (providerId) {
+      where.logistics_provider_id = providerId;
+    }
+
+    // Filtro por availability_status
+    if (filters.availability_status) {
+      where.availability_status = filters.availability_status;
+    }
+
+    // Filtro por work_type
+    if (filters.work_type) {
+      where.work_type = filters.work_type;
+    }
+
+    // Búsqueda de texto (case-insensitive) en User (first_name, last_name, email), driving_license, identity_document
+    if (filters.search && filters.search.trim()) {
+      const searchTerm = filters.search.trim();
+      
+      // Buscar usuarios que coincidan con el término de búsqueda
+      const matchingUsers = await this.prisma.user.findMany({
+        where: {
+          OR: [
+            { first_name: { contains: searchTerm, mode: 'insensitive' } },
+            { last_name: { contains: searchTerm, mode: 'insensitive' } },
+            { email: { contains: searchTerm, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true },
+      });
+      
+      const matchingUserIds = matchingUsers.map((u) => u.id);
+      
+      // Condiciones de búsqueda: campos del driver Y user_ids encontrados
+      const searchConditions: Prisma.DriverWhereInput[] = [
+        { driving_license: { contains: searchTerm, mode: 'insensitive' } },
+        { identity_document: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+      
+      // Si hay usuarios que coinciden, agregar condición para user_id
+      if (matchingUserIds.length > 0) {
+        searchConditions.push({ user_id: { in: matchingUserIds } });
+      }
+
+      // Combinar condiciones de búsqueda con otros filtros
+      if (where.AND) {
+        const andArray = Array.isArray(where.AND) ? where.AND : [where.AND];
+        where.AND = [...andArray, { OR: searchConditions }];
+      } else {
+        if (where.OR) {
+          where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+          delete where.OR;
+        } else {
+          where.OR = searchConditions;
+        }
+      }
+    }
+
+    // Paginación
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit;
+
+    // Obtener total de registros (sin paginación)
+    const total = await this.prisma.driver.count({ where });
+
+    // Obtener datos con paginación
+    const data = await this.prisma.driver.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    return {
+      data: data.map((item) => this.toDomain(item)),
+      total,
+    };
   }
 
   async create(data: CreateDriverData): Promise<Driver> {
