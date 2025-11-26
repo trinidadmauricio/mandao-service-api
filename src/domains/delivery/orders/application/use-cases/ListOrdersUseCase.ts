@@ -13,7 +13,7 @@ export class ListOrdersUseCase {
   constructor(@inject(TYPES.IOrderRepository) private orderRepository: IOrderRepository) {}
 
   async execute(
-    tenant_id: string,
+    tenant_id: string | undefined,
     logistics_provider_id: string | undefined,
     filters?: ListOrdersFiltersDto
   ): Promise<OrdersListResult> {

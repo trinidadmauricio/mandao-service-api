@@ -5,6 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { UserRole } from '../constants/permissions';
 
 // Rutas que NO requieren tenant (disponibles para SAAS_ADMIN sin tenant seleccionado)
 const ROUTES_WITHOUT_TENANT = [
@@ -52,14 +53,14 @@ export const requireTenantMiddleware = (
 
   // LOGISTICS_PROVIDER y SUPERVISOR actúan independientemente de tenant
   // No requieren tenant_id porque gestionan recursos por logistics_provider_id
-  if (req.user.role === 'LOGISTICS_PROVIDER' || req.user.role === 'SUPERVISOR') {
+  if (req.user.role === UserRole.LOGISTICS_PROVIDER || req.user.role === UserRole.SUPERVISOR) {
     next();
     return;
   }
 
   // Si el usuario es SAAS_ADMIN o SAAS_EDITOR sin tenant_id
   if (
-    (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR') &&
+    (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR) &&
     !req.user.tenant_id
   ) {
     // Si la ruta NO requiere tenant, permitir continuar

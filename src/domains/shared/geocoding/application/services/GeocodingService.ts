@@ -5,6 +5,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { logger } from '../../../../../shared/utils/logger';
+import { env } from '../../../../../config/env.config';
 import {
   SearchGeocodingDto,
   ReverseGeocodingDto,
@@ -19,10 +20,13 @@ export class GeocodingService {
   private photonClient: AxiosInstance;
   private readonly photonUrl: string;
   private readonly boundingBox: string;
+  private readonly isPublicService: boolean;
 
   constructor() {
-    this.photonUrl = process.env.PHOTON_URL || 'http://photon:2322';
+    this.photonUrl = env.PHOTON_URL;
     this.boundingBox = CENTRAL_AMERICA_CARIBBEAN_BBOX;
+    // Detectar si es el servicio público (no soporta bbox directamente)
+    this.isPublicService = this.photonUrl.includes('photon.komoot.de');
 
     this.photonClient = axios.create({
       baseURL: this.photonUrl,
@@ -47,8 +51,12 @@ export class GeocodingService {
       const params: Record<string, string | number> = {
         q: dto.q,
         limit: dto.limit || 10,
-        bbox: this.boundingBox, // Filtrar por Centro América y Caribe
       };
+
+      // Solo agregar bbox si no es el servicio público (el público no lo soporta)
+      if (!this.isPublicService) {
+        params.bbox = this.boundingBox; // Filtrar por Centro América y Caribe
+      }
 
       if (dto.lang) {
         params.lang = dto.lang;

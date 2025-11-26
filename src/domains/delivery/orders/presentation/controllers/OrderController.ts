@@ -35,23 +35,30 @@ import { TYPES } from '../../../../../config/types';
 import { PrismaClient } from '@prisma/client';
 import { IUserRepository } from '../../../../shared/users/domain/repositories/IUserRepository';
 import { listOrdersFiltersSchema } from '../../application/dto/ListOrdersFiltersDto';
+import { UserRole } from '../../../../../shared/constants/permissions';
 
 @injectable()
 export class OrderController {
   constructor(
-    @inject(TYPES.CreateOnDemandOrderUseCase) private createOnDemandOrderUseCase: CreateOnDemandOrderUseCase,
-    @inject(TYPES.CreateRetailOrderUseCase) private createRetailOrderUseCase: CreateRetailOrderUseCase,
+    @inject(TYPES.CreateOnDemandOrderUseCase)
+    private createOnDemandOrderUseCase: CreateOnDemandOrderUseCase,
+    @inject(TYPES.CreateRetailOrderUseCase)
+    private createRetailOrderUseCase: CreateRetailOrderUseCase,
     @inject(TYPES.GetOrderUseCase) private getOrderUseCase: GetOrderUseCase,
     @inject(TYPES.ListOrdersUseCase) private listOrdersUseCase: ListOrdersUseCase,
-    @inject(TYPES.UpdateOrderStatusUseCase) private updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    @inject(TYPES.UpdateOrderStatusUseCase)
+    private updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     @inject(TYPES.AssignDriverUseCase) private assignDriverUseCase: AssignDriverUseCase,
-    @inject(TYPES.AssignLogisticsProviderUseCase) private assignLogisticsProviderUseCase: AssignLogisticsProviderUseCase,
+    @inject(TYPES.AssignLogisticsProviderUseCase)
+    private assignLogisticsProviderUseCase: AssignLogisticsProviderUseCase,
     @inject(TYPES.MarkAsAutomaticUseCase) private markAsAutomaticUseCase: MarkAsAutomaticUseCase,
     @inject(TYPES.ChangeBranchUseCase) private changeBranchUseCase: ChangeBranchUseCase,
     @inject(TYPES.ModifyItemsUseCase) private modifyItemsUseCase: ModifyItemsUseCase,
-    @inject(TYPES.RecalculateTotalsUseCase) private recalculateTotalsUseCase: RecalculateTotalsUseCase,
+    @inject(TYPES.RecalculateTotalsUseCase)
+    private recalculateTotalsUseCase: RecalculateTotalsUseCase,
     @inject(TYPES.AddDeliveryProofUseCase) private addDeliveryProofUseCase: AddDeliveryProofUseCase,
-    @inject(TYPES.AddDeliveryRatingUseCase) private addDeliveryRatingUseCase: AddDeliveryRatingUseCase,
+    @inject(TYPES.AddDeliveryRatingUseCase)
+    private addDeliveryRatingUseCase: AddDeliveryRatingUseCase,
     @inject(TYPES.PrismaClient) private prisma: PrismaClient,
     @inject(TYPES.IUserRepository) private userRepository: IUserRepository
   ) {}
@@ -59,7 +66,15 @@ export class OrderController {
   async list(req: Request, res: Response): Promise<void> {
     try {
       const tenant_id = req.tenant?.id;
-      if (!tenant_id) {
+      const userRole = req.user?.role;
+
+      // LOGISTICS_PROVIDER y SUPERVISOR no requieren tenant_id
+      // Si no hay tenant_id y el usuario NO es LOGISTICS_PROVIDER ni SUPERVISOR, error
+      if (
+        !tenant_id &&
+        userRole !== UserRole.LOGISTICS_PROVIDER &&
+        userRole !== UserRole.SUPERVISOR
+      ) {
         res.status(400).json({
           status: 'error',
           message: 'Tenant not found',
@@ -69,8 +84,8 @@ export class OrderController {
 
       // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar por su logistics_provider_id
       const autoLogisticsProviderId =
-        req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
-          ? req.user.logistics_provider_id || undefined
+        userRole === UserRole.LOGISTICS_PROVIDER || userRole === UserRole.SUPERVISOR
+          ? req.user?.logistics_provider_id || undefined
           : undefined;
 
       // Extraer y validar filtros de query params
@@ -103,6 +118,19 @@ export class OrderController {
         filtersInput.limit = req.query.limit;
       }
 
+      // Si hay tenant, filtrar automáticamente por tipo de tenant (ON_DEMAND o RETAIL)
+      // Solo si no se especificó order_type manualmente
+      if (tenant_id && req.tenant && !filtersInput.order_type) {
+        const tenantType = req.tenant.type;
+        // Mapear TenantType a OrderType
+        if (tenantType === 'ON_DEMAND') {
+          filtersInput.order_type = 'ON_DEMAND';
+        } else if (tenantType === 'RETAIL') {
+          filtersInput.order_type = 'RETAIL';
+        }
+        // HYBRID permite ambos tipos, no filtrar automáticamente
+      }
+
       // Validar con schema Zod (solo si hay filtros)
       const filters =
         Object.keys(filtersInput).length > 0
@@ -112,8 +140,12 @@ export class OrderController {
       // Determinar logistics_provider_id para pasar al UseCase
       const logistics_provider_id = autoLogisticsProviderId;
 
-      // Ejecutar UseCase
-      const result = await this.listOrdersUseCase.execute(tenant_id, logistics_provider_id, filters);
+      // Ejecutar UseCase (tenant_id puede ser undefined para LOGISTICS_PROVIDER/SUPERVISOR)
+      const result = await this.listOrdersUseCase.execute(
+        tenant_id,
+        logistics_provider_id,
+        filters
+      );
 
       res.status(200).json({
         status: 'success',
@@ -152,28 +184,29 @@ export class OrderController {
       const order = await this.getOrderUseCase.execute(id, context);
 
       // Obtener relaciones de la orden
-      const [orderDrivers, orderBranches, orderItems, orderSummaryTotals, orderStatusHistory] = await Promise.all([
-        this.prisma.orderDriver.findMany({
-          where: { order_id: id },
-          orderBy: { created_at: 'desc' },
-        }),
-        this.prisma.orderBranch.findMany({
-          where: { order_id: id },
-          orderBy: { created_at: 'desc' },
-        }),
-        this.prisma.orderItem.findMany({
-          where: { order_id: id },
-          orderBy: { created_at: 'asc' },
-        }),
-        this.prisma.orderSummaryTotal.findMany({
-          where: { order_id: id },
-          orderBy: { version: 'desc' },
-        }),
-        this.prisma.orderStatusHistory.findMany({
-          where: { order_id: id },
-          orderBy: { created_at: 'desc' },
-        }),
-      ]);
+      const [orderDrivers, orderBranches, orderItems, orderSummaryTotals, orderStatusHistory] =
+        await Promise.all([
+          this.prisma.orderDriver.findMany({
+            where: { order_id: id },
+            orderBy: { created_at: 'desc' },
+          }),
+          this.prisma.orderBranch.findMany({
+            where: { order_id: id },
+            orderBy: { created_at: 'desc' },
+          }),
+          this.prisma.orderItem.findMany({
+            where: { order_id: id },
+            orderBy: { created_at: 'desc' },
+          }),
+          this.prisma.orderSummaryTotal.findMany({
+            where: { order_id: id },
+            orderBy: { version: 'desc' },
+          }),
+          this.prisma.orderStatusHistory.findMany({
+            where: { order_id: id },
+            orderBy: { created_at: 'desc' },
+          }),
+        ]);
 
       // Obtener información del driver actual si existe
       const currentDriver = orderDrivers.find((od) => od.is_current);
@@ -197,6 +230,44 @@ export class OrderController {
           }
         }
       }
+
+      // Filtrar items para obtener solo los más recientes (última modificación)
+      // Los items se crean en la misma transacción, por lo que tienen timestamps muy cercanos
+      // Agrupamos por "lotes" de items creados en el mismo momento y tomamos el lote más reciente
+      const getLatestItems = (items: typeof orderItems) => {
+        if (items.length === 0) return [];
+        
+        // Ordenar por created_at descendente (ya está ordenado así)
+        // Agrupar items por timestamp (items creados en la misma transacción)
+        // Usamos una ventana de 1 segundo para agrupar items de la misma modificación
+        const grouped: typeof items[] = [];
+        let currentGroup: typeof items = [];
+        let lastTimestamp: Date | null = null;
+        
+        for (const item of items) {
+          if (!lastTimestamp || Math.abs(item.created_at.getTime() - lastTimestamp.getTime()) < 1000) {
+            // Mismo grupo (misma transacción, diferencia < 1 segundo)
+            currentGroup.push(item);
+          } else {
+            // Nuevo grupo, guardar el anterior y empezar uno nuevo
+            if (currentGroup.length > 0) {
+              grouped.push(currentGroup);
+            }
+            currentGroup = [item];
+          }
+          lastTimestamp = item.created_at;
+        }
+        
+        // Agregar el último grupo
+        if (currentGroup.length > 0) {
+          grouped.push(currentGroup);
+        }
+        
+        // Retornar el grupo más reciente (el primero porque está ordenado desc)
+        return grouped.length > 0 ? grouped[0] : [];
+      };
+      
+      const latestItems = getLatestItems(orderItems);
 
       const orderResponse = {
         id: order.id,
@@ -239,7 +310,7 @@ export class OrderController {
           assigned_at: ob.assigned_at.toISOString(),
           created_at: ob.created_at.toISOString(),
         })),
-        order_items: orderItems.map((oi) => ({
+        order_items: latestItems.map((oi) => ({
           id: oi.id,
           product_snapshot: oi.product_snapshot,
           quantity: oi.quantity.toString(),
@@ -446,7 +517,7 @@ export class OrderController {
       }
 
       const body = assignDriverSchema.parse(req.body);
-      
+
       // Pasar contexto del usuario actual para validaciones
       const context = req.user
         ? {
@@ -484,7 +555,7 @@ export class OrderController {
         });
         return;
       }
-        res.status(500).json({
+      res.status(500).json({
         status: 'error',
         message: 'Internal server error',
       });
@@ -538,12 +609,15 @@ export class OrderController {
     } catch (error) {
       logger.error('Error assigning logistics provider', { error });
       if (error instanceof Error) {
-        const isPermissionError = 
-          error.message.includes('Only SAAS roles') ||
-          error.message.includes('cannot assign');
-        
-        const statusCode = isPermissionError ? 403 : (error.message.includes('not found') ? 404 : 400);
-        
+        const isPermissionError =
+          error.message.includes('Only SAAS roles') || error.message.includes('cannot assign');
+
+        const statusCode = isPermissionError
+          ? 403
+          : error.message.includes('not found')
+            ? 404
+            : 400;
+
         res.status(statusCode).json({
           status: 'error',
           message: error.message,
@@ -594,12 +668,16 @@ export class OrderController {
     } catch (error) {
       logger.error('Error marking order as automatic', { error });
       if (error instanceof Error) {
-        const isPermissionError = 
+        const isPermissionError =
           error.message.includes('Only LOGISTICS_PROVIDER') ||
           error.message.includes('cannot mark');
-        
-        const statusCode = isPermissionError ? 403 : (error.message.includes('not found') ? 404 : 400);
-        
+
+        const statusCode = isPermissionError
+          ? 403
+          : error.message.includes('not found')
+            ? 404
+            : 400;
+
         res.status(statusCode).json({
           status: 'error',
           message: error.message,
@@ -623,6 +701,21 @@ export class OrderController {
         res.status(400).json({
           status: 'error',
           message: 'Tenant not found',
+        });
+        return;
+      }
+
+      // Validación temprana: verificar que la orden no sea ON_DEMAND
+      const context = {
+        currentUserRole: req.user?.role as UserRole,
+        currentUserTenantId: tenant_id,
+        currentUserLogisticsProviderId: req.user?.logistics_provider_id || null,
+      };
+      const order = await this.getOrderUseCase.execute(id, context);
+      if (order.order_type === 'ON_DEMAND') {
+        res.status(400).json({
+          status: 'error',
+          message: 'Las órdenes ON_DEMAND no pueden tener sucursales asignadas',
         });
         return;
       }
@@ -903,4 +996,3 @@ export class OrderController {
     }
   }
 }
-

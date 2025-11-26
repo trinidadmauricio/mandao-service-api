@@ -1,37 +1,5 @@
-version: "3.8"
-
 services:
   # api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     target: production
-  #   container_name: mandao-api
-  #   ports:
-  #     - "${PORT:-3000}:3000"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - PORT=3000
-  #     - DATABASE_URL=postgresql://mandao_user:mandao_pass@db:5432/mandao_db?schema=shared&schema=delivery&schema=retail
-  #     - REDIS_URL=redis://redis:6379
-  #     - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
-  #     - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
-  #     - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
-  #     - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001}
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   restart: unless-stopped
-  #   networks:
-  #     - mandao-network
-  #   healthcheck:
-  #     test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
-  #     interval: 30s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 10s
 
   db:
     image: postgres:16-alpine
@@ -70,29 +38,63 @@ services:
       retries: 5
     command: redis-server --appendonly yes
 
+  # Nominatim - Base de datos para procesar datos OSM
+  nominatim:
+    image: mediagis/nominatim:4.2
+    container_name: mandao-nominatim
+    ports:
+      - "${NOMINATIM_PORT:-5433}:5432"
+    volumes:
+      - nominatim_data:/var/lib/postgresql/14/main
+      - ./photon_data:/nominatim/data
+    environment:
+      - PBF_URL=file:///nominatim/data/central-america-caribbean-latest.osm.pbf
+      - REPLICATION_URL=
+      - IMPORT_WIKIPEDIA=false
+      - NOMINATIM_PASSWORD=mandao_nominatim_pass
+    restart: unless-stopped
+    networks:
+      - mandao-network
+    # Nota: La imagen mediagis/nominatim tiene su propio entrypoint que maneja la inicialización
+    # PBF_URL con file:// indica que es un archivo local
+    # Nota: El procesamiento inicial puede tomar varias horas
+
+  # Photon Geocoding Service
+  # Servicio de geocoding local para Centro América y Caribe
+  # Requiere Nominatim con datos procesados
   photon:
-    image: komoot/photon:latest
+    build:
+      context: ./docker/photon
+      dockerfile: Dockerfile
     container_name: mandao-photon
     ports:
       - "${PHOTON_PORT:-2322}:2322"
     volumes:
-      - photon_data:/photon/photon_data
+      - photon_data:/photon_data
     restart: unless-stopped
     networks:
       - mandao-network
+    depends_on:
+      - nominatim
     environment:
       - PHOTON_LANGUAGE=es,en
+      - NOMINATIM_HOST=nominatim
+      - NOMINATIM_PORT=5432
+      - NOMINATIM_DB=nominatim
+      - NOMINATIM_USER=nominatim
+      - NOMINATIM_PASSWORD=mandao_nominatim_pass
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:2322/api?q=test"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 300s
 
 volumes:
   postgres_data:
   redis_data:
   photon_data:
+  nominatim_data:
 
 networks:
   mandao-network:

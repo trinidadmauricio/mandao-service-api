@@ -8,6 +8,7 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { IOrderRepository } from '../../domain/repositories/IOrderRepository';
+import { RecalculateTotalsUseCase } from './RecalculateTotalsUseCase';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { TYPES } from '../../../../../config/types';
 
@@ -29,6 +30,7 @@ export interface ModifyItemsDto {
 export class ModifyItemsUseCase {
   constructor(
     @inject(TYPES.IOrderRepository) private orderRepository: IOrderRepository,
+    @inject(TYPES.RecalculateTotalsUseCase) private recalculateTotalsUseCase: RecalculateTotalsUseCase,
     @inject(TYPES.PrismaClient) private prisma: PrismaClient
   ) {}
 
@@ -68,8 +70,11 @@ export class ModifyItemsUseCase {
       }
     });
 
-    // Nota: El recálculo de totals debe hacerse con RecalculateTotalsUseCase
-    // después de modificar items
+    // Recalcular totales automáticamente después de modificar items
+    // Esto asegura que los totales reflejen los nuevos items
+    await this.recalculateTotalsUseCase.execute({
+      order_id: dto.order_id,
+    });
   }
 }
 

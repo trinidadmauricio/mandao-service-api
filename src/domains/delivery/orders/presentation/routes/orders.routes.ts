@@ -77,7 +77,7 @@ const controller = container.get<OrderController>(TYPES.OrderController);
  *         schema:
  *           type: integer
  *           minimum: 1
- *         description: Número de página (default: 1)
+ *         description: "Número de página (default: 1)"
  *         example: 1
  *       - in: query
  *         name: limit
@@ -85,7 +85,7 @@ const controller = container.get<OrderController>(TYPES.OrderController);
  *           type: integer
  *           minimum: 1
  *           maximum: 100
- *         description: Cantidad de resultados por página (default: 10, max: 100)
+ *         description: "Cantidad de resultados por página (default: 10, max: 100)"
  *         example: 10
  *     responses:
  *       200:
@@ -503,7 +503,10 @@ router.patch(
  * /api/v1/orders/{id}/assign-driver:
  *   post:
  *     summary: Asignar driver a orden
- *     description: Asigna un driver a una orden. Sigue patrón inmutable (INSERT nuevo order_drivers).
+ *     description: |
+ *       Asigna un driver a una orden. Sigue patrón inmutable (INSERT nuevo order_drivers).
+ *       Solo roles SAAS (SAAS_ADMIN, SAAS_EDITOR) pueden realizar esta acción.
+ *       Nota: En el futuro habrá un sistema automático de asignación donde el rol no importará.
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -666,7 +669,9 @@ router.post(
  * /api/v1/orders/{id}/change-branch:
  *   post:
  *     summary: Cambiar branch de orden
- *     description: Cambia el branch asignado a una orden. Sigue patrón inmutable (INSERT nuevo order_branches).
+ *     description: |
+ *       Cambia el branch asignado a una orden. Sigue patrón inmutable (INSERT nuevo order_branches).
+ *       Nota: Este endpoint no aplica a órdenes de tipo ON_DEMAND, ya que estas no tienen concepto de sucursales.
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []

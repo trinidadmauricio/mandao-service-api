@@ -91,10 +91,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
   [UserRole.MERCHANT_USER]: [
     { resource: 'dashboard', action: 'read' },
-    { resource: 'orders', action: 'read' },
-    { resource: 'orders', action: 'create' },
-    { resource: 'orders', action: 'update' },
-    { resource: 'orders', action: 'delete' },
+    // Órdenes (acceso completo - puede ver y administrar todas sus órdenes)
+    { resource: 'orders', action: 'manage' },
     { resource: 'products', action: 'read' },
     { resource: 'products', action: 'create' },
     { resource: 'products', action: 'update' },

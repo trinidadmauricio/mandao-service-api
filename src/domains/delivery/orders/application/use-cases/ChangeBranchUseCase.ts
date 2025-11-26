@@ -32,6 +32,11 @@ export class ChangeBranchUseCase {
       throw new Error('Order not found');
     }
 
+    // Las órdenes ON_DEMAND no pueden tener sucursales asignadas
+    if (order.order_type === 'ON_DEMAND') {
+      throw new Error('Las órdenes ON_DEMAND no pueden tener sucursales asignadas');
+    }
+
     // Verificar que el branch existe
     const branch = await this.branchRepository.findById(dto.branch_id);
     if (!branch) {

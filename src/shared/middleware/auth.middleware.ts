@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { env } from '../../config/env.config';
 import { logger } from '../utils/logger';
+import { UserRole } from '../constants/permissions';
 
 const prisma = new PrismaClient();
 
@@ -92,7 +93,7 @@ export const authMiddleware = async (
       // (pueden tener tenant_id null y acceder a cualquier tenant)
       if (req.tenant && user.tenant_id !== req.tenant.id) {
         // Si el usuario NO es SAAS_ADMIN/SAAS_EDITOR, validar tenant
-        if (user.role !== 'SAAS_ADMIN' && user.role !== 'SAAS_EDITOR') {
+        if (user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR) {
           res.status(403).json({
             status: 'error',
             message: 'User does not belong to this tenant',
@@ -107,9 +108,9 @@ export const authMiddleware = async (
       if (user.tenant) {
         req.tenant = user.tenant;
       } else if (
-        (user.role === 'SAAS_ADMIN' || user.role === 'SAAS_EDITOR') &&
-        !user.tenant_id
-      ) {
+      (user.role === UserRole.SAAS_ADMIN || user.role === UserRole.SAAS_EDITOR) &&
+      !user.tenant_id
+    ) {
         // Si es SAAS_ADMIN sin tenant_id, verificar si hay tenant en header o query
         const tenantIdFromHeader = req.headers['x-tenant-id'] as string | undefined;
         const tenantIdFromQuery = req.query.tenant_id as string | undefined;
@@ -255,7 +256,7 @@ export const authMiddleware = async (
     }
 
     // Validación CRÍTICA: SUPERVISOR debe tener logistics_provider_id
-    if (user.role === 'SUPERVISOR' && !user.logistics_provider_id) {
+    if (user.role === UserRole.SUPERVISOR && !user.logistics_provider_id) {
       res.status(403).json({
         status: 'error',
         message: 'SUPERVISOR user must have logistics_provider_id',
@@ -268,7 +269,7 @@ export const authMiddleware = async (
     // (pueden tener tenant_id null y acceder a cualquier tenant)
     if (req.tenant && user.tenant_id !== req.tenant.id) {
       // Si el usuario NO es SAAS_ADMIN/SAAS_EDITOR, validar tenant
-      if (user.role !== 'SAAS_ADMIN' && user.role !== 'SAAS_EDITOR') {
+      if (user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR) {
         res.status(403).json({
           status: 'error',
           message: 'User does not belong to this tenant',
@@ -283,7 +284,7 @@ export const authMiddleware = async (
     if (user.tenant) {
       req.tenant = user.tenant;
     } else if (
-      (user.role === 'SAAS_ADMIN' || user.role === 'SAAS_EDITOR') &&
+      (user.role === UserRole.SAAS_ADMIN || user.role === UserRole.SAAS_EDITOR) &&
       !user.tenant_id
     ) {
       // Si es SAAS_ADMIN sin tenant_id, verificar si hay tenant en header o query

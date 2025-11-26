@@ -1,6 +1,6 @@
 /**
  * Use Case: Asignar Driver a Orden
- * 
+ *
  * Patrón inmutable: INSERT nuevo order_drivers, marca anteriores como is_current = false
  */
 
@@ -29,7 +29,8 @@ export class AssignDriverUseCase {
   constructor(
     @inject(TYPES.IOrderRepository) private orderRepository: IOrderRepository,
     @inject(TYPES.IDriverRepository) private driverRepository: IDriverRepository,
-    @inject(TYPES.ILogisticsProviderRepository) private logisticsProviderRepository: ILogisticsProviderRepository,
+    @inject(TYPES.ILogisticsProviderRepository)
+    private logisticsProviderRepository: ILogisticsProviderRepository,
     @inject(TYPES.PrismaClient) private prisma: PrismaClient
   ) {}
 
@@ -61,7 +62,6 @@ export class AssignDriverUseCase {
     // Validaciones CRÍTICAS de asignación de driver
     if (context) {
       const currentRole = context.currentUserRole as UserRole;
-      const currentUserLogisticsProviderId = context.currentUserLogisticsProviderId;
 
       // Verificar si la orden está asignada a un LOGISTICS_PROVIDER
       // La orden debe tener un order_driver con logistics_provider_id (puede o no tener driver_id)
@@ -76,34 +76,12 @@ export class AssignDriverUseCase {
         throw new Error('Order must be assigned to a LOGISTICS_PROVIDER before assigning a driver');
       }
 
-      const orderLogisticsProviderId = currentOrderDriver.logistics_provider_id;
-
-      // Validar permisos: Solo SAAS roles, LOGISTICS_PROVIDER o SUPERVISOR pueden asignar drivers
-      if (
-        currentRole !== UserRole.SAAS_ADMIN &&
-        currentRole !== UserRole.SAAS_EDITOR &&
-        currentRole !== UserRole.LOGISTICS_PROVIDER &&
-        currentRole !== UserRole.SUPERVISOR
-      ) {
-        throw new Error(`Users with role ${currentRole} cannot assign drivers`);
-      }
-
-      // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, validar ownership
-      if (currentRole === UserRole.LOGISTICS_PROVIDER || currentRole === UserRole.SUPERVISOR) {
-        // Validar que el usuario tiene logistics_provider_id
-        if (!currentUserLogisticsProviderId) {
-          throw new Error(`${currentRole} user must have logistics_provider_id to assign drivers`);
-        }
-
-        // Validar que la orden está asignada a su proveedor
-        if (orderLogisticsProviderId !== currentUserLogisticsProviderId) {
-          throw new Error('User can only assign drivers to orders assigned to their logistics provider');
-        }
-
-        // Validar que el driver pertenece a su flota
-        if (driver.logistics_provider_id !== currentUserLogisticsProviderId) {
-          throw new Error('User can only assign drivers from their own logistics provider fleet');
-        }
+      // Validar permisos: Solo roles SAAS pueden asignar drivers
+      // Nota: En el futuro habrá un sistema automático de asignación donde el rol no importará
+      if (currentRole !== UserRole.SAAS_ADMIN && currentRole !== UserRole.SAAS_EDITOR) {
+        throw new Error(
+          `Users with role ${currentRole} cannot assign drivers. Only SAAS roles can assign drivers.`
+        );
       }
       // SAAS roles pueden asignar cualquier driver a cualquier orden (sin restricciones)
     }
@@ -166,4 +144,3 @@ export class AssignDriverUseCase {
     });
   }
 }
-
