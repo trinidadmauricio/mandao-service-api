@@ -34,6 +34,7 @@ import { serializeForResponse } from '../../../../../shared/utils/serializer.uti
 import { TYPES } from '../../../../../config/types';
 import { PrismaClient } from '@prisma/client';
 import { IUserRepository } from '../../../../shared/users/domain/repositories/IUserRepository';
+import { listOrdersFiltersSchema } from '../../application/dto/ListOrdersFiltersDto';
 
 @injectable()
 export class OrderController {
@@ -66,22 +67,72 @@ export class OrderController {
         return;
       }
 
-      const status = req.query.status as string | undefined;
-      
       // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar por su logistics_provider_id
-      const logistics_provider_id =
+      const autoLogisticsProviderId =
         req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
           ? req.user.logistics_provider_id || undefined
           : undefined;
 
-      const orders = await this.listOrdersUseCase.execute(tenant_id, status, logistics_provider_id);
+      // Extraer y validar filtros de query params
+      const filtersInput: Record<string, unknown> = {};
+      if (req.query.search) {
+        filtersInput.search = req.query.search as string;
+      }
+      if (req.query.status) {
+        filtersInput.status = req.query.status as string;
+      }
+      if (req.query.order_type) {
+        filtersInput.order_type = req.query.order_type as string;
+      }
+      if (req.query.driver_id) {
+        filtersInput.driver_id = req.query.driver_id as string;
+      }
+      if (req.query.branch_id) {
+        filtersInput.branch_id = req.query.branch_id as string;
+      }
+      if (req.query.start_date) {
+        filtersInput.start_date = req.query.start_date as string;
+      }
+      if (req.query.end_date) {
+        filtersInput.end_date = req.query.end_date as string;
+      }
+      if (req.query.page) {
+        filtersInput.page = req.query.page;
+      }
+      if (req.query.limit) {
+        filtersInput.limit = req.query.limit;
+      }
+
+      // Validar con schema Zod (solo si hay filtros)
+      const filters =
+        Object.keys(filtersInput).length > 0
+          ? listOrdersFiltersSchema.parse(filtersInput)
+          : undefined;
+
+      // Determinar logistics_provider_id para pasar al UseCase
+      const logistics_provider_id = autoLogisticsProviderId;
+
+      // Ejecutar UseCase
+      const result = await this.listOrdersUseCase.execute(tenant_id, logistics_provider_id, filters);
 
       res.status(200).json({
         status: 'success',
-        data: serializeForResponse(orders),
+        data: serializeForResponse(result.data),
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
       });
     } catch (error) {
       logger.error('Error listing orders', { error });
+      if (error instanceof Error && error.name === 'ZodError') {
+        res.status(400).json({
+          status: 'error',
+          message: 'Invalid filter parameters',
+          errors: error,
+        });
+        return;
+      }
       res.status(500).json({
         status: 'error',
         message: 'Internal server error',

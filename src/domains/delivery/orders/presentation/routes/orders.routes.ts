@@ -21,11 +21,17 @@ const controller = container.get<OrderController>(TYPES.OrderController);
  * /api/v1/orders:
  *   get:
  *     summary: Listar órdenes
- *     description: Obtiene la lista de órdenes del tenant actual con filtros opcionales
+ *     description: Obtiene la lista de órdenes del tenant actual con filtros opcionales y paginación
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Buscar por número de orden, tracking code o order number
+ *         example: SHIP-00284
  *       - in: query
  *         name: status
  *         schema:
@@ -33,9 +39,57 @@ const controller = container.get<OrderController>(TYPES.OrderController);
  *           enum: [DRAFT, PENDING, CONFIRMED, ASSIGNED, IN_TRANSIT, DELIVERED, CANCELLED, FAILED]
  *         description: Filtrar por estado de orden
  *         example: PENDING
+ *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: string
+ *           enum: [RETAIL, ON_DEMAND]
+ *         description: Filtrar por tipo de orden
+ *         example: RETAIL
+ *       - in: query
+ *         name: driver_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por ID del driver asignado
+ *       - in: query
+ *         name: branch_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por ID de la sucursal
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha de inicio para filtrar por rango de fechas
+ *         example: 2025-01-01
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha de fin para filtrar por rango de fechas
+ *         example: 2025-12-31
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Número de página (default: 1)
+ *         example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Cantidad de resultados por página (default: 10, max: 100)
+ *         example: 10
  *     responses:
  *       200:
- *         description: Lista de órdenes
+ *         description: Lista de órdenes con paginación
  *         content:
  *           application/json:
  *             schema:
@@ -48,6 +102,24 @@ const controller = container.get<OrderController>(TYPES.OrderController);
  *                   type: array
  *                   items:
  *                     type: object
+ *                 total:
+ *                   type: integer
+ *                   description: Total de órdenes que coinciden con los filtros
+ *                   example: 100
+ *                 page:
+ *                   type: integer
+ *                   description: Página actual
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   description: Cantidad de resultados por página
+ *                   example: 10
+ *                 totalPages:
+ *                   type: integer
+ *                   description: Total de páginas
+ *                   example: 10
+ *       400:
+ *         description: Parámetros de filtro inválidos
  *       401:
  *         description: No autenticado
  */

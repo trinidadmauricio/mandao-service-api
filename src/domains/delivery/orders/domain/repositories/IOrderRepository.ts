@@ -3,11 +3,25 @@
  */
 
 import { Order } from '../entities/Order';
+import { ListOrdersFiltersDto } from '../../application/dto/ListOrdersFiltersDto';
+
+export interface OrdersListResult {
+  data: Order[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 export interface IOrderRepository {
   findById(id: string): Promise<Order | null>;
   findByTrackingCode(tracking_code: string): Promise<Order | null>;
   findAll(tenant_id?: string, status?: string, logistics_provider_id?: string): Promise<Order[]>;
+  findAllWithFilters(
+    tenant_id: string,
+    logistics_provider_id: string | undefined,
+    filters: ListOrdersFiltersDto
+  ): Promise<OrdersListResult>;
   create(data: CreateOrderData): Promise<Order>;
   updateStatus(id: string, status: string, cancellation_reason?: string | null): Promise<Order>;
 }

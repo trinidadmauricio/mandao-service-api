@@ -5,10 +5,11 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { IOrderRepository, CreateOrderData } from '../../domain/repositories/IOrderRepository';
+import { IOrderRepository, CreateOrderData, OrdersListResult } from '../../domain/repositories/IOrderRepository';
 import { Order, OrderType, OrderStatus, OrderPriority } from '../../domain/entities/Order';
 import { generateSecureToken } from '../../../../../shared/utils/crypto.util';
 import { TYPES } from '../../../../../config/types';
+import { ListOrdersFiltersDto } from '../../application/dto/ListOrdersFiltersDto';
 
 @injectable()
 export class PrismaOrderRepository implements IOrderRepository {
@@ -69,6 +70,126 @@ export class PrismaOrderRepository implements IOrderRepository {
     });
 
     return data.map((item) => this.toDomain(item));
+  }
+
+  async findAllWithFilters(
+    tenant_id: string,
+    logistics_provider_id: string | undefined,
+    filters: ListOrdersFiltersDto
+  ): Promise<OrdersListResult> {
+    const where: Prisma.OrderWhereInput = {
+      tenant_id,
+    };
+
+    // Si se especifica logistics_provider_id, filtrar órdenes asignadas a ese proveedor
+    if (logistics_provider_id) {
+      where.order_drivers = {
+        some: {
+          is_current: true,
+          logistics_provider_id: logistics_provider_id,
+        },
+      };
+    }
+
+    // Filtro por status
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    // Filtro por order_type
+    if (filters.order_type) {
+      where.order_type = filters.order_type;
+    }
+
+    // Filtro por driver_id
+    if (filters.driver_id) {
+      where.order_drivers = {
+        some: {
+          is_current: true,
+          driver_id: filters.driver_id,
+        },
+      };
+    }
+
+    // Filtro por branch_id
+    if (filters.branch_id) {
+      where.order_branches = {
+        some: {
+          is_current: true,
+          branch_id: filters.branch_id,
+        },
+      };
+    }
+
+    // Filtro por rango de fechas
+    if (filters.start_date || filters.end_date) {
+      where.created_at = {};
+      if (filters.start_date) {
+        where.created_at.gte = new Date(filters.start_date);
+      }
+      if (filters.end_date) {
+        where.created_at.lte = new Date(filters.end_date);
+      }
+    }
+
+    // Búsqueda de texto (case-insensitive) en order_display_number, tracking_code, order_number
+    if (filters.search && filters.search.trim()) {
+      const searchTerm = filters.search.trim();
+      const searchConditions: Prisma.OrderWhereInput[] = [
+        { order_display_number: { contains: searchTerm, mode: 'insensitive' } },
+        { tracking_code: { contains: searchTerm, mode: 'insensitive' } },
+      ];
+
+      // Buscar también por order_number (convertir a string para búsqueda)
+      // Nota: order_number es BigInt, necesitamos buscar en la representación string
+      try {
+        const searchNumber = BigInt(searchTerm);
+        searchConditions.push({ order_number: searchNumber });
+      } catch {
+        // Si no es un número válido, ignorar esta condición
+      }
+
+      // Combinar condiciones de búsqueda con otros filtros
+      if (where.AND) {
+        const andArray = Array.isArray(where.AND) ? where.AND : [where.AND];
+        where.AND = [...andArray, { OR: searchConditions }];
+      } else {
+        if (where.OR) {
+          where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+          delete where.OR;
+        } else {
+          where.OR = searchConditions;
+        }
+      }
+    }
+
+    // Paginación
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit;
+
+    // Obtener total de registros (sin paginación)
+    const total = await this.prisma.order.count({ where });
+
+    // Obtener datos con paginación
+    const data = await this.prisma.order.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: data.map((item) => this.toDomain(item)),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async create(data: CreateOrderData): Promise<Order> {
