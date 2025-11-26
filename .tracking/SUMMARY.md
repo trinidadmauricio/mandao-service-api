@@ -1,7 +1,7 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 3/10 partes completadas (30%)
+- **Progreso**: 4/10 partes completadas (40%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
@@ -42,6 +42,20 @@
   - Frontend: Asignación automática de logistics_provider_id al crear SUPERVISOR
   - Tests: Unit tests completos para todas las validaciones de SUPERVISOR
 
+### ✅ Parte 5: Restricciones de Creación de Usuarios (CRÍTICO)
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/user-creation-restrictions
+- **Resumen**: Se implementaron todas las restricciones de creación de usuarios por rol.
+- **Cambios principales**:
+  - Backend: Validación SAAS_ADMIN puede crear todos excepto CUSTOMER
+  - Backend: Validación SAAS_EDITOR no puede crear SAAS roles ni CUSTOMER
+  - Backend: Validación OWNER solo puede crear MERCHANT_USER
+  - Backend: Validación ningún rol puede crear CUSTOMER desde backoffice
+  - Backend: Validación SUPERVISOR y MERCHANT_USER no pueden crear usuarios
+  - Backend: UserController retorna 403 para errores de permisos
+  - Frontend: Filtrar opciones de roles según rol del usuario actual
+  - Tests: Unit tests completos para todas las restricciones de creación
+
 ## Partes en Progreso
 
 (Ninguna actualmente)
@@ -52,6 +66,7 @@
 - [ ] Parte 2: Crear Módulo de UOMs (depende de Parte 8)
 - [x] Parte 3: Agregar Rol DRIVER ✅
 - [x] Parte 4: Validar SUPERVISOR ✅
+- [x] Parte 5: Restricciones de Creación de Usuarios ✅
 - [ ] Parte 2: Crear Módulo de UOMs
 - [ ] Parte 3: Agregar Rol DRIVER
 - [ ] Parte 4: Validar SUPERVISOR
