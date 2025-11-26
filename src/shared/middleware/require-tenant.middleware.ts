@@ -50,6 +50,13 @@ export const requireTenantMiddleware = (
     return;
   }
 
+  // LOGISTICS_PROVIDER y SUPERVISOR actúan independientemente de tenant
+  // No requieren tenant_id porque gestionan recursos por logistics_provider_id
+  if (req.user.role === 'LOGISTICS_PROVIDER' || req.user.role === 'SUPERVISOR') {
+    next();
+    return;
+  }
+
   // Si el usuario es SAAS_ADMIN o SAAS_EDITOR sin tenant_id
   if (
     (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR') &&

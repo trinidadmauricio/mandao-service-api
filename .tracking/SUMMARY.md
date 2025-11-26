@@ -1,7 +1,7 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 4/10 partes completadas (40%)
+- **Progreso**: 5/10 partes completadas (50%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
@@ -58,7 +58,18 @@
 
 ## Partes en Progreso
 
-(Ninguna actualmente)
+### 🔄 Parte 6: Asignación de Órdenes y Drivers (CRÍTICO)
+- **Fecha de inicio**: 2024-01-15
+- **Branch**: feature/order-driver-assignment
+- **Resumen**: Implementación de lógica de asignación de órdenes a LOGISTICS_PROVIDER y drivers a órdenes.
+- **Cambios principales**:
+  - Backend: Creado AssignLogisticsProviderUseCase (solo SAAS roles pueden asignar)
+  - Backend: Actualizado AssignDriverUseCase con validaciones de permisos
+  - Backend: Creado MarkAsAutomaticUseCase (LOGISTICS_PROVIDER/SUPERVISOR pueden marcar como automático)
+  - Backend: Actualizado OrderController con nuevos endpoints
+  - Backend: Actualizado requireTenantMiddleware para permitir LOGISTICS_PROVIDER/SUPERVISOR sin tenant
+  - Backend: Agregadas rutas para assign-logistics-provider y mark-as-automatic
+  - **Pendiente**: Unit tests para AssignLogisticsProviderUseCase y MarkAsAutomaticUseCase
 
 ## Partes Pendientes
 
@@ -71,7 +82,7 @@
 - [ ] Parte 3: Agregar Rol DRIVER
 - [ ] Parte 4: Validar SUPERVISOR
 - [ ] Parte 5: Restricciones de Creación de Usuarios
-- [ ] Parte 6: Asignación de Órdenes y Drivers
+- [x] Parte 6: Asignación de Órdenes y Drivers (en progreso - falta tests)
 - [ ] Parte 7: Aislamiento de LOGISTICS_PROVIDER
 - [ ] Parte 8: Visibilidad por Tenant Type
 - [ ] Parte 9: Restricciones de Módulos SAAS

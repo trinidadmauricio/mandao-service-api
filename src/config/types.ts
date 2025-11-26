@@ -215,6 +215,8 @@ export const TYPES = {
   ListOrdersUseCase: Symbol.for('ListOrdersUseCase'),
   UpdateOrderStatusUseCase: Symbol.for('UpdateOrderStatusUseCase'),
   AssignDriverUseCase: Symbol.for('AssignDriverUseCase'),
+  AssignLogisticsProviderUseCase: Symbol.for('AssignLogisticsProviderUseCase'),
+  MarkAsAutomaticUseCase: Symbol.for('MarkAsAutomaticUseCase'),
   ChangeBranchUseCase: Symbol.for('ChangeBranchUseCase'),
   ModifyItemsUseCase: Symbol.for('ModifyItemsUseCase'),
   RecalculateTotalsUseCase: Symbol.for('RecalculateTotalsUseCase'),

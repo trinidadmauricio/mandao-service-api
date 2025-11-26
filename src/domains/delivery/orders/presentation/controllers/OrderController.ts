@@ -11,6 +11,8 @@ import { GetOrderUseCase } from '../../application/use-cases/GetOrderUseCase';
 import { ListOrdersUseCase } from '../../application/use-cases/ListOrdersUseCase';
 import { UpdateOrderStatusUseCase } from '../../application/use-cases/UpdateOrderStatusUseCase';
 import { AssignDriverUseCase } from '../../application/use-cases/AssignDriverUseCase';
+import { AssignLogisticsProviderUseCase } from '../../application/use-cases/AssignLogisticsProviderUseCase';
+import { MarkAsAutomaticUseCase } from '../../application/use-cases/MarkAsAutomaticUseCase';
 import { ChangeBranchUseCase } from '../../application/use-cases/ChangeBranchUseCase';
 import { ModifyItemsUseCase } from '../../application/use-cases/ModifyItemsUseCase';
 import { RecalculateTotalsUseCase } from '../../application/use-cases/RecalculateTotalsUseCase';
@@ -42,6 +44,8 @@ export class OrderController {
     @inject(TYPES.ListOrdersUseCase) private listOrdersUseCase: ListOrdersUseCase,
     @inject(TYPES.UpdateOrderStatusUseCase) private updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     @inject(TYPES.AssignDriverUseCase) private assignDriverUseCase: AssignDriverUseCase,
+    @inject(TYPES.AssignLogisticsProviderUseCase) private assignLogisticsProviderUseCase: AssignLogisticsProviderUseCase,
+    @inject(TYPES.MarkAsAutomaticUseCase) private markAsAutomaticUseCase: MarkAsAutomaticUseCase,
     @inject(TYPES.ChangeBranchUseCase) private changeBranchUseCase: ChangeBranchUseCase,
     @inject(TYPES.ModifyItemsUseCase) private modifyItemsUseCase: ModifyItemsUseCase,
     @inject(TYPES.RecalculateTotalsUseCase) private recalculateTotalsUseCase: RecalculateTotalsUseCase,
@@ -375,11 +379,23 @@ export class OrderController {
       }
 
       const body = assignDriverSchema.parse(req.body);
-      await this.assignDriverUseCase.execute({
-        order_id: id,
-        driver_id: body.driver_id,
-        assigned_by_user_id: user_id,
-      });
+      
+      // Pasar contexto del usuario actual para validaciones
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+
+      await this.assignDriverUseCase.execute(
+        {
+          order_id: id,
+          driver_id: body.driver_id,
+          assigned_by_user_id: user_id,
+        },
+        context
+      );
 
       res.status(200).json({
         status: 'success',
@@ -396,6 +412,128 @@ export class OrderController {
           return;
         }
         res.status(400).json({
+          status: 'error',
+          message: error.message,
+        });
+        return;
+      }
+        res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async assignLogisticsProvider(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const tenant_id = req.tenant?.id;
+      const user_id = req.user?.id;
+
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const body = req.body;
+      if (!body.logistics_provider_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'logistics_provider_id is required',
+        });
+        return;
+      }
+
+      // Pasar contexto del usuario actual para validaciones
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            isSystemProcess: false,
+          }
+        : undefined;
+
+      await this.assignLogisticsProviderUseCase.execute(
+        {
+          order_id: id,
+          logistics_provider_id: body.logistics_provider_id,
+          assigned_by_user_id: user_id,
+        },
+        context
+      );
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Logistics provider assigned successfully',
+      });
+    } catch (error) {
+      logger.error('Error assigning logistics provider', { error });
+      if (error instanceof Error) {
+        const isPermissionError = 
+          error.message.includes('Only SAAS roles') ||
+          error.message.includes('cannot assign');
+        
+        const statusCode = isPermissionError ? 403 : (error.message.includes('not found') ? 404 : 400);
+        
+        res.status(statusCode).json({
+          status: 'error',
+          message: error.message,
+        });
+        return;
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async markAsAutomatic(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const tenant_id = req.tenant?.id;
+      const user_id = req.user?.id;
+
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      // Pasar contexto del usuario actual para validaciones
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+
+      await this.markAsAutomaticUseCase.execute(
+        {
+          order_id: id,
+          marked_by_user_id: user_id,
+        },
+        context
+      );
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Order marked as automatic successfully',
+      });
+    } catch (error) {
+      logger.error('Error marking order as automatic', { error });
+      if (error instanceof Error) {
+        const isPermissionError = 
+          error.message.includes('Only LOGISTICS_PROVIDER') ||
+          error.message.includes('cannot mark');
+        
+        const statusCode = isPermissionError ? 403 : (error.message.includes('not found') ? 404 : 400);
+        
+        res.status(statusCode).json({
           status: 'error',
           message: error.message,
         });
