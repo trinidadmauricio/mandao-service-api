@@ -1,24 +1,29 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 0/10 partes completadas (0%)
+- **Progreso**: 1/10 partes completadas (10%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
 ## Partes Completadas
 
-(Ninguna aún)
+### ✅ Parte 1: Deshabilitar HYBRID en Creación de Tenants
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/disable-hybrid-tenant
+- **Resumen**: Se eliminó la opción HYBRID del formulario y API de creación de tenants.
+- **Cambios principales**:
+  - Backend: Actualizado CreateTenantDto, ITenantRepository, TenantController
+  - Backend: Agregada validación explícita para rechazar HYBRID con error 400
+  - Frontend: Actualizado tipo Tenant en api.ts y use-tenant.ts
+  - Tests: Unit tests para validaciones de tenant type (CreateTenantUseCase y TenantController)
 
 ## Partes en Progreso
 
-### 🚧 Parte 1: Deshabilitar HYBRID en Creación de Tenants
-- **Branch**: feature/disable-hybrid-tenant
-- **Estado**: En desarrollo
-- **Progreso**: 0/X tareas completadas
+(Ninguna actualmente)
 
 ## Partes Pendientes
 
-- [ ] Parte 1: Deshabilitar HYBRID en Creación de Tenants
+- [x] Parte 1: Deshabilitar HYBRID en Creación de Tenants ✅
 - [ ] Parte 2: Crear Módulo de UOMs
 - [ ] Parte 3: Agregar Rol DRIVER
 - [ ] Parte 4: Validar SUPERVISOR
