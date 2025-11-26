@@ -5,6 +5,7 @@
 import { ListLogisticsProvidersUseCase } from '../../application/use-cases/ListLogisticsProvidersUseCase';
 import { ILogisticsProviderRepository } from '../../domain/repositories/ILogisticsProviderRepository';
 import { LogisticsProvider } from '../../domain/entities/LogisticsProvider';
+import { UserRole } from '../../../../../shared/constants/permissions';
 
 describe('ListLogisticsProvidersUseCase', () => {
   let useCase: ListLogisticsProvidersUseCase;
@@ -15,52 +16,17 @@ describe('ListLogisticsProvidersUseCase', () => {
       findById: jest.fn(),
       findAll: jest.fn(),
       findAllWithFilters: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
     } as any;
 
     useCase = new ListLogisticsProvidersUseCase(mockRepository);
   });
 
-  it('should list providers without filters (backward compatibility)', async () => {
-    const tenantId = 'tenant-123';
+  it('should list all logistics providers for SAAS_ADMIN', async () => {
     const providers = [
       new LogisticsProvider(
         'provider-1',
-        tenantId,
-        'Company 1',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'PENDING',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
-
-    mockRepository.findAll.mockResolvedValue(providers);
-
-    const result = await useCase.execute(tenantId);
-
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAll).toHaveBeenCalledWith(tenantId);
-    expect(mockRepository.findAllWithFilters).not.toHaveBeenCalled();
-  });
-
-  it('should list providers with status filter', async () => {
-    const tenantId = 'tenant-123';
-    const filters = { status: 'ACTIVE' as const };
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        tenantId,
-        'Company 1',
+        'tenant-1',
+        'Provider 1',
         'TAX1',
         'Rep 1',
         '+1234567890',
@@ -73,199 +39,110 @@ describe('ListLogisticsProvidersUseCase', () => {
         new Date(),
         new Date()
       ),
+      new LogisticsProvider(
+        'provider-2',
+        'tenant-2',
+        'Provider 2',
+        'TAX2',
+        'Rep 2',
+        '+1234567891',
+        'DOC2',
+        'VERIFIED',
+        null,
+        null,
+        0,
+        'ACTIVE',
+        new Date(),
+        new Date()
+      ),
     ];
 
-    mockRepository.findAllWithFilters.mockResolvedValue(providers);
+    mockRepository.findAll.mockResolvedValue(providers);
 
-    const result = await useCase.execute(tenantId, filters);
+    const context = {
+      currentUserRole: UserRole.SAAS_ADMIN,
+      currentUserLogisticsProviderId: null,
+    };
+
+    const result = await useCase.execute(undefined, undefined, context);
 
     expect(result).toEqual(providers);
-    expect(mockRepository.findAllWithFilters).toHaveBeenCalledWith(tenantId, filters);
+    expect(mockRepository.findAll).toHaveBeenCalledWith(undefined);
+  });
+
+  it('should return only own provider for LOGISTICS_PROVIDER', async () => {
+    const provider = new LogisticsProvider(
+      'provider-id',
+      'tenant-id',
+      'Provider Company',
+      'TAX123',
+      'Rep Name',
+      '+1234567890',
+      'DOC123',
+      'VERIFIED',
+      null,
+      null,
+      0,
+      'ACTIVE',
+      new Date(),
+      new Date()
+    );
+
+    mockRepository.findById.mockResolvedValue(provider);
+
+    const context = {
+      currentUserRole: UserRole.LOGISTICS_PROVIDER,
+      currentUserLogisticsProviderId: 'provider-id',
+    };
+
+    const result = await useCase.execute(undefined, undefined, context);
+
+    expect(result).toEqual([provider]);
+    expect(mockRepository.findById).toHaveBeenCalledWith('provider-id');
     expect(mockRepository.findAll).not.toHaveBeenCalled();
   });
 
-  it('should list providers with verification_status filter', async () => {
-    const tenantId = 'tenant-123';
-    const filters = { verification_status: 'VERIFIED' as const };
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        tenantId,
-        'Company 1',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'VERIFIED',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
+  it('should return empty array if LOGISTICS_PROVIDER provider not found', async () => {
+    mockRepository.findById.mockResolvedValue(null);
 
-    mockRepository.findAllWithFilters.mockResolvedValue(providers);
-
-    const result = await useCase.execute(tenantId, filters);
-
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAllWithFilters).toHaveBeenCalledWith(tenantId, filters);
-  });
-
-  it('should list providers with search filter', async () => {
-    const tenantId = 'tenant-123';
-    const filters = { search: 'Company' };
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        tenantId,
-        'Company 1',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'PENDING',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
-
-    mockRepository.findAllWithFilters.mockResolvedValue(providers);
-
-    const result = await useCase.execute(tenantId, filters);
-
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAllWithFilters).toHaveBeenCalledWith(tenantId, filters);
-  });
-
-  it('should list providers with is_global filter', async () => {
-    const tenantId = 'tenant-123';
-    const filters = { is_global: true };
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        null, // Global provider
-        'Global Company',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'PENDING',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
-
-    mockRepository.findAllWithFilters.mockResolvedValue(providers);
-
-    const result = await useCase.execute(tenantId, filters);
-
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAllWithFilters).toHaveBeenCalledWith(tenantId, filters);
-  });
-
-  it('should list providers with multiple filters combined', async () => {
-    const tenantId = 'tenant-123';
-    const filters = {
-      status: 'ACTIVE' as const,
-      verification_status: 'VERIFIED' as const,
-      search: 'Company',
-      is_global: false,
+    const context = {
+      currentUserRole: UserRole.LOGISTICS_PROVIDER,
+      currentUserLogisticsProviderId: 'provider-id',
     };
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        tenantId,
-        'Company 1',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'VERIFIED',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
 
-    mockRepository.findAllWithFilters.mockResolvedValue(providers);
+    const result = await useCase.execute(undefined, undefined, context);
 
-    const result = await useCase.execute(tenantId, filters);
-
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAllWithFilters).toHaveBeenCalledWith(tenantId, filters);
+    expect(result).toEqual([]);
   });
 
-  it('should use findAll when filters object is empty', async () => {
-    const tenantId = 'tenant-123';
-    const filters = {};
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        tenantId,
-        'Company 1',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'PENDING',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
+  it('should return only own provider for SUPERVISOR', async () => {
+    const provider = new LogisticsProvider(
+      'provider-id',
+      'tenant-id',
+      'Provider Company',
+      'TAX123',
+      'Rep Name',
+      '+1234567890',
+      'DOC123',
+      'VERIFIED',
+      null,
+      null,
+      0,
+      'ACTIVE',
+      new Date(),
+      new Date()
+    );
 
-    mockRepository.findAll.mockResolvedValue(providers);
+    mockRepository.findById.mockResolvedValue(provider);
 
-    const result = await useCase.execute(tenantId, filters);
+    const context = {
+      currentUserRole: UserRole.SUPERVISOR,
+      currentUserLogisticsProviderId: 'provider-id',
+    };
 
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAll).toHaveBeenCalledWith(tenantId);
-    expect(mockRepository.findAllWithFilters).not.toHaveBeenCalled();
-  });
+    const result = await useCase.execute(undefined, undefined, context);
 
-  it('should work without tenant_id', async () => {
-    const filters = { status: 'ACTIVE' as const };
-    const providers = [
-      new LogisticsProvider(
-        'provider-1',
-        null,
-        'Company 1',
-        'TAX1',
-        'Rep 1',
-        '+1234567890',
-        'DOC1',
-        'PENDING',
-        null,
-        null,
-        0,
-        'ACTIVE',
-        new Date(),
-        new Date()
-      ),
-    ];
-
-    mockRepository.findAllWithFilters.mockResolvedValue(providers);
-
-    const result = await useCase.execute(undefined, filters);
-
-    expect(result).toEqual(providers);
-    expect(mockRepository.findAllWithFilters).toHaveBeenCalledWith(undefined, filters);
+    expect(result).toEqual([provider]);
+    expect(mockRepository.findById).toHaveBeenCalledWith('provider-id');
   });
 });
