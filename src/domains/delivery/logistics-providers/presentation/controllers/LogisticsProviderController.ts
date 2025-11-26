@@ -59,7 +59,13 @@ export class LogisticsProviderController {
   async getById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const provider = await this.getUseCase.execute(id);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      const provider = await this.getUseCase.execute(id, context);
 
       res.status(200).json({
         status: 'success',
@@ -67,12 +73,21 @@ export class LogisticsProviderController {
       });
     } catch (error) {
       logger.error('Error getting logistics provider', { error });
-      if (error instanceof Error && error.message === 'Logistics provider not found') {
-        res.status(404).json({
-          status: 'error',
-          message: error.message,
-        });
-        return;
+      if (error instanceof Error) {
+        if (error.message === 'Logistics provider not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes('permission')) {
+          res.status(403).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
       }
       res.status(500).json({
         status: 'error',
@@ -111,7 +126,13 @@ export class LogisticsProviderController {
           ? listLogisticsProvidersFiltersSchema.parse(filtersInput)
           : undefined;
 
-      const providers = await this.listUseCase.execute(tenant_id, filters);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      const providers = await this.listUseCase.execute(tenant_id, filters, context);
 
       res.status(200).json({
         status: 'success',

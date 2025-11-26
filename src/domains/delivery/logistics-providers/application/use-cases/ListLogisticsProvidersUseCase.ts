@@ -8,6 +8,12 @@ import { ILogisticsProviderRepository } from '../../domain/repositories/ILogisti
 import { LogisticsProvider } from '../../domain/entities/LogisticsProvider';
 import { ListLogisticsProvidersFiltersDto } from '../dto/ListLogisticsProvidersFiltersDto';
 import { TYPES } from '../../../../../config/types';
+import { UserRole } from '../../../../../shared/constants/permissions';
+
+export interface ListLogisticsProvidersContext {
+  currentUserRole: string;
+  currentUserLogisticsProviderId: string | null;
+}
 
 @injectable()
 export class ListLogisticsProvidersUseCase {
@@ -16,9 +22,24 @@ export class ListLogisticsProvidersUseCase {
   ) {}
 
   async execute(
-    tenant_id?: string,
-    filters?: ListLogisticsProvidersFiltersDto
+    tenant_id: string | undefined,
+    filters: ListLogisticsProvidersFiltersDto | undefined,
+    context: ListLogisticsProvidersContext | undefined
   ): Promise<LogisticsProvider[]> {
+    // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, solo retornar su propio proveedor
+    if (context) {
+      const currentRole = context.currentUserRole as UserRole;
+      const currentUserLogisticsProviderId = context.currentUserLogisticsProviderId;
+
+      if (
+        (currentRole === UserRole.LOGISTICS_PROVIDER || currentRole === UserRole.SUPERVISOR) &&
+        currentUserLogisticsProviderId
+      ) {
+        const provider = await this.repository.findById(currentUserLogisticsProviderId);
+        return provider ? [provider] : [];
+      }
+    }
+
     // Si hay filtros, usar findAllWithFilters
     if (filters && this.hasFilters(filters)) {
       return await this.repository.findAllWithFilters(tenant_id, filters);
