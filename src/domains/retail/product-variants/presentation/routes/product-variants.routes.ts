@@ -7,6 +7,9 @@ import { container } from '../../../../../config/inversify.config';
 import { TYPES } from '../../../../../config/types';
 import { ProductVariantController } from '../controllers/ProductVariantController';
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
+import { requireTenantMiddleware } from '../../../../../shared/middleware/require-tenant.middleware';
+import { requirePermission } from '../../../../../shared/middleware/require-permission.middleware';
+import { requireTenantType } from '../../../../../shared/middleware/require-tenant-type.middleware';
 
 const router = Router();
 
@@ -35,7 +38,14 @@ const controller = container.get<ProductVariantController>(TYPES.ProductVariantC
  *       401:
  *         description: No autenticado
  */
-router.get('/', authMiddleware, (req, res) => controller.list(req, res));
+router.get(
+  '/',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('products', 'read'),
+  requireTenantType(['RETAIL']),
+  (req, res) => controller.list(req, res)
+);
 
 /**
  * @swagger
@@ -61,7 +71,14 @@ router.get('/', authMiddleware, (req, res) => controller.list(req, res));
  *       401:
  *         description: No autenticado
  */
-router.get('/:id', authMiddleware, (req, res) => controller.getById(req, res));
+router.get(
+  '/:id',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('products', 'read'),
+  requireTenantType(['RETAIL']),
+  (req, res) => controller.getById(req, res)
+);
 
 /**
  * @swagger
@@ -182,7 +199,14 @@ router.get('/:id', authMiddleware, (req, res) => controller.getById(req, res));
  *       401:
  *         description: No autenticado
  */
-router.post('/', authMiddleware, (req, res) => controller.create(req, res));
+router.post(
+  '/',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('products', 'create'),
+  requireTenantType(['RETAIL']),
+  (req, res) => controller.create(req, res)
+);
 
 /**
  * @swagger
@@ -266,7 +290,14 @@ router.post('/', authMiddleware, (req, res) => controller.create(req, res));
  *       401:
  *         description: No autenticado
  */
-router.patch('/:id', authMiddleware, (req, res) => controller.update(req, res));
+router.patch(
+  '/:id',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('products', 'update'),
+  requireTenantType(['RETAIL']),
+  (req, res) => controller.update(req, res)
+);
 
 /**
  * @swagger
@@ -292,6 +323,13 @@ router.patch('/:id', authMiddleware, (req, res) => controller.update(req, res));
  *       401:
  *         description: No autenticado
  */
-router.delete('/:id', authMiddleware, (req, res) => controller.delete(req, res));
+router.delete(
+  '/:id',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('products', 'delete'),
+  requireTenantType(['RETAIL']),
+  (req, res) => controller.delete(req, res)
+);
 
 export default router;
