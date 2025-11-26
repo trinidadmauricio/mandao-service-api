@@ -19,7 +19,7 @@
   - Validar permisos en cada endpoint
 - [x] Actualizar `requireTenantMiddleware.ts`:
   - Permitir LOGISTICS_PROVIDER/SUPERVISOR sin tenant
-- [ ] Escribir unit tests para todas las validaciones
+- [x] Escribir unit tests para todas las validaciones
 
 ## Frontend
 
