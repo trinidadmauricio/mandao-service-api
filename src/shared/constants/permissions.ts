@@ -137,6 +137,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'users', action: 'update' },
     { resource: 'reports', action: 'read' },
   ],
+  [UserRole.DRIVER]: [
+    // DRIVER no tiene permisos en el backoffice - solo acceso al link de rastreo público
+  ],
   [UserRole.CUSTOMER]: [
     { resource: 'orders', action: 'read' },
     { resource: 'orders', action: 'update' },
