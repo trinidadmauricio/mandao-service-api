@@ -56,10 +56,10 @@ export class AssignLogisticsProviderUseCase {
     // Crear snapshot del logistics provider
     const logisticsProviderSnapshot = {
       id: logisticsProvider.id,
-      name: logisticsProvider.name,
+      company_name: logisticsProvider.company_name,
       tax_id: logisticsProvider.tax_id,
       representative_name: logisticsProvider.representative_name,
-      contact_phone: logisticsProvider.contact_phone,
+      contact_phone: logisticsProvider.representative_phone,
       verification_status: logisticsProvider.verification_status,
     };
 
@@ -109,7 +109,7 @@ export class AssignLogisticsProviderUseCase {
             from_status: order.status,
             to_status: 'ASSIGNED',
             changed_by_user_id: dto.assigned_by_user_id ?? null,
-            notes: `Assigned to logistics provider: ${logisticsProvider.name}`,
+            notes: `Assigned to logistics provider: ${logisticsProvider.company_name}`,
           },
         });
       }
