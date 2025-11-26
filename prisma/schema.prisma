@@ -127,6 +127,7 @@ enum UserRole {
   SUPERVISOR
   MERCHANT_USER
   LOGISTICS_PROVIDER
+  DRIVER
   CUSTOMER
 
   @@schema("shared")

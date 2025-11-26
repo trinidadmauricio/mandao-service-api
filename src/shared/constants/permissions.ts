@@ -40,6 +40,7 @@ export enum UserRole {
   SUPERVISOR = 'SUPERVISOR',
   MERCHANT_USER = 'MERCHANT_USER',
   LOGISTICS_PROVIDER = 'LOGISTICS_PROVIDER',
+  DRIVER = 'DRIVER',
   CUSTOMER = 'CUSTOMER',
 }
 
@@ -136,6 +137,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'users', action: 'create' },
     { resource: 'users', action: 'update' },
     { resource: 'reports', action: 'read' },
+  ],
+  [UserRole.DRIVER]: [
+    // DRIVER no tiene permisos en el backoffice - solo acceso al link de rastreo público
   ],
   [UserRole.CUSTOMER]: [
     { resource: 'orders', action: 'read' },
