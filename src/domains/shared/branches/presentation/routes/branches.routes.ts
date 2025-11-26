@@ -9,6 +9,7 @@ import { BranchController } from '../controllers/BranchController';
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
 import { requireTenantMiddleware } from '../../../../../shared/middleware/require-tenant.middleware';
 import { requirePermission } from '../../../../../shared/middleware/require-permission.middleware';
+import { requireTenantType } from '../../../../../shared/middleware/require-tenant-type.middleware';
 
 const router = Router();
 
@@ -57,6 +58,7 @@ router.get(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('branches', 'read'),
+  requireTenantType(['RETAIL']),
   (req, res) => branchController.list(req, res)
 );
 
@@ -90,6 +92,7 @@ router.get(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('branches', 'read'),
+  requireTenantType(['RETAIL']),
   (req, res) => branchController.getById(req, res)
 );
 
@@ -215,6 +218,7 @@ router.post(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('branches', 'create'),
+  requireTenantType(['RETAIL']),
   (req, res) => branchController.create(req, res)
 );
 
@@ -333,6 +337,7 @@ router.patch(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('branches', 'update'),
+  requireTenantType(['RETAIL']),
   (req, res) => branchController.update(req, res)
 );
 
@@ -366,6 +371,7 @@ router.delete(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('branches', 'delete'),
+  requireTenantType(['RETAIL']),
   (req, res) => branchController.delete(req, res)
 );
 

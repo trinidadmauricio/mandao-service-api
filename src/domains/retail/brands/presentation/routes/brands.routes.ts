@@ -36,6 +36,7 @@ router.get(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('brands', 'read'),
+  requireTenantType(['RETAIL']),
   (req, res) => controller.list(req, res)
 );
 
@@ -68,6 +69,7 @@ router.get(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('brands', 'read'),
+  requireTenantType(['RETAIL']),
   (req, res) => controller.getById(req, res)
 );
 
@@ -137,7 +139,7 @@ router.post(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('brands', 'create'),
-  requireTenantType(['RETAIL', 'HYBRID']),
+  requireTenantType(['RETAIL']),
   (req, res) => controller.create(req, res)
 );
 
@@ -196,6 +198,7 @@ router.patch(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('brands', 'update'),
+  requireTenantType(['RETAIL']),
   (req, res) => controller.update(req, res)
 );
 
@@ -228,6 +231,7 @@ router.delete(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('brands', 'delete'),
+  requireTenantType(['RETAIL']),
   (req, res) => controller.delete(req, res)
 );
 

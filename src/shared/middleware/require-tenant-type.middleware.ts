@@ -18,11 +18,26 @@ export type TenantType = 'RETAIL' | 'ON_DEMAND' | 'HYBRID';
  */
 export function requireTenantType(allowedTypes: TenantType[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, no tienen tenant
+    // y no se aplican restricciones de tenant type
+    if (req.user && (req.user.role === 'LOGISTICS_PROVIDER' || req.user.role === 'SUPERVISOR')) {
+      next();
+      return;
+    }
+
+    // Si el usuario es SAAS_ADMIN o SAAS_EDITOR, pueden acceder a todo sin restricciones
+    if (req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR')) {
+      next();
+      return;
+    }
+
     // Si no hay tenant, el requireTenantMiddleware ya debería haber bloqueado
     if (!req.tenant) {
       logger.warn('requireTenantType called without tenant', {
         path: req.path,
         allowedTypes,
+        userId: req.user?.id,
+        userRole: req.user?.role,
       });
       res.status(400).json({
         status: 'error',
