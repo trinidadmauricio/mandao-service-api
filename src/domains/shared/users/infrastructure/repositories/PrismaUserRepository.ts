@@ -81,6 +81,11 @@ export class PrismaUserRepository implements IUserRepository {
       where.status = filters.status;
     }
 
+    // Filtro por logistics_provider_id
+    if (filters.logistics_provider_id) {
+      where.logistics_provider_id = filters.logistics_provider_id;
+    }
+
     // Búsqueda de texto (case-insensitive) en first_name, last_name, email, phone
     if (filters.search && filters.search.trim()) {
       const searchTerm = filters.search.trim();

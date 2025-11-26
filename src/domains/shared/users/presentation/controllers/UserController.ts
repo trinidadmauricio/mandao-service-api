@@ -105,6 +105,12 @@ export class UserController {
     try {
       const tenant_id = req.tenant?.id;
 
+      // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar automáticamente por su logistics_provider_id
+      const autoLogisticsProviderId =
+        req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
+          ? req.user.logistics_provider_id || undefined
+          : undefined;
+
       // Extraer y validar filtros de query params
       const filtersInput: Record<string, unknown> = {};
       if (req.query.search) {
@@ -116,11 +122,19 @@ export class UserController {
       if (req.query.status) {
         filtersInput.status = req.query.status as string;
       }
+      if (req.query.logistics_provider_id) {
+        filtersInput.logistics_provider_id = req.query.logistics_provider_id as string;
+      }
       if (req.query.page) {
         filtersInput.page = req.query.page;
       }
       if (req.query.limit) {
         filtersInput.limit = req.query.limit;
+      }
+
+      // Si hay autoLogisticsProviderId y no está en los filtros, agregarlo
+      if (autoLogisticsProviderId && !filtersInput.logistics_provider_id) {
+        filtersInput.logistics_provider_id = autoLogisticsProviderId;
       }
 
       // Validar con schema Zod (solo si hay filtros)
