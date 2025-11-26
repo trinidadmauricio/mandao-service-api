@@ -2,34 +2,34 @@
 
 ## Backend - Order Counters
 
-- [ ] Crear middleware `requireSaasRole` o validar en rutas
-- [ ] Validar que solo SAAS roles pueden acceder a GET /order-counters/tenant/:tenant_id (listado general)
-- [ ] Permitir OWNER ver su propio contador (ya tiene requireTenantMiddleware)
-- [ ] Validar que solo SAAS roles pueden crear contadores (POST /order-counters)
-- [ ] Validar que solo SAAS roles pueden actualizar cualquier contador (PATCH /order-counters/tenant/:tenant_id)
-- [ ] OWNER puede actualizar su propio contador (ya validado por tenant)
-- [ ] Escribir unit tests para validaciones
+- [x] Crear middleware `requireSaasRole` o validar en rutas ✅
+- [x] Validar que solo SAAS roles pueden acceder a GET /order-counters/tenant/:tenant_id (listado general) ✅
+- [x] Permitir OWNER ver su propio contador (ya tiene requireTenantMiddleware) ✅
+- [x] Validar que solo SAAS roles pueden crear contadores (POST /order-counters) ✅
+- [x] Validar que solo SAAS roles pueden actualizar cualquier contador (PATCH /order-counters/tenant/:tenant_id) ✅
+- [x] OWNER puede actualizar su propio contador (ya validado por tenant) ✅
+- [x] Escribir unit tests para validaciones ✅
 
 ## Backend - Payments
 
-- [ ] Validar que solo SAAS roles pueden acceder a POST /payments/transactions (crear transacción general)
-- [ ] Permitir usuarios ver pagos de sus órdenes (GET /payments/orders/:orderId/payments) - ya validado por tenant
-- [ ] Validar que solo SAAS roles pueden acceder a POST /payments/checkout (si es necesario)
-- [ ] Validar que solo SAAS roles pueden acceder a POST /payments/refunds (si es necesario)
-- [ ] Webhook de Stripe no requiere validación (ya es público)
-- [ ] Escribir unit tests para validaciones
+- [x] Validar que solo SAAS roles pueden acceder a POST /payments/transactions (crear transacción general) ✅
+- [x] Permitir usuarios ver pagos de sus órdenes (GET /payments/orders/:orderId/payments) - ya validado por tenant ✅
+- [x] Validar que solo SAAS roles pueden acceder a POST /payments/checkout (si es necesario) ✅
+- [x] Validar que solo SAAS roles pueden acceder a POST /payments/refunds (si es necesario) ✅
+- [x] Webhook de Stripe no requiere validación (ya es público) ✅
+- [x] Escribir unit tests para validaciones ✅
 
 ## Backend - Subscriptions
 
-- [ ] Validar que solo SAAS roles pueden acceder a todas las rutas de subscriptions
-- [ ] Revisar rutas: change-plan, start-trial, convert-trial, limits
-- [ ] Escribir unit tests para validaciones
+- [x] Validar que solo SAAS roles pueden acceder a todas las rutas de subscriptions ✅
+- [x] Revisar rutas: change-plan, start-trial, convert-trial, limits ✅
+- [x] Escribir unit tests para validaciones ✅
 
 ## Backend - Subscription Plans
 
-- [ ] Validar que solo SAAS roles pueden acceder a todas las rutas de subscription-plans
-- [ ] Revisar rutas: list, create, get, update, delete
-- [ ] Escribir unit tests para validaciones
+- [x] Validar que solo SAAS roles pueden acceder a todas las rutas de subscription-plans ✅
+- [x] Revisar rutas: list, create, get, update, delete ✅
+- [x] Escribir unit tests para validaciones ✅
 
 ## Frontend - Sidebar
 
