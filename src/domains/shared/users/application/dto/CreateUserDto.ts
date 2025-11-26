@@ -3,12 +3,13 @@
  */
 
 import { z } from 'zod';
+import { UserRole, USER_ROLE_VALUES } from '../../../../../shared/constants/permissions';
 
 export const createUserSchema = z.object({
   tenant_id: z.string().uuid().nullable().optional(),
   email: z.string().email(),
   password: z.string().min(8).max(255),
-  role: z.enum(['SAAS_ADMIN', 'SAAS_EDITOR', 'OWNER', 'SUPERVISOR', 'MERCHANT_USER', 'LOGISTICS_PROVIDER', 'DRIVER', 'CUSTOMER']),
+  role: z.enum(USER_ROLE_VALUES),
   first_name: z.string().min(1).max(255),
   last_name: z.string().min(1).max(255),
   phone: z.string().max(20).nullable().optional(),
@@ -17,7 +18,7 @@ export const createUserSchema = z.object({
 }).refine(
   (data) => {
     // Si el rol es SUPERVISOR, logistics_provider_id es requerido
-    if (data.role === 'SUPERVISOR' && !data.logistics_provider_id) {
+    if (data.role === UserRole.SUPERVISOR && !data.logistics_provider_id) {
       return false;
     }
     return true;

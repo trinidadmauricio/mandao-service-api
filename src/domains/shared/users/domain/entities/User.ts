@@ -2,13 +2,15 @@
  * Entidad User
  */
 
+import { UserRole } from '../../../../../shared/constants/permissions';
+
 export class User {
   constructor(
     public readonly id: string,
     public readonly tenant_id: string | null,
     public readonly email: string,
     public readonly password_hash: string,
-    public readonly role: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'DRIVER' | 'CUSTOMER',
+    public readonly role: UserRole,
     public readonly first_name: string,
     public readonly last_name: string,
     public readonly phone: string | null,

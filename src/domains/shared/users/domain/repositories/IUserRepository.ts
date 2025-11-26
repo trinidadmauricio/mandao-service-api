@@ -4,6 +4,7 @@
 
 import { User } from '../entities/User';
 import { ListUsersFiltersDto } from '../../application/dto/ListUsersFiltersDto';
+import { UserRole } from '../../../../../shared/constants/permissions';
 
 export interface UsersListResult {
   data: User[];
@@ -17,7 +18,7 @@ export interface CreateUserData {
   tenant_id?: string | null;
   email: string;
   password_hash: string;
-  role: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'DRIVER' | 'CUSTOMER';
+  role: UserRole;
   first_name: string;
   last_name: string;
   phone?: string | null;
@@ -29,7 +30,7 @@ export interface UpdateUserData {
   first_name?: string;
   last_name?: string;
   phone?: string | null;
-  role?: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'DRIVER' | 'CUSTOMER';
+  role?: UserRole;
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   password_hash?: string;
   email_verified_at?: Date | null;

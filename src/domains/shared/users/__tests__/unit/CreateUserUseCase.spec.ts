@@ -32,7 +32,7 @@ describe('CreateUserUseCase', () => {
       password: 'password123',
       first_name: 'John',
       last_name: 'Doe',
-      role: 'MERCHANT_USER' as const,
+      role: UserRole.MERCHANT_USER,
     };
 
     const user = new User(
@@ -40,7 +40,7 @@ describe('CreateUserUseCase', () => {
       null,
       'test@example.com',
       'hashed-password',
-      'MERCHANT_USER',
+      UserRole.MERCHANT_USER,
       'John',
       'Doe',
       null,
@@ -78,7 +78,7 @@ describe('CreateUserUseCase', () => {
       password: 'password123',
       first_name: 'John',
       last_name: 'Doe',
-      role: 'MERCHANT_USER' as const,
+      role: UserRole.MERCHANT_USER,
     };
 
     const existingUser = new User(
@@ -86,7 +86,7 @@ describe('CreateUserUseCase', () => {
       null, // tenant_id
       'existing@example.com', // email
       'hash', // password_hash
-      'MERCHANT_USER', // role
+      UserRole.MERCHANT_USER, // role
       'John', // first_name
       'Doe', // last_name
       null, // phone
@@ -122,7 +122,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Supervisor',
         last_name: 'User',
-        role: 'SUPERVISOR' as const,
+        role: UserRole.SUPERVISOR,
         logistics_provider_id: 'logistics-provider-id',
       };
 
@@ -131,7 +131,7 @@ describe('CreateUserUseCase', () => {
         null,
         'supervisor@example.com',
         'hashed-password',
-        'SUPERVISOR',
+        UserRole.SUPERVISOR,
         'Supervisor',
         'User',
         null,
@@ -161,7 +161,7 @@ describe('CreateUserUseCase', () => {
       expect(result).toEqual(supervisor);
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          role: 'SUPERVISOR',
+          role: UserRole.SUPERVISOR,
           logistics_provider_id: 'logistics-provider-id',
         })
       );
@@ -173,7 +173,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Supervisor',
         last_name: 'User',
-        role: 'SUPERVISOR' as const,
+        role: UserRole.SUPERVISOR,
         logistics_provider_id: 'logistics-provider-id',
       };
 
@@ -193,7 +193,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Supervisor',
         last_name: 'User',
-        role: 'SUPERVISOR' as const,
+        role: UserRole.SUPERVISOR,
         logistics_provider_id: 'logistics-provider-id',
       };
 
@@ -208,7 +208,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Supervisor',
         last_name: 'User',
-        role: 'SUPERVISOR' as const,
+        role: UserRole.SUPERVISOR,
         // No se pasa logistics_provider_id, debe asignarse automáticamente
       };
 
@@ -217,7 +217,7 @@ describe('CreateUserUseCase', () => {
         null,
         'supervisor@example.com',
         'hashed-password',
-        'SUPERVISOR',
+        UserRole.SUPERVISOR,
         'Supervisor',
         'User',
         null,
@@ -246,7 +246,7 @@ describe('CreateUserUseCase', () => {
 
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          role: 'SUPERVISOR',
+          role: UserRole.SUPERVISOR,
           logistics_provider_id: 'logistics-provider-id',
         })
       );
@@ -258,7 +258,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Supervisor',
         last_name: 'User',
-        role: 'SUPERVISOR' as const,
+        role: UserRole.SUPERVISOR,
       };
 
       const context = {
@@ -274,7 +274,7 @@ describe('CreateUserUseCase', () => {
 
   describe('User creation restrictions by role', () => {
     it('should allow SAAS_ADMIN to create all roles except CUSTOMER', async () => {
-      const roles = ['SAAS_EDITOR', 'OWNER', 'LOGISTICS_PROVIDER', 'MERCHANT_USER', 'DRIVER'] as const;
+      const roles = [UserRole.SAAS_EDITOR, UserRole.OWNER, UserRole.LOGISTICS_PROVIDER, UserRole.MERCHANT_USER, UserRole.DRIVER];
       
       for (const role of roles) {
         const dto = {
@@ -325,7 +325,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Supervisor',
         last_name: 'User',
-        role: 'SUPERVISOR' as const,
+        role: UserRole.SUPERVISOR,
         logistics_provider_id: 'logistics-provider-id',
       };
 
@@ -334,7 +334,7 @@ describe('CreateUserUseCase', () => {
         null,
         'supervisor@example.com',
         'hashed-password',
-        'SUPERVISOR',
+        UserRole.SUPERVISOR,
         'Supervisor',
         'User',
         null,
@@ -369,7 +369,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Customer',
         last_name: 'User',
-        role: 'CUSTOMER' as const,
+        role: UserRole.CUSTOMER,
       };
 
       const context = {
@@ -382,13 +382,13 @@ describe('CreateUserUseCase', () => {
       );
     });
 
-    it('should reject SAAS role creation by SAAS_EDITOR', async () => {
+    it('should reject SAAS_ADMIN creation by SAAS_EDITOR', async () => {
       const dto = {
-        email: 'saas@example.com',
+        email: 'saas-admin@example.com',
         password: 'password123',
         first_name: 'SAAS',
         last_name: 'Admin',
-        role: 'SAAS_ADMIN' as const,
+        role: UserRole.SAAS_ADMIN,
       };
 
       const context = {
@@ -401,13 +401,79 @@ describe('CreateUserUseCase', () => {
       );
     });
 
+    it('should reject SAAS_EDITOR creation by SAAS_EDITOR', async () => {
+      const dto = {
+        email: 'saas-editor@example.com',
+        password: 'password123',
+        first_name: 'SAAS',
+        last_name: 'Editor',
+        role: UserRole.SAAS_EDITOR,
+      };
+
+      const context = {
+        currentUserRole: UserRole.SAAS_EDITOR,
+        currentUserLogisticsProviderId: null,
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'SAAS_EDITOR cannot create SAAS_ADMIN or SAAS_EDITOR users'
+      );
+    });
+
+    it('should allow SAAS_EDITOR to create any role except SAAS roles', async () => {
+      const allowedRoles = [UserRole.OWNER, UserRole.MERCHANT_USER, UserRole.LOGISTICS_PROVIDER, UserRole.DRIVER];
+      
+      for (const role of allowedRoles) {
+        const dto = {
+          email: `test-${role}@example.com`,
+          password: 'password123',
+          first_name: 'Test',
+          last_name: 'User',
+          role,
+        };
+
+        const user = new User(
+          'user-id',
+          null,
+          `test-${role}@example.com`,
+          'hashed-password',
+          role,
+          'Test',
+          'User',
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          0,
+          null,
+          'ACTIVE',
+          null,
+          new Date(),
+          new Date()
+        );
+
+        const context = {
+          currentUserRole: UserRole.SAAS_EDITOR,
+          currentUserLogisticsProviderId: null,
+        };
+
+        mockRepository.findByEmail.mockResolvedValue(null);
+        mockRepository.create.mockResolvedValue(user);
+
+        await useCase.execute(dto, context);
+        expect(mockRepository.create).toHaveBeenCalled();
+      }
+    });
+
     it('should allow OWNER to create only MERCHANT_USER', async () => {
       const dto = {
         email: 'merchant@example.com',
         password: 'password123',
         first_name: 'Merchant',
         last_name: 'User',
-        role: 'MERCHANT_USER' as const,
+        role: UserRole.MERCHANT_USER,
       };
 
       const user = new User(
@@ -415,7 +481,7 @@ describe('CreateUserUseCase', () => {
         null,
         'merchant@example.com',
         'hashed-password',
-        'MERCHANT_USER',
+        UserRole.MERCHANT_USER,
         'Merchant',
         'User',
         null,
@@ -450,7 +516,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Owner',
         last_name: 'User',
-        role: 'OWNER' as const,
+        role: UserRole.OWNER,
       };
 
       const context = {
@@ -469,7 +535,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Test',
         last_name: 'User',
-        role: 'MERCHANT_USER' as const,
+        role: UserRole.MERCHANT_USER,
       };
 
       const context = {
@@ -488,7 +554,7 @@ describe('CreateUserUseCase', () => {
         password: 'password123',
         first_name: 'Test',
         last_name: 'User',
-        role: 'MERCHANT_USER' as const,
+        role: UserRole.MERCHANT_USER,
       };
 
       const context = {

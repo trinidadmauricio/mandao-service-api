@@ -14,6 +14,8 @@ import { createUserSchema, updateUserSchema } from '../../application/dto';
 import { listUsersFiltersSchema } from '../../application/dto/ListUsersFiltersDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
+import { UserRole } from '../../../../../shared/constants/permissions';
+import { User } from '../../domain/entities/User';
 
 @injectable()
 export class UserController {
@@ -25,10 +27,53 @@ export class UserController {
     @inject(TYPES.DeleteUserUseCase) private deleteUserUseCase: DeleteUserUseCase
   ) {}
 
+  /**
+   * Valida si el usuario autenticado puede acceder a un usuario específico
+   * según las reglas de permisos:
+   * - OWNER: solo puede acceder a MERCHANT_USER de su tenant_id
+   * - LOGISTICS_PROVIDER: solo puede acceder a SUPERVISOR de su logistics_provider_id
+   * - SAAS_EDITOR: puede acceder a todos excepto SAAS_ADMIN y SAAS_EDITOR
+   * - SAAS_ADMIN: puede acceder a todos sin restricciones
+   */
+  private canAccessUser(req: Request, targetUser: User): boolean {
+    const currentUser = req.user;
+    if (!currentUser) {
+      return false;
+    }
+
+    const currentRole = currentUser.role as UserRole;
+
+    // SAAS_ADMIN tiene acceso completo
+    if (currentRole === UserRole.SAAS_ADMIN) {
+      return true;
+    }
+
+    // OWNER solo puede acceder a MERCHANT_USER de su tenant_id
+    if (currentRole === UserRole.OWNER) {
+      return targetUser.role === UserRole.MERCHANT_USER && targetUser.tenant_id === req.tenant?.id;
+    }
+
+    // LOGISTICS_PROVIDER solo puede acceder a SUPERVISOR de su logistics_provider_id
+    if (currentRole === UserRole.LOGISTICS_PROVIDER) {
+      return (
+        targetUser.role === UserRole.SUPERVISOR &&
+        targetUser.logistics_provider_id === currentUser.logistics_provider_id
+      );
+    }
+
+    // SAAS_EDITOR puede acceder a todos excepto SAAS_ADMIN y SAAS_EDITOR
+    if (currentRole === UserRole.SAAS_EDITOR) {
+      return targetUser.role !== UserRole.SAAS_ADMIN && targetUser.role !== UserRole.SAAS_EDITOR;
+    }
+
+    // Por defecto, no permitir acceso
+    return false;
+  }
+
   async create(req: Request, res: Response): Promise<void> {
     try {
       const dto = createUserSchema.parse(req.body);
-      
+
       // Pasar contexto del usuario actual para validaciones de creación
       const context = req.user
         ? {
@@ -51,14 +96,14 @@ export class UserController {
       logger.error('Error creating user', { error });
       if (error instanceof Error) {
         // Errores de restricciones de permisos deben retornar 403
-        const isPermissionError = 
+        const isPermissionError =
           error.message.includes('cannot create') ||
           error.message.includes('can only create') ||
           error.message.includes('cannot be created from backoffice') ||
           error.message.includes('requires authentication context');
-        
+
         const statusCode = isPermissionError ? 403 : 400;
-        
+
         res.status(statusCode).json({
           status: 'error',
           message: error.message,
@@ -76,6 +121,15 @@ export class UserController {
     try {
       const { id } = req.params;
       const user = await this.getUserUseCase.execute(id);
+
+      // Validar permisos de acceso
+      if (!this.canAccessUser(req, user)) {
+        res.status(403).json({
+          status: 'error',
+          message: 'Access denied',
+        });
+        return;
+      }
 
       // No retornar password_hash en la respuesta
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,8 +160,11 @@ export class UserController {
       const tenant_id = req.tenant?.id;
 
       // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar automáticamente por su logistics_provider_id
+      const currentUserRole = req.user?.role as UserRole | undefined;
       const autoLogisticsProviderId =
-        req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
+        (currentUserRole === UserRole.LOGISTICS_PROVIDER ||
+          currentUserRole === UserRole.SUPERVISOR) &&
+        req.user
           ? req.user.logistics_provider_id || undefined
           : undefined;
 
@@ -132,6 +189,20 @@ export class UserController {
         filtersInput.limit = req.query.limit;
       }
 
+      // Filtrado automático por rol según el usuario actual
+      // OWNER siempre debe ver solo MERCHANT_USER, incluso si hay filtro manual
+      if (currentUserRole === UserRole.OWNER) {
+        filtersInput.role = UserRole.MERCHANT_USER;
+      }
+
+      // LOGISTICS_PROVIDER solo puede ver usuarios SUPERVISOR de su logistics_provider_id
+      if (currentUserRole === UserRole.LOGISTICS_PROVIDER) {
+        filtersInput.role = UserRole.SUPERVISOR;
+      }
+
+      // SAAS_ADMIN ven todos (no aplicar filtro automático)
+      // SAAS_EDITOR: se filtrará después de obtener resultados
+
       // Si hay autoLogisticsProviderId y no está en los filtros, agregarlo
       if (autoLogisticsProviderId && !filtersInput.logistics_provider_id) {
         filtersInput.logistics_provider_id = autoLogisticsProviderId;
@@ -147,19 +218,46 @@ export class UserController {
       const result = await this.listUsersUseCase.execute(tenant_id, filters);
 
       // Verificar si el resultado es UsersListResult (con paginación) o User[] (sin paginación)
-      const isPaginatedResult = result && typeof result === 'object' && 'data' in result && 'total' in result;
-      const usersList = isPaginatedResult ? (result as { data: any[]; total: number; page?: number; limit?: number; totalPages?: number }).data : (result as any[]);
-      const total = isPaginatedResult ? (result as { data: any[]; total: number }).total : usersList.length;
+      const isPaginatedResult =
+        result && typeof result === 'object' && 'data' in result && 'total' in result;
+      const usersList = isPaginatedResult
+        ? (
+            result as {
+              data: any[];
+              total: number;
+              page?: number;
+              limit?: number;
+              totalPages?: number;
+            }
+          ).data
+        : (result as any[]);
+      let total = isPaginatedResult
+        ? (result as { data: any[]; total: number }).total
+        : usersList.length;
       const page = isPaginatedResult ? (result as { page?: number }).page : undefined;
       const limit = isPaginatedResult ? (result as { limit?: number }).limit : undefined;
-      const totalPages = isPaginatedResult ? (result as { totalPages?: number }).totalPages : undefined;
+      let totalPages = isPaginatedResult
+        ? (result as { totalPages?: number }).totalPages
+        : undefined;
 
       // No retornar password_hash en la respuesta
-      const usersResponse = usersList.map((user) => {
+      let usersResponse = usersList.map((user) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { password_hash, ...userResponse } = user as any;
         return userResponse;
       });
+
+      // Filtrar resultados para SAAS_EDITOR (excluir SAAS_ADMIN y SAAS_EDITOR)
+      if (currentUserRole === UserRole.SAAS_EDITOR) {
+        usersResponse = usersResponse.filter(
+          (user) => user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR
+        );
+        // Ajustar total si es necesario
+        if (isPaginatedResult) {
+          total = usersResponse.length;
+          totalPages = Math.ceil(total / (limit || 10));
+        }
+      }
 
       // Construir respuesta
       const response: any = {
@@ -196,6 +294,19 @@ export class UserController {
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+
+      // Obtener el usuario existente para validar permisos
+      const existingUser = await this.getUserUseCase.execute(id);
+
+      // Validar permisos de acceso
+      if (!this.canAccessUser(req, existingUser)) {
+        res.status(403).json({
+          status: 'error',
+          message: 'Access denied',
+        });
+        return;
+      }
+
       const dto = updateUserSchema.parse(req.body);
       const user = await this.updateUserUseCase.execute(id, dto);
 
@@ -226,6 +337,19 @@ export class UserController {
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+
+      // Obtener el usuario existente para validar permisos
+      const existingUser = await this.getUserUseCase.execute(id);
+
+      // Validar permisos de acceso
+      if (!this.canAccessUser(req, existingUser)) {
+        res.status(403).json({
+          status: 'error',
+          message: 'Access denied',
+        });
+        return;
+      }
+
       await this.deleteUserUseCase.execute(id);
 
       res.status(204).send();
@@ -245,4 +369,3 @@ export class UserController {
     }
   }
 }
-

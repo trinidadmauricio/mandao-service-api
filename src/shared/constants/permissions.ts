@@ -47,6 +47,11 @@ export enum UserRole {
 }
 
 /**
+ * Array de todos los valores de UserRole para uso en schemas de validación
+ */
+export const USER_ROLE_VALUES = Object.values(UserRole) as [UserRole, ...UserRole[]];
+
+/**
  * Matriz de permisos por rol
  */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
