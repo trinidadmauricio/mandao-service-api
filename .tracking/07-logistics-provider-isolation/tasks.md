@@ -68,15 +68,17 @@
 
 ## Backend - Delivery Zones (si aplica)
 
-- [ ] Verificar si tienen `logistics_provider_id` en el schema
-- [ ] Si tienen relación, aplicar mismo patrón que Drivers/Vehicles
-- [ ] Escribir unit tests
+- [x] Verificar si tienen `logistics_provider_id` en el schema
+  - **Resultado**: NO tienen `logistics_provider_id` en el schema actual
+  - **Nota**: DeliveryZone solo tiene `tenant_id`. Si en el futuro se necesita asociar zonas a LOGISTICS_PROVIDER, se requerirá modificar el schema.
+  - **Acción**: Por ahora, LOGISTICS_PROVIDER puede acceder a zonas a través de permisos, pero no hay aislamiento por `logistics_provider_id`
 
 ## Backend - Delivery Rates (si aplica)
 
-- [ ] Verificar si tienen `logistics_provider_id` en el schema
-- [ ] Si tienen relación, aplicar mismo patrón que Drivers/Vehicles
-- [ ] Escribir unit tests
+- [x] Verificar si tienen `logistics_provider_id` en el schema
+  - **Resultado**: NO tienen `logistics_provider_id` en el schema actual
+  - **Nota**: DeliveryRate solo tiene `tenant_id`. Si en el futuro se necesita asociar tarifas a LOGISTICS_PROVIDER, se requerirá modificar el schema.
+  - **Acción**: Por ahora, LOGISTICS_PROVIDER puede acceder a tarifas a través de permisos, pero no hay aislamiento por `logistics_provider_id`
 
 ## Verificación
 
