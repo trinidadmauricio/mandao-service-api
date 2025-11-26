@@ -28,8 +28,10 @@ export class CreateUserUseCase {
 
     const currentRole = context.currentUserRole as UserRole;
 
+    const dtoRole = dto.role as UserRole;
+
     // Validación CRÍTICA: NINGÚN rol del backoffice puede crear CUSTOMER
-    if (dto.role === 'CUSTOMER') {
+    if (dtoRole === UserRole.CUSTOMER) {
       throw new Error('CUSTOMER role cannot be created from backoffice. CUSTOMER users are created exclusively through storefront signup.');
     }
 
@@ -41,21 +43,21 @@ export class CreateUserUseCase {
 
       case UserRole.SAAS_EDITOR:
         // SAAS_EDITOR puede crear todos excepto SAAS roles y CUSTOMER
-        if (dto.role === 'SAAS_ADMIN' || dto.role === 'SAAS_EDITOR') {
+        if (dtoRole === UserRole.SAAS_ADMIN || dtoRole === UserRole.SAAS_EDITOR) {
           throw new Error('SAAS_EDITOR cannot create SAAS_ADMIN or SAAS_EDITOR users');
         }
         break;
 
       case UserRole.OWNER:
         // OWNER solo puede crear MERCHANT_USER
-        if (dto.role !== 'MERCHANT_USER') {
+        if (dtoRole !== UserRole.MERCHANT_USER) {
           throw new Error('OWNER can only create users with role MERCHANT_USER');
         }
         break;
 
       case UserRole.LOGISTICS_PROVIDER:
         // LOGISTICS_PROVIDER solo puede crear SUPERVISOR
-        if (dto.role !== 'SUPERVISOR') {
+        if (dtoRole !== UserRole.SUPERVISOR) {
           throw new Error('LOGISTICS_PROVIDER can only create users with role SUPERVISOR');
         }
         // Validar que tiene logistics_provider_id
@@ -77,7 +79,7 @@ export class CreateUserUseCase {
     }
 
     // Validar que SUPERVISOR tenga logistics_provider_id (validación final)
-    if (dto.role === 'SUPERVISOR' && !dto.logistics_provider_id) {
+    if (dtoRole === UserRole.SUPERVISOR && !dto.logistics_provider_id) {
       throw new Error('SUPERVISOR role requires logistics_provider_id');
     }
 

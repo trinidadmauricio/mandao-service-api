@@ -11,6 +11,7 @@ import { RegisterDto } from '../dto/RegisterDto';
 import { hashPassword } from '../../../../../shared/utils/password.util';
 import { generateSecureToken } from '../../../../../shared/utils/crypto.util';
 import { TYPES } from '../../../../../config/types';
+import { UserRole } from '../../../../../shared/constants/permissions';
 
 @injectable()
 export class RegisterUseCase {
@@ -53,7 +54,7 @@ export class RegisterUseCase {
       tenant_id: dto.tenant_id || null,
       email: dto.email,
       password_hash,
-      role: dto.role || 'CUSTOMER',
+      role: (dto.role as UserRole) || UserRole.CUSTOMER,
       first_name: dto.first_name,
       last_name: dto.last_name,
       phone: dto.phone || null,

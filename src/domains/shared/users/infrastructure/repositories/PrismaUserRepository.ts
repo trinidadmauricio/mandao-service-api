@@ -14,6 +14,7 @@ import {
 import { User } from '../../domain/entities/User';
 import { ListUsersFiltersDto } from '../../application/dto/ListUsersFiltersDto';
 import { TYPES } from '../../../../../config/types';
+import { UserRole } from '../../../../../shared/constants/permissions';
 
 @injectable()
 export class PrismaUserRepository implements IUserRepository {
@@ -178,7 +179,7 @@ export class PrismaUserRepository implements IUserRepository {
     tenant_id: string | null;
     email: string;
     password_hash: string;
-    role: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'DRIVER' | 'CUSTOMER';
+    role: string | UserRole; // Prisma enum o nuestro enum
     first_name: string;
     last_name: string;
     phone: string | null;
@@ -199,7 +200,7 @@ export class PrismaUserRepository implements IUserRepository {
       data.tenant_id,
       data.email,
       data.password_hash,
-      data.role,
+      data.role as UserRole, // Cast del enum de Prisma a nuestro enum
       data.first_name,
       data.last_name,
       data.phone,
