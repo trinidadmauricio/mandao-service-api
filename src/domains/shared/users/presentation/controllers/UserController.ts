@@ -50,7 +50,16 @@ export class UserController {
     } catch (error) {
       logger.error('Error creating user', { error });
       if (error instanceof Error) {
-        res.status(400).json({
+        // Errores de restricciones de permisos deben retornar 403
+        const isPermissionError = 
+          error.message.includes('cannot create') ||
+          error.message.includes('can only create') ||
+          error.message.includes('cannot be created from backoffice') ||
+          error.message.includes('requires authentication context');
+        
+        const statusCode = isPermissionError ? 403 : 400;
+        
+        res.status(statusCode).json({
           status: 'error',
           message: error.message,
         });

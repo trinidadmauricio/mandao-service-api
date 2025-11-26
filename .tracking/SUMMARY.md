@@ -1,7 +1,7 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 2/10 partes completadas (20%)
+- **Progreso**: 3/10 partes completadas (30%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
@@ -28,6 +28,20 @@
   - Frontend: Agregado DRIVER a roles.ts sin permisos
   - Tests: Unit tests para validar que DRIVER no tiene permisos
 
+### ✅ Parte 4: Validar SUPERVISOR Solo Creado por LOGISTICS_PROVIDER (CRÍTICO)
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/supervisor-creation-validation
+- **Resumen**: Se implementaron validaciones críticas para que solo LOGISTICS_PROVIDER pueda crear SUPERVISOR.
+- **Cambios principales**:
+  - Backend: Validación en CreateUserUseCase que solo LOGISTICS_PROVIDER puede crear SUPERVISOR
+  - Backend: Validación que SUPERVISOR tenga logistics_provider_id obligatorio
+  - Backend: Asignación automática de logistics_provider_id del creador al SUPERVISOR
+  - Backend: Validación en auth.middleware que SUPERVISOR tenga logistics_provider_id
+  - Frontend: Ocultar SUPERVISOR del select si el usuario NO es LOGISTICS_PROVIDER
+  - Frontend: Ocultar CUSTOMER del select (exclusivo del storefront)
+  - Frontend: Asignación automática de logistics_provider_id al crear SUPERVISOR
+  - Tests: Unit tests completos para todas las validaciones de SUPERVISOR
+
 ## Partes en Progreso
 
 (Ninguna actualmente)
@@ -37,6 +51,7 @@
 - [x] Parte 1: Deshabilitar HYBRID en Creación de Tenants ✅
 - [ ] Parte 2: Crear Módulo de UOMs (depende de Parte 8)
 - [x] Parte 3: Agregar Rol DRIVER ✅
+- [x] Parte 4: Validar SUPERVISOR ✅
 - [ ] Parte 2: Crear Módulo de UOMs
 - [ ] Parte 3: Agregar Rol DRIVER
 - [ ] Parte 4: Validar SUPERVISOR

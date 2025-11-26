@@ -21,21 +21,62 @@ export class CreateUserUseCase {
   constructor(@inject(TYPES.IUserRepository) private repository: IUserRepository) {}
 
   async execute(dto: CreateUserDto, context?: CreateUserContext): Promise<User> {
-    // Validación CRÍTICA: Solo LOGISTICS_PROVIDER puede crear SUPERVISOR
-    if (dto.role === 'SUPERVISOR') {
-      if (!context || context.currentUserRole !== UserRole.LOGISTICS_PROVIDER) {
-        throw new Error('Only LOGISTICS_PROVIDER can create users with role SUPERVISOR');
-      }
-
-      if (!context.currentUserLogisticsProviderId) {
-        throw new Error('LOGISTICS_PROVIDER user must have logistics_provider_id to create SUPERVISOR');
-      }
-
-      // Asignar automáticamente el logistics_provider_id del creador
-      dto.logistics_provider_id = context.currentUserLogisticsProviderId;
+    // Validar que hay contexto (usuario autenticado)
+    if (!context) {
+      throw new Error('User creation requires authentication context');
     }
 
-    // Validar que SUPERVISOR tenga logistics_provider_id
+    const currentRole = context.currentUserRole as UserRole;
+
+    // Validación CRÍTICA: NINGÚN rol del backoffice puede crear CUSTOMER
+    if (dto.role === 'CUSTOMER') {
+      throw new Error('CUSTOMER role cannot be created from backoffice. CUSTOMER users are created exclusively through storefront signup.');
+    }
+
+    // Validar restricciones según el rol del usuario actual
+    switch (currentRole) {
+      case UserRole.SAAS_ADMIN:
+        // SAAS_ADMIN puede crear todos excepto CUSTOMER (ya validado arriba)
+        break;
+
+      case UserRole.SAAS_EDITOR:
+        // SAAS_EDITOR puede crear todos excepto SAAS roles y CUSTOMER
+        if (dto.role === 'SAAS_ADMIN' || dto.role === 'SAAS_EDITOR') {
+          throw new Error('SAAS_EDITOR cannot create SAAS_ADMIN or SAAS_EDITOR users');
+        }
+        break;
+
+      case UserRole.OWNER:
+        // OWNER solo puede crear MERCHANT_USER
+        if (dto.role !== 'MERCHANT_USER') {
+          throw new Error('OWNER can only create users with role MERCHANT_USER');
+        }
+        break;
+
+      case UserRole.LOGISTICS_PROVIDER:
+        // LOGISTICS_PROVIDER solo puede crear SUPERVISOR
+        if (dto.role !== 'SUPERVISOR') {
+          throw new Error('LOGISTICS_PROVIDER can only create users with role SUPERVISOR');
+        }
+        // Validar que tiene logistics_provider_id
+        if (!context.currentUserLogisticsProviderId) {
+          throw new Error('LOGISTICS_PROVIDER user must have logistics_provider_id to create SUPERVISOR');
+        }
+        // Asignar automáticamente el logistics_provider_id del creador
+        dto.logistics_provider_id = context.currentUserLogisticsProviderId;
+        break;
+
+      case UserRole.SUPERVISOR:
+      case UserRole.MERCHANT_USER:
+        // SUPERVISOR y MERCHANT_USER no pueden crear usuarios
+        throw new Error(`${currentRole} role cannot create users`);
+        break;
+
+      default:
+        throw new Error(`User creation not allowed for role ${currentRole}`);
+    }
+
+    // Validar que SUPERVISOR tenga logistics_provider_id (validación final)
     if (dto.role === 'SUPERVISOR' && !dto.logistics_provider_id) {
       throw new Error('SUPERVISOR role requires logistics_provider_id');
     }
