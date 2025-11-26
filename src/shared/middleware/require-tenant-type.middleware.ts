@@ -7,6 +7,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { UserRole } from '../constants/permissions';
 
 export type TenantType = 'RETAIL' | 'ON_DEMAND' | 'HYBRID';
 
@@ -20,13 +21,13 @@ export function requireTenantType(allowedTypes: TenantType[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, no tienen tenant
     // y no se aplican restricciones de tenant type
-    if (req.user && (req.user.role === 'LOGISTICS_PROVIDER' || req.user.role === 'SUPERVISOR')) {
+    if (req.user && (req.user.role === UserRole.LOGISTICS_PROVIDER || req.user.role === UserRole.SUPERVISOR)) {
       next();
       return;
     }
 
     // Si el usuario es SAAS_ADMIN o SAAS_EDITOR, pueden acceder a todo sin restricciones
-    if (req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR')) {
+    if (req.user && (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR)) {
       next();
       return;
     }

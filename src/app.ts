@@ -168,6 +168,7 @@ import storefrontRoutes from './domains/retail/storefront/presentation/routes/st
 import paymentsRoutes from './domains/shared/payments/presentation/routes/payments.routes';
 import subscriptionsRoutes from './domains/shared/subscription-plans/presentation/routes/subscriptions.routes';
 import reportsRoutes from './domains/shared/reports/presentation/routes/reports.routes';
+import geocodingRoutes from './domains/shared/geocoding/presentation/routes/geocoding.routes';
 
 app.use('/api/v1/tenants', tenantsRoutes);
 app.use('/api/v1/subscription-plans', subscriptionPlansRoutes);
@@ -192,6 +193,7 @@ app.use('/api/v1/storefront', storefrontRoutes);
 app.use('/api/v1/payments', paymentsRoutes);
 app.use('/api/v1/subscriptions', subscriptionsRoutes);
 app.use('/api/v1/reports', reportsRoutes);
+app.use('/api/v1/geocoding', geocodingRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

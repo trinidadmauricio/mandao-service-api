@@ -74,6 +74,21 @@ export class UserController {
     try {
       const dto = createUserSchema.parse(req.body);
 
+      // Asignar tenant_id automáticamente según el rol del usuario a crear
+      // LOGISTICS_PROVIDER y SUPERVISOR NO deben tener tenant_id (null)
+      // Los demás roles SÍ deben tener tenant_id del usuario actual o del request
+      const newUserRole = dto.role as UserRole;
+      if (newUserRole === UserRole.LOGISTICS_PROVIDER || newUserRole === UserRole.SUPERVISOR) {
+        // Estos roles no tienen tenant_id
+        dto.tenant_id = null;
+      } else {
+        // Los demás roles deben tener tenant_id
+        // Prioridad: 1) tenant_id del body (si viene), 2) req.tenant?.id, 3) req.user?.tenant_id
+        if (!dto.tenant_id) {
+          dto.tenant_id = req.tenant?.id || req.user?.tenant_id || null;
+        }
+      }
+
       // Pasar contexto del usuario actual para validaciones de creación
       const context = req.user
         ? {
@@ -208,7 +223,9 @@ export class UserController {
         filtersInput.logistics_provider_id = autoLogisticsProviderId;
       }
 
-      // Validar con schema Zod (solo si hay filtros)
+      // Validar con schema Zod
+      // Siempre crear objeto de filtros si hay algún filtro aplicado (incluyendo roles forzados)
+      // o si hay query params, para asegurar que se use findAllWithFilters
       const filters =
         Object.keys(filtersInput).length > 0
           ? listUsersFiltersSchema.parse(filtersInput)

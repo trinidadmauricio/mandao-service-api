@@ -83,6 +83,24 @@ export class CreateUserUseCase {
       throw new Error('SUPERVISOR role requires logistics_provider_id');
     }
 
+    // Validar tenant_id según el rol
+    // LOGISTICS_PROVIDER y SUPERVISOR NO deben tener tenant_id
+    if ((dtoRole === UserRole.LOGISTICS_PROVIDER || dtoRole === UserRole.SUPERVISOR) && dto.tenant_id) {
+      throw new Error(`${dtoRole} role cannot have tenant_id`);
+    }
+
+    // Los demás roles (excepto SAAS_ADMIN y SAAS_EDITOR que pueden ser globales) deben tener tenant_id
+    // SAAS_ADMIN y SAAS_EDITOR pueden tener tenant_id null si son usuarios globales
+    if (
+      dtoRole !== UserRole.LOGISTICS_PROVIDER &&
+      dtoRole !== UserRole.SUPERVISOR &&
+      dtoRole !== UserRole.SAAS_ADMIN &&
+      dtoRole !== UserRole.SAAS_EDITOR &&
+      !dto.tenant_id
+    ) {
+      throw new Error(`${dtoRole} role requires tenant_id`);
+    }
+
     // Validar que el email no exista
     const existing = await this.repository.findByEmail(dto.email);
     if (existing) {

@@ -73,7 +73,9 @@ describe('Permissions System', () => {
   });
 
   describe('MERCHANT_USER role', () => {
-    it('should have access to orders (read, create, update, delete)', () => {
+    it('should have manage access to orders (includes read, create, update, delete)', () => {
+      // MERCHANT_USER tiene 'manage' que incluye todas las acciones
+      expect(hasPermission(UserRole.MERCHANT_USER, 'orders', 'manage')).toBe(true);
       expect(hasPermission(UserRole.MERCHANT_USER, 'orders', 'read')).toBe(true);
       expect(hasPermission(UserRole.MERCHANT_USER, 'orders', 'create')).toBe(true);
       expect(hasPermission(UserRole.MERCHANT_USER, 'orders', 'update')).toBe(true);

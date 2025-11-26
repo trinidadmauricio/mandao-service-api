@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
+import { UserRole } from '../constants/permissions';
 
 const prisma = new PrismaClient();
 
@@ -85,7 +86,7 @@ export const tenantMiddleware = async (
       // Si el usuario es SAAS_ADMIN o SAAS_EDITOR sin tenant_id
       if (
         req.user &&
-        (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR') &&
+        (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR) &&
         !req.user.tenant_id
       ) {
         // Si la ruta NO requiere tenant, permitir continuar
@@ -158,7 +159,7 @@ export const tenantMiddleware = async (
       // Si el usuario es SAAS_ADMIN y la ruta no requiere tenant, permitir continuar
       if (
         req.user &&
-        (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR') &&
+        (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR) &&
         !req.user.tenant_id
       ) {
         if (!requiresTenant(req.path)) {

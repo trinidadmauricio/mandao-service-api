@@ -8,6 +8,7 @@ import { IUserRepository } from '../../../users/domain/repositories/IUserReposit
 import { verifyPassword } from '../../../../../shared/utils/password.util';
 import { generateSecureToken } from '../../../../../shared/utils/crypto.util';
 import { generateAccessToken } from '../../../../../shared/utils/jwt.util';
+import { UserRole } from '../../../../../shared/constants/permissions';
 import { TYPES } from '../../../../../config/types';
 
 export interface LoginCredentials {
@@ -51,7 +52,7 @@ export class AuthService {
     // Para otros usuarios, validar que el tenant_id coincida
     if (tenant_id && user.tenant_id !== tenant_id) {
       // Si el usuario NO es SAAS_ADMIN/SAAS_EDITOR, validar tenant
-      if (user.role !== 'SAAS_ADMIN' && user.role !== 'SAAS_EDITOR') {
+      if (user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR) {
         throw new Error('Invalid credentials');
       }
       // Si es SAAS_ADMIN/SAAS_EDITOR, permitir login aunque el tenant_id no coincida

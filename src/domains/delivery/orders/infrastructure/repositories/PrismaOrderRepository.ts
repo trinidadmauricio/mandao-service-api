@@ -73,13 +73,17 @@ export class PrismaOrderRepository implements IOrderRepository {
   }
 
   async findAllWithFilters(
-    tenant_id: string,
+    tenant_id: string | undefined,
     logistics_provider_id: string | undefined,
     filters: ListOrdersFiltersDto
   ): Promise<OrdersListResult> {
-    const where: Prisma.OrderWhereInput = {
-      tenant_id,
-    };
+    const where: Prisma.OrderWhereInput = {};
+    
+    // Solo filtrar por tenant_id si está presente
+    // LOGISTICS_PROVIDER y SUPERVISOR no tienen tenant_id
+    if (tenant_id) {
+      where.tenant_id = tenant_id;
+    }
 
     // Si se especifica logistics_provider_id, filtrar órdenes asignadas a ese proveedor
     if (logistics_provider_id) {

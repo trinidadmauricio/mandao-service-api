@@ -13,7 +13,10 @@ import { TYPES } from '../../../../../config/types';
 export class ListUsersUseCase {
   constructor(@inject(TYPES.IUserRepository) private repository: IUserRepository) {}
 
-  async execute(tenant_id?: string, filters?: ListUsersFiltersDto): Promise<User[] | UsersListResult> {
+  async execute(
+    tenant_id?: string,
+    filters?: ListUsersFiltersDto
+  ): Promise<User[] | UsersListResult> {
     // Si hay filtros, usar findAllWithFilters
     if (filters && this.hasFilters(filters)) {
       return await this.repository.findAllWithFilters(tenant_id, filters);
@@ -33,9 +36,9 @@ export class ListUsersUseCase {
       filters.search ||
       filters.role ||
       filters.status ||
+      filters.logistics_provider_id ||
       filters.page ||
       filters.limit
     );
   }
 }
-

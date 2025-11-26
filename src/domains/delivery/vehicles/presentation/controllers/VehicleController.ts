@@ -12,6 +12,7 @@ import { UpdateVehicleUseCase } from '../../application/use-cases/UpdateVehicleU
 import { DeleteVehicleUseCase } from '../../application/use-cases/DeleteVehicleUseCase';
 import { createVehicleSchema, updateVehicleSchema } from '../../application/dto/CreateVehicleDto';
 import { logger } from '../../../../../shared/utils/logger';
+import { UserRole } from '../../../../../shared/constants/permissions';
 import { TYPES } from '../../../../../config/types';
 
 @injectable()
@@ -102,7 +103,7 @@ export class VehicleController {
       // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar automáticamente por su logistics_provider_id
       // Si no es LOGISTICS_PROVIDER/SUPERVISOR, usar el query parameter si se proporciona
       const logistics_provider_id =
-        req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
+        req.user?.role === UserRole.LOGISTICS_PROVIDER || req.user?.role === UserRole.SUPERVISOR
           ? req.user.logistics_provider_id || undefined
           : (req.query.logistics_provider_id as string | undefined);
 

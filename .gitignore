@@ -44,3 +44,7 @@ prisma/migrations/
 # Docker
 docker-compose.override.yml
 *.tracking/
+
+# Photon data (OSM files are large)
+photon_data/
+*.osm.pbf

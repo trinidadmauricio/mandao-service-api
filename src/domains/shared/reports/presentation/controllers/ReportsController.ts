@@ -13,6 +13,7 @@ import { GetDriversReportUseCase } from '../../application/use-cases/GetDriversR
 import { GetDashboardKpisUseCase } from '../../application/use-cases/GetDashboardKpisUseCase';
 import { orderReportFiltersSchema } from '../../application/dto/OrderReportFiltersDto';
 import { logger } from '../../../../../shared/utils/logger';
+import { UserRole } from '../../../../../shared/constants/permissions';
 import { TYPES } from '../../../../../config/types';
 
 const prisma = new PrismaClient();
@@ -40,7 +41,7 @@ export class ReportsController {
     }
 
     // Si el usuario es SAAS_ADMIN o SAAS_EDITOR, permitir tenant_id como query parameter o header
-    if (req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR')) {
+    if (req.user && (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR)) {
       // Intentar obtener tenant_id del query parameter primero
       let tenant_id = req.query.tenant_id as string | undefined;
       

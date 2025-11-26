@@ -18,7 +18,7 @@ export interface IOrderRepository {
   findByTrackingCode(tracking_code: string): Promise<Order | null>;
   findAll(tenant_id?: string, status?: string, logistics_provider_id?: string): Promise<Order[]>;
   findAllWithFilters(
-    tenant_id: string,
+    tenant_id: string | undefined,
     logistics_provider_id: string | undefined,
     filters: ListOrdersFiltersDto
   ): Promise<OrdersListResult>;

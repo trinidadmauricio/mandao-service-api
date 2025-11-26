@@ -12,6 +12,7 @@ import { UpdateOrderCounterUseCase } from '../../application/use-cases/UpdateOrd
 import { createOrderCounterSchema, updateOrderCounterSchema } from '../../application/dto';
 import { logger } from '../../../../../shared/utils/logger';
 import { serializeForResponse } from '../../../../../shared/utils/serializer.util';
+import { UserRole } from '../../../../../shared/constants/permissions';
 import { TYPES } from '../../../../../config/types';
 
 @injectable()
@@ -64,7 +65,7 @@ export class OrderCounterController {
 
       // Validar que OWNER solo puede ver su propio contador
       // SAAS roles pueden ver cualquier contador
-      if (req.user?.role === 'OWNER' && req.user.tenant_id !== tenant_id) {
+      if (req.user?.role === UserRole.OWNER && req.user.tenant_id !== tenant_id) {
         res.status(403).json({
           status: 'error',
           message: 'You can only access your own order counter',
@@ -107,7 +108,7 @@ export class OrderCounterController {
 
       // Validar que OWNER solo puede incrementar su propio contador
       // SAAS roles pueden incrementar cualquier contador
-      if (req.user?.role === 'OWNER' && req.user.tenant_id !== tenant_id) {
+      if (req.user?.role === UserRole.OWNER && req.user.tenant_id !== tenant_id) {
         res.status(403).json({
           status: 'error',
           message: 'You can only increment your own order counter',
@@ -156,7 +157,7 @@ export class OrderCounterController {
 
       // Validar que OWNER solo puede actualizar su propio contador
       // SAAS roles pueden actualizar cualquier contador
-      if (req.user?.role === 'OWNER' && req.user.tenant_id !== tenant_id) {
+      if (req.user?.role === UserRole.OWNER && req.user.tenant_id !== tenant_id) {
         res.status(403).json({
           status: 'error',
           message: 'You can only update your own order counter',
