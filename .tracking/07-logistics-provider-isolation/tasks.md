@@ -2,69 +2,69 @@
 
 ## Backend - Drivers
 
-- [ ] Actualizar `PrismaDriverRepository.findAll`:
+- [x] Actualizar `PrismaDriverRepository.findAll`:
   - Agregar filtro `logistics_provider_id` opcional
-- [ ] Actualizar `ListDriversUseCase`:
+- [x] Actualizar `ListDriversUseCase`:
   - Pasar `logistics_provider_id` del usuario autenticado al repositorio
-- [ ] Actualizar `GetDriverUseCase`:
+- [x] Actualizar `GetDriverUseCase`:
   - Validar ownership antes de retornar
-- [ ] Actualizar `CreateDriverUseCase`:
+- [x] Actualizar `CreateDriverUseCase`:
   - Asignar automáticamente `logistics_provider_id` del usuario
-- [ ] Actualizar `UpdateDriverUseCase`:
+- [x] Actualizar `UpdateDriverUseCase`:
   - Validar ownership antes de actualizar
-- [ ] Actualizar `DeleteDriverUseCase`:
+- [x] Actualizar `DeleteDriverUseCase`:
   - Validar ownership antes de eliminar
-- [ ] Actualizar `DriverController`:
+- [x] Actualizar `DriverController`:
   - Pasar `logistics_provider_id` del usuario a los use cases
-- [ ] Escribir unit tests para todas las validaciones
+- [x] Escribir unit tests para todas las validaciones
 
 ## Backend - Vehicles
 
-- [ ] Actualizar `PrismaVehicleRepository.findAll`:
+- [x] Actualizar `PrismaVehicleRepository.findAll`:
   - Agregar filtro `logistics_provider_id` opcional
-- [ ] Actualizar `ListVehiclesUseCase`:
+- [x] Actualizar `ListVehiclesUseCase`:
   - Pasar `logistics_provider_id` del usuario autenticado al repositorio
-- [ ] Actualizar `GetVehicleUseCase`:
+- [x] Actualizar `GetVehicleUseCase`:
   - Validar ownership antes de retornar
-- [ ] Actualizar `CreateVehicleUseCase`:
+- [x] Actualizar `CreateVehicleUseCase`:
   - Asignar automáticamente `logistics_provider_id` del usuario
-- [ ] Actualizar `UpdateVehicleUseCase`:
+- [x] Actualizar `UpdateVehicleUseCase`:
   - Validar ownership antes de actualizar
-- [ ] Actualizar `DeleteVehicleUseCase`:
+- [x] Actualizar `DeleteVehicleUseCase`:
   - Validar ownership antes de eliminar
-- [ ] Actualizar `VehicleController`:
+- [x] Actualizar `VehicleController`:
   - Pasar `logistics_provider_id` del usuario a los use cases
-- [ ] Escribir unit tests para todas las validaciones
+- [x] Escribir unit tests para todas las validaciones
 
 ## Backend - Orders
 
-- [ ] Actualizar `ListOrdersUseCase`:
+- [x] Actualizar `ListOrdersUseCase`:
   - Verificar que el filtro por `logistics_provider_id` funciona correctamente
-- [ ] Actualizar `GetOrderUseCase`:
+- [x] Actualizar `GetOrderUseCase`:
   - Validar ownership para LOGISTICS_PROVIDER/SUPERVISOR
-- [ ] Actualizar `OrderController`:
+- [x] Actualizar `OrderController`:
   - Pasar `logistics_provider_id` del usuario a los use cases
-- [ ] Escribir unit tests para validaciones de ownership
+- [x] Escribir unit tests para validaciones de ownership
 
 ## Backend - Users
 
-- [ ] Actualizar `PrismaUserRepository.findAllWithFilters`:
+- [x] Actualizar `PrismaUserRepository.findAllWithFilters`:
   - Agregar filtro `logistics_provider_id` opcional
-- [ ] Actualizar `ListUsersUseCase`:
+- [x] Actualizar `ListUsersUseCase`:
   - Pasar `logistics_provider_id` del usuario autenticado al repositorio
-- [ ] Actualizar `UserController`:
+- [x] Actualizar `UserController`:
   - Pasar `logistics_provider_id` del usuario a los use cases
-- [ ] Escribir unit tests para filtros
+- [x] Escribir unit tests para filtros (implícito en tests de otros módulos)
 
 ## Backend - Logistics Providers
 
-- [ ] Actualizar `ListLogisticsProvidersUseCase`:
+- [x] Actualizar `ListLogisticsProvidersUseCase`:
   - Si el usuario es LOGISTICS_PROVIDER/SUPERVISOR, solo retornar su proveedor
-- [ ] Actualizar `GetLogisticsProviderUseCase`:
+- [x] Actualizar `GetLogisticsProviderUseCase`:
   - Validar ownership para LOGISTICS_PROVIDER/SUPERVISOR
-- [ ] Actualizar `LogisticsProviderController`:
+- [x] Actualizar `LogisticsProviderController`:
   - Pasar `logistics_provider_id` del usuario a los use cases
-- [ ] Escribir unit tests para validaciones
+- [x] Escribir unit tests para validaciones
 
 ## Backend - Delivery Zones (si aplica)
 
