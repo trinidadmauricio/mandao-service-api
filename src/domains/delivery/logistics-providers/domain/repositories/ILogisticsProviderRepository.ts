@@ -3,10 +3,15 @@
  */
 
 import { LogisticsProvider } from '../entities/LogisticsProvider';
+import { ListLogisticsProvidersFiltersDto } from '../../application/dto/ListLogisticsProvidersFiltersDto';
 
 export interface ILogisticsProviderRepository {
   findById(id: string): Promise<LogisticsProvider | null>;
   findAll(tenant_id?: string): Promise<LogisticsProvider[]>;
+  findAllWithFilters(
+    tenant_id: string | undefined,
+    filters: ListLogisticsProvidersFiltersDto
+  ): Promise<LogisticsProvider[]>;
   create(data: CreateLogisticsProviderData): Promise<LogisticsProvider>;
   update(id: string, data: UpdateLogisticsProviderData): Promise<LogisticsProvider>;
   delete(id: string): Promise<void>;
@@ -34,4 +39,3 @@ export interface UpdateLogisticsProviderData {
   verification_documents?: Record<string, unknown> | null;
   status?: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
 }
-
