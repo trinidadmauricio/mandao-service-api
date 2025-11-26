@@ -254,6 +254,15 @@ export const authMiddleware = async (
       return;
     }
 
+    // Validación CRÍTICA: SUPERVISOR debe tener logistics_provider_id
+    if (user.role === 'SUPERVISOR' && !user.logistics_provider_id) {
+      res.status(403).json({
+        status: 'error',
+        message: 'SUPERVISOR user must have logistics_provider_id',
+      });
+      return;
+    }
+
     // Verificar tenant isolation si hay tenant en la request
     // Para SAAS_ADMIN y SAAS_EDITOR, permitir acceso aunque el tenant_id no coincida
     // (pueden tener tenant_id null y acceder a cualquier tenant)

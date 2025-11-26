@@ -28,7 +28,16 @@ export class UserController {
   async create(req: Request, res: Response): Promise<void> {
     try {
       const dto = createUserSchema.parse(req.body);
-      const user = await this.createUserUseCase.execute(dto);
+      
+      // Pasar contexto del usuario actual para validaciones de creación
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+
+      const user = await this.createUserUseCase.execute(dto, context);
 
       // No retornar password_hash en la respuesta
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

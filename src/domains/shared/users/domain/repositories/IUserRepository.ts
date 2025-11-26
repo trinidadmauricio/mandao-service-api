@@ -17,7 +17,7 @@ export interface CreateUserData {
   tenant_id?: string | null;
   email: string;
   password_hash: string;
-  role: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'CUSTOMER';
+  role: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'DRIVER' | 'CUSTOMER';
   first_name: string;
   last_name: string;
   phone?: string | null;
@@ -29,7 +29,7 @@ export interface UpdateUserData {
   first_name?: string;
   last_name?: string;
   phone?: string | null;
-  role?: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'CUSTOMER';
+  role?: 'SAAS_ADMIN' | 'SAAS_EDITOR' | 'OWNER' | 'SUPERVISOR' | 'MERCHANT_USER' | 'LOGISTICS_PROVIDER' | 'DRIVER' | 'CUSTOMER';
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   password_hash?: string;
   email_verified_at?: Date | null;
