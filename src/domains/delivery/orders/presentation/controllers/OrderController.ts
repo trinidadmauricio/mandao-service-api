@@ -68,10 +68,11 @@ export class OrderController {
 
       const status = req.query.status as string | undefined;
       
-      // Si el usuario es LOGISTICS_PROVIDER, filtrar por su logistics_provider_id
-      const logistics_provider_id = req.user?.role === 'LOGISTICS_PROVIDER' 
-        ? req.user.logistics_provider_id || undefined
-        : undefined;
+      // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar por su logistics_provider_id
+      const logistics_provider_id =
+        req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
+          ? req.user.logistics_provider_id || undefined
+          : undefined;
 
       const orders = await this.listOrdersUseCase.execute(tenant_id, status, logistics_provider_id);
 
@@ -91,7 +92,13 @@ export class OrderController {
   async getById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const order = await this.getOrderUseCase.execute(id);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      const order = await this.getOrderUseCase.execute(id, context);
 
       // Obtener relaciones de la orden
       const [orderDrivers, orderBranches, orderItems, orderSummaryTotals, orderStatusHistory] = await Promise.all([
@@ -218,12 +225,21 @@ export class OrderController {
       });
     } catch (error) {
       logger.error('Error getting order', { error });
-      if (error instanceof Error && error.message === 'Order not found') {
-        res.status(404).json({
-          status: 'error',
-          message: error.message,
-        });
-        return;
+      if (error instanceof Error) {
+        if (error.message === 'Order not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes('permission')) {
+          res.status(403).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
       }
       res.status(500).json({
         status: 'error',
