@@ -70,9 +70,29 @@ services:
       retries: 5
     command: redis-server --appendonly yes
 
+  photon:
+    image: komoot/photon:latest
+    container_name: mandao-photon
+    ports:
+      - "${PHOTON_PORT:-2322}:2322"
+    volumes:
+      - photon_data:/photon/photon_data
+    restart: unless-stopped
+    networks:
+      - mandao-network
+    environment:
+      - PHOTON_LANGUAGE=es,en
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2322/api?q=test"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
 volumes:
   postgres_data:
   redis_data:
+  photon_data:
 
 networks:
   mandao-network:

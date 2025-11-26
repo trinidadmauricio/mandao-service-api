@@ -55,6 +55,9 @@ export const env = {
 
   // Logging
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
+
+  // Geocoding (Photon)
+  PHOTON_URL: process.env.PHOTON_URL || 'http://photon:2322',
 };
 
 // Validate required environment variables
