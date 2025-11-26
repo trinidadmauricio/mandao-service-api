@@ -33,17 +33,17 @@
 
 ## Frontend - Sidebar
 
-- [ ] Ocultar "Contadores" para roles no-SAAS
-- [ ] Ocultar "Pagos" para roles no-SAAS
-- [ ] Ocultar "Suscripción" para roles no-SAAS
-- [ ] Asegurar que LOGISTICS_PROVIDER/SUPERVISOR no vean módulos SAAS
+- [x] Ocultar "Contadores" para roles no-SAAS ✅ (completado en Parte 10)
+- [x] Ocultar "Pagos" para roles no-SAAS ✅ (completado en Parte 10)
+- [x] Ocultar "Suscripción" para roles no-SAAS ✅ (completado en Parte 10)
+- [x] Asegurar que LOGISTICS_PROVIDER/SUPERVISOR no vean módulos SAAS ✅ (completado en Parte 10)
 
 ## Frontend - Permission Guards
 
-- [ ] Actualizar guards en páginas de Order Counters
-- [ ] Actualizar guards en páginas de Payments
-- [ ] Actualizar guards en páginas de Subscriptions
-- [ ] Redirigir a página de error si intentan acceder sin permisos SAAS
+- [x] Actualizar guards en páginas de Order Counters ✅ (completado en Parte 10 - los guards usan hasPermission que ya excluye módulos SAAS)
+- [x] Actualizar guards en páginas de Payments ✅ (completado en Parte 10 - los guards usan hasPermission que ya excluye módulos SAAS)
+- [x] Actualizar guards en páginas de Subscriptions ✅ (completado en Parte 10 - los guards usan hasPermission que ya excluye módulos SAAS)
+- [x] Redirigir a página de error si intentan acceder sin permisos SAAS ✅ (los guards ya manejan esto automáticamente con hasPermission)
 
 ## Verificación
 
