@@ -279,6 +279,8 @@ import { CreateRetailOrderUseCase } from '../domains/delivery/orders/application
 import { GetOrderUseCase } from '../domains/delivery/orders/application/use-cases/GetOrderUseCase';
 import { ListOrdersUseCase } from '../domains/delivery/orders/application/use-cases/ListOrdersUseCase';
 import { AssignDriverUseCase } from '../domains/delivery/orders/application/use-cases/AssignDriverUseCase';
+import { AssignLogisticsProviderUseCase } from '../domains/delivery/orders/application/use-cases/AssignLogisticsProviderUseCase';
+import { MarkAsAutomaticUseCase } from '../domains/delivery/orders/application/use-cases/MarkAsAutomaticUseCase';
 import { ChangeBranchUseCase } from '../domains/delivery/orders/application/use-cases/ChangeBranchUseCase';
 import { UpdateOrderStatusUseCase } from '../domains/delivery/orders/application/use-cases/UpdateOrderStatusUseCase';
 import { ModifyItemsUseCase } from '../domains/delivery/orders/application/use-cases/ModifyItemsUseCase';
@@ -680,6 +682,8 @@ container.bind<CreateRetailOrderUseCase>(TYPES.CreateRetailOrderUseCase).to(Crea
 container.bind<GetOrderUseCase>(TYPES.GetOrderUseCase).to(GetOrderUseCase);
 container.bind<ListOrdersUseCase>(TYPES.ListOrdersUseCase).to(ListOrdersUseCase);
 container.bind<AssignDriverUseCase>(TYPES.AssignDriverUseCase).to(AssignDriverUseCase);
+container.bind<AssignLogisticsProviderUseCase>(TYPES.AssignLogisticsProviderUseCase).to(AssignLogisticsProviderUseCase);
+container.bind<MarkAsAutomaticUseCase>(TYPES.MarkAsAutomaticUseCase).to(MarkAsAutomaticUseCase);
 container.bind<ChangeBranchUseCase>(TYPES.ChangeBranchUseCase).to(ChangeBranchUseCase);
 container.bind<UpdateOrderStatusUseCase>(TYPES.UpdateOrderStatusUseCase).to(UpdateOrderStatusUseCase);
 container.bind<ModifyItemsUseCase>(TYPES.ModifyItemsUseCase).to(ModifyItemsUseCase);

@@ -480,8 +480,113 @@ router.post(
   authMiddleware,
   requireTenantMiddleware,
   requirePermission('orders', 'manage'),
-  requireTenantType(['ON_DEMAND', 'HYBRID']),
   (req, res) => controller.assignDriver(req, res)
+);
+
+/**
+ * @swagger
+ * /api/v1/orders/{id}/assign-logistics-provider:
+ *   post:
+ *     summary: Asignar LOGISTICS_PROVIDER a orden
+ *     description: Asigna un LOGISTICS_PROVIDER a una orden. Solo SAAS roles pueden realizar esta acción.
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - logistics_provider_id
+ *             properties:
+ *               logistics_provider_id:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: LOGISTICS_PROVIDER asignado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Logistics provider assigned successfully
+ *       400:
+ *         description: Error de validación
+ *       403:
+ *         description: No autorizado (solo SAAS roles)
+ *       404:
+ *         description: Orden o LOGISTICS_PROVIDER no encontrado
+ *       401:
+ *         description: No autenticado
+ */
+router.post(
+  '/:id/assign-logistics-provider',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('orders', 'manage'),
+  (req, res) => controller.assignLogisticsProvider(req, res)
+);
+
+/**
+ * @swagger
+ * /api/v1/orders/{id}/mark-as-automatic:
+ *   post:
+ *     summary: Marcar orden como automática
+ *     description: Marca una orden para asignación automática de driver. Solo LOGISTICS_PROVIDER o SUPERVISOR pueden realizar esta acción.
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Orden marcada como automática exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Order marked as automatic successfully
+ *       400:
+ *         description: Error de validación
+ *       403:
+ *         description: No autorizado (solo LOGISTICS_PROVIDER o SUPERVISOR)
+ *       404:
+ *         description: Orden no encontrada
+ *       401:
+ *         description: No autenticado
+ */
+router.post(
+  '/:id/mark-as-automatic',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('orders', 'manage'),
+  (req, res) => controller.markAsAutomatic(req, res)
 );
 
 /**

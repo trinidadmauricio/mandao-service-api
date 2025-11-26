@@ -1,7 +1,7 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 3/10 partes completadas (30%)
+- **Progreso**: 5/10 partes completadas (50%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
@@ -42,9 +42,34 @@
   - Frontend: Asignación automática de logistics_provider_id al crear SUPERVISOR
   - Tests: Unit tests completos para todas las validaciones de SUPERVISOR
 
+### ✅ Parte 5: Restricciones de Creación de Usuarios (CRÍTICO)
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/user-creation-restrictions
+- **Resumen**: Se implementaron todas las restricciones de creación de usuarios por rol.
+- **Cambios principales**:
+  - Backend: Validación SAAS_ADMIN puede crear todos excepto CUSTOMER
+  - Backend: Validación SAAS_EDITOR no puede crear SAAS roles ni CUSTOMER
+  - Backend: Validación OWNER solo puede crear MERCHANT_USER
+  - Backend: Validación ningún rol puede crear CUSTOMER desde backoffice
+  - Backend: Validación SUPERVISOR y MERCHANT_USER no pueden crear usuarios
+  - Backend: UserController retorna 403 para errores de permisos
+  - Frontend: Filtrar opciones de roles según rol del usuario actual
+  - Tests: Unit tests completos para todas las restricciones de creación
+
 ## Partes en Progreso
 
-(Ninguna actualmente)
+### 🔄 Parte 6: Asignación de Órdenes y Drivers (CRÍTICO)
+- **Fecha de inicio**: 2024-01-15
+- **Branch**: feature/order-driver-assignment
+- **Resumen**: Implementación de lógica de asignación de órdenes a LOGISTICS_PROVIDER y drivers a órdenes.
+- **Cambios principales**:
+  - Backend: Creado AssignLogisticsProviderUseCase (solo SAAS roles pueden asignar)
+  - Backend: Actualizado AssignDriverUseCase con validaciones de permisos
+  - Backend: Creado MarkAsAutomaticUseCase (LOGISTICS_PROVIDER/SUPERVISOR pueden marcar como automático)
+  - Backend: Actualizado OrderController con nuevos endpoints
+  - Backend: Actualizado requireTenantMiddleware para permitir LOGISTICS_PROVIDER/SUPERVISOR sin tenant
+  - Backend: Agregadas rutas para assign-logistics-provider y mark-as-automatic
+  - **Pendiente**: Unit tests para AssignLogisticsProviderUseCase y MarkAsAutomaticUseCase
 
 ## Partes Pendientes
 
@@ -52,11 +77,12 @@
 - [ ] Parte 2: Crear Módulo de UOMs (depende de Parte 8)
 - [x] Parte 3: Agregar Rol DRIVER ✅
 - [x] Parte 4: Validar SUPERVISOR ✅
+- [x] Parte 5: Restricciones de Creación de Usuarios ✅
 - [ ] Parte 2: Crear Módulo de UOMs
 - [ ] Parte 3: Agregar Rol DRIVER
 - [ ] Parte 4: Validar SUPERVISOR
 - [ ] Parte 5: Restricciones de Creación de Usuarios
-- [ ] Parte 6: Asignación de Órdenes y Drivers
+- [x] Parte 6: Asignación de Órdenes y Drivers (en progreso - falta tests)
 - [ ] Parte 7: Aislamiento de LOGISTICS_PROVIDER
 - [ ] Parte 8: Visibilidad por Tenant Type
 - [ ] Parte 9: Restricciones de Módulos SAAS
