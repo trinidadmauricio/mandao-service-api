@@ -114,10 +114,11 @@
   - Backend: Subscription Plans: Solo SAAS puede gestionar planes
   - Backend: Actualizado hasPermission, canAccessResource, getAllowedActions para excluir módulos SAAS de OWNER
   - Tests: Unit tests para validaciones de permisos
+  - **Nota**: Los cambios del sidebar se completaron en la Parte 10
 
 ### ✅ Parte 10: Actualizar Permisos en Constants
 - **Fecha de completación**: 2024-01-15
-- **Branch**: feature/permissions-update
+- **Branch**: feature/permissions-update (backend) / feature/tenant-type-visibility (frontend)
 - **Resumen**: Actualización completa de la matriz de permisos para reflejar todas las reglas implementadas.
 - **Cambios principales**:
   - Backend: Agregado resource 'units-of-measure' al tipo Resource
@@ -128,6 +129,9 @@
   - Backend: Actualizado funciones helper (hasPermission, canAccessResource, getAllowedActions) para excluir módulos SAAS de OWNER
   - Frontend: Actualizado constants en roles.ts para coincidir con backend
   - Frontend: Actualizado funciones helper para excluir módulos SAAS de OWNER
+  - Frontend: Actualizado Sidebar para restringir módulos SAAS solo a roles SAAS (Pagos, Suscripción, Contadores)
+  - Frontend: Agregado LOGISTICS_PROVIDER a Zonas de Entrega, Tarifas de Entrega y Proveedores en sidebar
+  - Frontend: Agregado módulo Unidades de Medida (solo RETAIL) en sidebar
   - Tests: 26 unit tests pasando (cubren todos los roles y permisos)
 
 ## Partes Pendientes
