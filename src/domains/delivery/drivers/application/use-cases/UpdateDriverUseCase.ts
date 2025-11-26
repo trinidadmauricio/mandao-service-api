@@ -8,16 +8,37 @@ import { IDriverRepository } from '../../domain/repositories/IDriverRepository';
 import { Driver } from '../../domain/entities/Driver';
 import { UpdateDriverDto } from '../dto/CreateDriverDto';
 import { TYPES } from '../../../../../config/types';
+import { UserRole } from '../../../../../shared/constants/permissions';
+
+export interface UpdateDriverContext {
+  currentUserRole: string;
+  currentUserLogisticsProviderId: string | null;
+}
 
 @injectable()
 export class UpdateDriverUseCase {
   constructor(@inject(TYPES.IDriverRepository) private repository: IDriverRepository) {}
 
-  async execute(id: string, dto: UpdateDriverDto): Promise<Driver> {
+  async execute(id: string, dto: UpdateDriverDto, context?: UpdateDriverContext): Promise<Driver> {
     // Verificar que existe
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw new Error('Driver not found');
+    }
+
+    // Validar ownership para LOGISTICS_PROVIDER y SUPERVISOR
+    if (context) {
+      const currentRole = context.currentUserRole as UserRole;
+      const currentUserLogisticsProviderId = context.currentUserLogisticsProviderId;
+
+      if (
+        (currentRole === UserRole.LOGISTICS_PROVIDER || currentRole === UserRole.SUPERVISOR) &&
+        currentUserLogisticsProviderId
+      ) {
+        if (existing.logistics_provider_id !== currentUserLogisticsProviderId) {
+          throw new Error('You do not have permission to update this driver');
+        }
+      }
     }
 
     // Actualizar

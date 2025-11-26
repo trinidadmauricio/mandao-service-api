@@ -30,7 +30,13 @@ export class DriverController {
   async create(req: Request, res: Response): Promise<void> {
     try {
       const dto = createDriverSchema.parse(req.body);
-      const driver = await this.createUseCase.execute(dto);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      const driver = await this.createUseCase.execute(dto, context);
 
       res.status(201).json({
         status: 'success',
@@ -39,7 +45,9 @@ export class DriverController {
     } catch (error) {
       logger.error('Error creating driver', { error });
       if (error instanceof Error) {
-        res.status(400).json({
+        const isPermissionError = error.message.includes('permission') || error.message.includes('can only');
+        const statusCode = isPermissionError ? 403 : 400;
+        res.status(statusCode).json({
           status: 'error',
           message: error.message,
         });
@@ -55,7 +63,13 @@ export class DriverController {
   async getById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const driver = await this.getUseCase.execute(id);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      const driver = await this.getUseCase.execute(id, context);
 
       res.status(200).json({
         status: 'success',
@@ -63,12 +77,21 @@ export class DriverController {
       });
     } catch (error) {
       logger.error('Error getting driver', { error });
-      if (error instanceof Error && error.message === 'Driver not found') {
-        res.status(404).json({
-          status: 'error',
-          message: error.message,
-        });
-        return;
+      if (error instanceof Error) {
+        if (error.message === 'Driver not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes('permission')) {
+          res.status(403).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
       }
       res.status(500).json({
         status: 'error',
@@ -79,11 +102,12 @@ export class DriverController {
 
   async list(req: Request, res: Response): Promise<void> {
     try {
-      // Si el usuario es LOGISTICS_PROVIDER, filtrar automáticamente por su logistics_provider_id
-      // Si no es LOGISTICS_PROVIDER, usar el query parameter si se proporciona
-      const autoLogisticsProviderId = req.user?.role === 'LOGISTICS_PROVIDER'
-        ? req.user.logistics_provider_id || undefined
-        : undefined;
+      // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar automáticamente por su logistics_provider_id
+      // Si no es LOGISTICS_PROVIDER/SUPERVISOR, usar el query parameter si se proporciona
+      const autoLogisticsProviderId =
+        req.user?.role === 'LOGISTICS_PROVIDER' || req.user?.role === 'SUPERVISOR'
+          ? req.user.logistics_provider_id || undefined
+          : undefined;
 
       // Extraer y validar filtros de query params
       const filtersInput: Record<string, unknown> = {};
@@ -210,7 +234,13 @@ export class DriverController {
     try {
       const { id } = req.params;
       const dto = updateDriverSchema.parse(req.body);
-      const driver = await this.updateUseCase.execute(id, dto);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      const driver = await this.updateUseCase.execute(id, dto, context);
 
       res.status(200).json({
         status: 'success',
@@ -218,12 +248,21 @@ export class DriverController {
       });
     } catch (error) {
       logger.error('Error updating driver', { error });
-      if (error instanceof Error && error.message === 'Driver not found') {
-        res.status(404).json({
-          status: 'error',
-          message: error.message,
-        });
-        return;
+      if (error instanceof Error) {
+        if (error.message === 'Driver not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes('permission')) {
+          res.status(403).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
       }
       res.status(500).json({
         status: 'error',
@@ -235,17 +274,32 @@ export class DriverController {
   async delete(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      await this.deleteUseCase.execute(id);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+          }
+        : undefined;
+      await this.deleteUseCase.execute(id, context);
 
       res.status(204).send();
     } catch (error) {
       logger.error('Error deleting driver', { error });
-      if (error instanceof Error && error.message === 'Driver not found') {
-        res.status(404).json({
-          status: 'error',
-          message: error.message,
-        });
-        return;
+      if (error instanceof Error) {
+        if (error.message === 'Driver not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes('permission')) {
+          res.status(403).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
       }
       res.status(500).json({
         status: 'error',
