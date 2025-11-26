@@ -9,6 +9,8 @@ import { TYPES } from '../../../../../config/types';
 import { PaymentController } from '../controllers/PaymentController';
 import { StripeWebhookController } from '../controllers/StripeWebhookController';
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
+import { requireTenantMiddleware } from '../../../../../shared/middleware/require-tenant.middleware';
+import { requireSaasRole } from '../../../../../shared/middleware/require-saas-role.middleware';
 
 const router = Router();
 
@@ -204,7 +206,13 @@ router.get('/orders/:orderId/payments', authMiddleware, (req, res) => paymentCon
  *       401:
  *         description: No autenticado
  */
-router.post('/transactions', authMiddleware, (req, res) => paymentController.createPaymentTransaction(req, res));
+// POST /transactions es para crear transacciones generales - solo SAAS
+router.post(
+  '/transactions',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => paymentController.createPaymentTransaction(req, res)
+);
 
 /**
  * @swagger
@@ -261,7 +269,14 @@ router.post('/transactions', authMiddleware, (req, res) => paymentController.cre
  *       401:
  *         description: No autenticado
  */
-router.post('/checkout', authMiddleware, (req, res) => paymentController.createCheckout(req, res));
+// POST /checkout puede ser usado por usuarios para crear sesiones de checkout de sus órdenes
+// No requiere SAAS role, pero requiere tenant (validado en controller)
+router.post(
+  '/checkout',
+  authMiddleware,
+  requireTenantMiddleware,
+  (req, res) => paymentController.createCheckout(req, res)
+);
 
 /**
  * @swagger
@@ -305,6 +320,13 @@ router.post('/checkout', authMiddleware, (req, res) => paymentController.createC
  *       401:
  *         description: No autenticado
  */
-router.post('/refunds', authMiddleware, (req, res) => paymentController.createRefund(req, res));
+// POST /refunds solo para SAAS (reembolsos generales)
+// Los usuarios pueden ver pagos de sus órdenes pero no crear reembolsos generales
+router.post(
+  '/refunds',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => paymentController.createRefund(req, res)
+);
 
 export default router;

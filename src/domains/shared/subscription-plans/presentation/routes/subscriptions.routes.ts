@@ -7,6 +7,7 @@ import { container } from '../../../../../config/inversify.config';
 import { TYPES } from '../../../../../config/types';
 import { SubscriptionController } from '../controllers/SubscriptionController';
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
+import { requireSaasRole } from '../../../../../shared/middleware/require-saas-role.middleware';
 
 const router = Router();
 
@@ -45,8 +46,11 @@ const subscriptionController = container.get<SubscriptionController>(TYPES.Subsc
  *       401:
  *         description: No autenticado
  */
-router.post('/change-plan', authMiddleware, (req, res) =>
-  subscriptionController.changePlan(req, res)
+router.post(
+  '/change-plan',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionController.changePlan(req, res)
 );
 
 /**
@@ -85,8 +89,11 @@ router.post('/change-plan', authMiddleware, (req, res) =>
  *       401:
  *         description: No autenticado
  */
-router.post('/start-trial', authMiddleware, (req, res) =>
-  subscriptionController.startTrial(req, res)
+router.post(
+  '/start-trial',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionController.startTrial(req, res)
 );
 
 /**
@@ -119,8 +126,11 @@ router.post('/start-trial', authMiddleware, (req, res) =>
  *       401:
  *         description: No autenticado
  */
-router.post('/convert-trial', authMiddleware, (req, res) =>
-  subscriptionController.convertTrialToPaid(req, res)
+router.post(
+  '/convert-trial',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionController.convertTrialToPaid(req, res)
 );
 
 /**
@@ -161,6 +171,12 @@ router.post('/convert-trial', authMiddleware, (req, res) =>
  *       401:
  *         description: No autenticado
  */
-router.get('/limits', authMiddleware, (req, res) => subscriptionController.getLimits(req, res));
+// GET /limits puede ser usado por OWNER para ver límites de su suscripción
+// No requiere SAAS role, pero requiere tenant (validado en controller)
+router.get(
+  '/limits',
+  authMiddleware,
+  (req, res) => subscriptionController.getLimits(req, res)
+);
 
 export default router;
