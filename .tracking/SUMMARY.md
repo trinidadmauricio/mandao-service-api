@@ -71,6 +71,21 @@
   - Backend: Agregadas rutas para assign-logistics-provider y mark-as-automatic
   - Tests: 22 unit tests pasando (6 para AssignLogisticsProviderUseCase, 8 para MarkAsAutomaticUseCase, 8 para AssignDriverUseCase)
 
+### ✅ Parte 7: Aislamiento de LOGISTICS_PROVIDER (CRÍTICO)
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/logistics-provider-isolation
+- **Resumen**: Implementación completa de filtros y validaciones de ownership para LOGISTICS_PROVIDER y SUPERVISOR en todos los recursos.
+- **Cambios principales**:
+  - Backend: Drivers - Validación de ownership en getById, create, update, delete
+  - Backend: Vehicles - Validación de ownership en getById, create, update, delete
+  - Backend: Orders - Validación de ownership en getById (solo órdenes asignadas a su proveedor)
+  - Backend: Users - Filtro por logistics_provider_id en list
+  - Backend: Logistics Providers - Solo ver su propio proveedor en list y getById
+  - Backend: Actualizado todos los controllers para pasar contexto a los use cases
+  - Backend: Actualizado list para incluir SUPERVISOR además de LOGISTICS_PROVIDER
+  - Tests: 40 unit tests pasando (9 archivos de tests nuevos/actualizados)
+  - Documentación: Verificado que DeliveryZone y DeliveryRate no tienen logistics_provider_id en schema
+
 ## Partes Pendientes
 
 - [x] Parte 1: Deshabilitar HYBRID en Creación de Tenants ✅
