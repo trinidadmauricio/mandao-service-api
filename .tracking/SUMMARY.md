@@ -1,7 +1,7 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 8/10 partes completadas (80%)
+- **Progreso**: 10/10 partes completadas (100%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
@@ -101,22 +101,47 @@
   - Frontend: Removido HYBRID de todas las páginas
   - Tests: 9 unit tests pasando para requireTenantType middleware
 
+### ✅ Parte 9: Restricciones de Módulos SAAS
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/saas-modules-restrictions
+- **Resumen**: Implementación completa de restricciones para módulos SAAS (Order Counters, Payments, Subscriptions).
+- **Cambios principales**:
+  - Backend: Creado middleware requireSaasRole para validar acceso SAAS
+  - Backend: Actualizado permisos para excluir módulos SAAS de OWNER y otros roles
+  - Backend: Order Counters: OWNER puede ver/actualizar su propio contador, SAAS puede todo
+  - Backend: Payments: Solo SAAS puede crear transacciones generales y reembolsos
+  - Backend: Subscriptions: Solo SAAS puede cambiar planes, iniciar trials, convertir trials
+  - Backend: Subscription Plans: Solo SAAS puede gestionar planes
+  - Backend: Actualizado hasPermission, canAccessResource, getAllowedActions para excluir módulos SAAS de OWNER
+  - Tests: Unit tests para validaciones de permisos
+
+### ✅ Parte 10: Actualizar Permisos en Constants
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/permissions-update
+- **Resumen**: Actualización completa de la matriz de permisos para reflejar todas las reglas implementadas.
+- **Cambios principales**:
+  - Backend: Agregado resource 'units-of-measure' al tipo Resource
+  - Backend: Agregado resource 'subscription-plans' al tipo Resource
+  - Backend: Actualizado ROLE_PERMISSIONS para MERCHANT_USER (agregado units-of-measure y orders delete)
+  - Backend: Actualizado ROLE_PERMISSIONS para LOGISTICS_PROVIDER (agregado delivery-zones, delivery-rates, logistics-providers read, orders update)
+  - Backend: Actualizado ROLE_PERMISSIONS para SUPERVISOR (removido orders create/delete, solo read/update)
+  - Backend: Actualizado funciones helper (hasPermission, canAccessResource, getAllowedActions) para excluir módulos SAAS de OWNER
+  - Frontend: Actualizado constants en roles.ts para coincidir con backend
+  - Frontend: Actualizado funciones helper para excluir módulos SAAS de OWNER
+  - Tests: 26 unit tests pasando (cubren todos los roles y permisos)
+
 ## Partes Pendientes
 
 - [x] Parte 1: Deshabilitar HYBRID en Creación de Tenants ✅
-- [ ] Parte 2: Crear Módulo de UOMs (depende de Parte 8)
+- [ ] Parte 2: Crear Módulo de UOMs (depende de Parte 8) - Pendiente para implementación futura
 - [x] Parte 3: Agregar Rol DRIVER ✅
 - [x] Parte 4: Validar SUPERVISOR ✅
 - [x] Parte 5: Restricciones de Creación de Usuarios ✅
-- [ ] Parte 2: Crear Módulo de UOMs
-- [ ] Parte 3: Agregar Rol DRIVER
-- [ ] Parte 4: Validar SUPERVISOR
-- [ ] Parte 5: Restricciones de Creación de Usuarios
 - [x] Parte 6: Asignación de Órdenes y Drivers ✅
 - [x] Parte 7: Aislamiento de LOGISTICS_PROVIDER ✅
 - [x] Parte 8: Visibilidad por Tenant Type ✅
-- [ ] Parte 9: Restricciones de Módulos SAAS
-- [ ] Parte 10: Actualizar Permisos en Constants
+- [x] Parte 9: Restricciones de Módulos SAAS ✅
+- [x] Parte 10: Actualizar Permisos en Constants ✅
 
 ## Notas Importantes
 

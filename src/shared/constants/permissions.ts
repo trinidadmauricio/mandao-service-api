@@ -22,7 +22,9 @@ export type Resource =
   | 'payments'
   | 'reports'
   | 'subscriptions'
+  | 'subscription-plans'
   | 'order-counters'
+  | 'units-of-measure'
   | 'storefront'
   | '*'; // Wildcard para acceso total
 
@@ -60,10 +62,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.SUPERVISOR]: [
     { resource: 'dashboard', action: 'read' },
     { resource: 'orders', action: 'read' },
-    { resource: 'orders', action: 'create' },
     { resource: 'orders', action: 'update' },
-    { resource: 'orders', action: 'delete' },
-    { resource: 'orders', action: 'manage' },
     { resource: 'drivers', action: 'read' },
     { resource: 'drivers', action: 'create' },
     { resource: 'drivers', action: 'update' },
@@ -90,6 +89,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'orders', action: 'read' },
     { resource: 'orders', action: 'create' },
     { resource: 'orders', action: 'update' },
+    { resource: 'orders', action: 'delete' },
     { resource: 'products', action: 'read' },
     { resource: 'products', action: 'create' },
     { resource: 'products', action: 'update' },
@@ -106,11 +106,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'branches', action: 'create' },
     { resource: 'branches', action: 'update' },
     { resource: 'branches', action: 'delete' },
+    { resource: 'units-of-measure', action: 'read' },
+    { resource: 'units-of-measure', action: 'create' },
+    { resource: 'units-of-measure', action: 'update' },
+    { resource: 'units-of-measure', action: 'delete' },
     { resource: 'reports', action: 'read' },
   ],
   [UserRole.LOGISTICS_PROVIDER]: [
     { resource: 'dashboard', action: 'read' },
     { resource: 'orders', action: 'read' },
+    { resource: 'orders', action: 'update' },
     { resource: 'drivers', action: 'read' },
     { resource: 'drivers', action: 'create' },
     { resource: 'drivers', action: 'update' },
@@ -119,6 +124,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'vehicles', action: 'create' },
     { resource: 'vehicles', action: 'update' },
     { resource: 'vehicles', action: 'delete' },
+    { resource: 'delivery-zones', action: 'read' },
+    { resource: 'delivery-zones', action: 'create' },
+    { resource: 'delivery-zones', action: 'update' },
+    { resource: 'delivery-zones', action: 'delete' },
+    { resource: 'delivery-rates', action: 'read' },
+    { resource: 'delivery-rates', action: 'create' },
+    { resource: 'delivery-rates', action: 'update' },
+    { resource: 'delivery-rates', action: 'delete' },
+    { resource: 'logistics-providers', action: 'read' },
     { resource: 'users', action: 'read' },
     { resource: 'users', action: 'create' },
     { resource: 'users', action: 'update' },
