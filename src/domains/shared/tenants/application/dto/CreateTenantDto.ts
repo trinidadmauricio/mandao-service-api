@@ -11,7 +11,7 @@ export const createTenantSchema = z.object({
     .max(50)
     .regex(/^[a-z0-9-]+$/),
   name: z.string().min(1).max(255),
-  type: z.enum(['RETAIL', 'ON_DEMAND', 'HYBRID']),
+  type: z.enum(['RETAIL', 'ON_DEMAND']),
   subscription_plan_id: z.string().uuid().optional(),
   default_locale: z.string().length(2).optional(),
   default_currency: z.string().length(3).optional(),

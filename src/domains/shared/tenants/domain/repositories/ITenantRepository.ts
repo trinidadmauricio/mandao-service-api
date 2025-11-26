@@ -16,7 +16,7 @@ export interface ITenantRepository {
 export interface CreateTenantData {
   slug: string;
   name: string;
-  type: 'RETAIL' | 'ON_DEMAND' | 'HYBRID';
+  type: 'RETAIL' | 'ON_DEMAND';
   subscription_plan_id?: string;
   default_locale?: string;
   default_currency?: string;
