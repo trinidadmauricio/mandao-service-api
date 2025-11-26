@@ -26,6 +26,15 @@ export class TenantController {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
+      // Validación explícita: HYBRID está deshabilitado
+      if (req.body.type === 'HYBRID') {
+        res.status(400).json({
+          status: 'error',
+          message: 'HYBRID tenant type is not allowed. Only RETAIL and ON_DEMAND are supported.',
+        });
+        return;
+      }
+      
       const dto = createTenantSchema.parse(req.body);
       const tenant = await this.createTenantUseCase.execute(dto);
 

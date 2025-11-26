@@ -83,5 +83,37 @@ describe('CreateTenantUseCase', () => {
       'Tenant with this slug already exists'
     );
   });
+
+  it('should create ON_DEMAND tenant successfully', async () => {
+    const dto = {
+      slug: 'on-demand-tenant',
+      name: 'On Demand Tenant',
+      type: 'ON_DEMAND' as const,
+    };
+
+    const tenant = new Tenant(
+      'tenant-id',
+      'on-demand-tenant',
+      'On Demand Tenant',
+      'ON_DEMAND',
+      null,
+      'TRIAL',
+      null,
+      'es',
+      'USD',
+      null,
+      new Date(),
+      new Date()
+    );
+
+    mockRepository.findBySlug.mockResolvedValue(null);
+    mockRepository.create.mockResolvedValue(tenant);
+
+    const result = await useCase.execute(dto);
+
+    expect(result).toEqual(tenant);
+    expect(mockRepository.findBySlug).toHaveBeenCalledWith('on-demand-tenant');
+    expect(mockRepository.create).toHaveBeenCalled();
+  });
 });
 
