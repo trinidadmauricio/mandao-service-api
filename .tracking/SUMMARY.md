@@ -1,7 +1,7 @@
 # Resumen General del Proyecto: Seguridad y Visibilidad
 
 ## Estado General
-- **Progreso**: 7/10 partes completadas (70%)
+- **Progreso**: 8/10 partes completadas (80%)
 - **Última actualización**: 2024-01-15
 - **Branch base**: feature/drivers-filters
 
@@ -86,6 +86,21 @@
   - Tests: 40 unit tests pasando (9 archivos de tests nuevos/actualizados)
   - Documentación: Verificado que DeliveryZone y DeliveryRate no tienen logistics_provider_id en schema
 
+### ✅ Parte 8: Visibilidad por Tenant Type
+- **Fecha de completación**: 2024-01-15
+- **Branch**: feature/tenant-type-visibility
+- **Resumen**: Implementación completa de visibilidad de módulos según tenant type (RETAIL vs ON_DEMAND).
+- **Cambios principales**:
+  - Backend: Actualizado requireTenantType middleware para permitir LOGISTICS_PROVIDER/SUPERVISOR y SAAS roles
+  - Backend: Agregado requireTenantType(['RETAIL']) a todas las rutas de catálogo (products, categories, brands, branches, product-variants)
+  - Backend: Removido HYBRID de tipos permitidos
+  - Backend: Agregados middlewares de seguridad a product-variants
+  - Frontend: Actualizado Sidebar para ocultar módulos de catálogo para ON_DEMAND
+  - Frontend: Actualizado PermissionGuard para validar tenant type
+  - Frontend: Agregado allowedTenantTypes={['RETAIL']} a todas las páginas de catálogo
+  - Frontend: Removido HYBRID de todas las páginas
+  - Tests: 9 unit tests pasando para requireTenantType middleware
+
 ## Partes Pendientes
 
 - [x] Parte 1: Deshabilitar HYBRID en Creación de Tenants ✅
@@ -99,7 +114,7 @@
 - [ ] Parte 5: Restricciones de Creación de Usuarios
 - [x] Parte 6: Asignación de Órdenes y Drivers ✅
 - [x] Parte 7: Aislamiento de LOGISTICS_PROVIDER ✅
-- [ ] Parte 8: Visibilidad por Tenant Type
+- [x] Parte 8: Visibilidad por Tenant Type ✅
 - [ ] Parte 9: Restricciones de Módulos SAAS
 - [ ] Parte 10: Actualizar Permisos en Constants
 
