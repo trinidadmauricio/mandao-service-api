@@ -9,6 +9,7 @@ import { OrderCounterController } from '../controllers/OrderCounterController';
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
 import { requireTenantMiddleware } from '../../../../../shared/middleware/require-tenant.middleware';
 import { requirePermission } from '../../../../../shared/middleware/require-permission.middleware';
+import { requireSaasRole } from '../../../../../shared/middleware/require-saas-role.middleware';
 
 const router = Router();
 
@@ -140,6 +141,7 @@ router.post(
   '/',
   authMiddleware,
   requireTenantMiddleware,
+  requireSaasRole, // Solo SAAS puede crear contadores
   requirePermission('order-counters', 'create'),
   (req, res) => orderCounterController.create(req, res)
 );
@@ -251,6 +253,9 @@ router.post(
  *       401:
  *         description: No autenticado
  */
+// PATCH permite OWNER actualizar su propio contador (validado por tenant)
+// pero también permite SAAS actualizar cualquier contador
+// La validación se hace en el controller o use case
 router.patch(
   '/tenant/:tenant_id',
   authMiddleware,

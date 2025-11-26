@@ -62,6 +62,16 @@ export class OrderCounterController {
         return;
       }
 
+      // Validar que OWNER solo puede ver su propio contador
+      // SAAS roles pueden ver cualquier contador
+      if (req.user?.role === 'OWNER' && req.user.tenant_id !== tenant_id) {
+        res.status(403).json({
+          status: 'error',
+          message: 'You can only access your own order counter',
+        });
+        return;
+      }
+
       const counter = await this.getOrderCounterUseCase.execute(tenant_id);
 
       res.status(200).json({
@@ -91,6 +101,16 @@ export class OrderCounterController {
         res.status(400).json({
           status: 'error',
           message: 'Tenant ID is required',
+        });
+        return;
+      }
+
+      // Validar que OWNER solo puede incrementar su propio contador
+      // SAAS roles pueden incrementar cualquier contador
+      if (req.user?.role === 'OWNER' && req.user.tenant_id !== tenant_id) {
+        res.status(403).json({
+          status: 'error',
+          message: 'You can only increment your own order counter',
         });
         return;
       }
@@ -130,6 +150,16 @@ export class OrderCounterController {
         res.status(400).json({
           status: 'error',
           message: 'Tenant ID is required',
+        });
+        return;
+      }
+
+      // Validar que OWNER solo puede actualizar su propio contador
+      // SAAS roles pueden actualizar cualquier contador
+      if (req.user?.role === 'OWNER' && req.user.tenant_id !== tenant_id) {
+        res.status(403).json({
+          status: 'error',
+          message: 'You can only update your own order counter',
         });
         return;
       }

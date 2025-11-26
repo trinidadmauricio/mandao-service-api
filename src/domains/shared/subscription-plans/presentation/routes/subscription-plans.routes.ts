@@ -7,6 +7,7 @@ import { container } from '../../../../../config/inversify.config';
 import { TYPES } from '../../../../../config/types';
 import { SubscriptionPlanController } from '../controllers/SubscriptionPlanController';
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
+import { requireSaasRole } from '../../../../../shared/middleware/require-saas-role.middleware';
 
 const router = Router();
 
@@ -30,7 +31,12 @@ const subscriptionPlanController = container.get<SubscriptionPlanController>(
  *       401:
  *         description: No autenticado
  */
-router.get('/', authMiddleware, (req, res) => subscriptionPlanController.list(req, res));
+router.get(
+  '/',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionPlanController.list(req, res)
+);
 
 /**
  * @swagger
@@ -56,7 +62,12 @@ router.get('/', authMiddleware, (req, res) => subscriptionPlanController.list(re
  *       401:
  *         description: No autenticado
  */
-router.get('/:id', authMiddleware, (req, res) => subscriptionPlanController.getById(req, res));
+router.get(
+  '/:id',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionPlanController.getById(req, res)
+);
 
 /**
  * @swagger
@@ -135,7 +146,12 @@ router.get('/:id', authMiddleware, (req, res) => subscriptionPlanController.getB
  *       401:
  *         description: No autenticado
  */
-router.post('/', authMiddleware, (req, res) => subscriptionPlanController.create(req, res));
+router.post(
+  '/',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionPlanController.create(req, res)
+);
 
 /**
  * @swagger
@@ -184,7 +200,12 @@ router.post('/', authMiddleware, (req, res) => subscriptionPlanController.create
  *       401:
  *         description: No autenticado
  */
-router.patch('/:id', authMiddleware, (req, res) => subscriptionPlanController.update(req, res));
+router.patch(
+  '/:id',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionPlanController.update(req, res)
+);
 
 /**
  * @swagger
@@ -210,6 +231,11 @@ router.patch('/:id', authMiddleware, (req, res) => subscriptionPlanController.up
  *       401:
  *         description: No autenticado
  */
-router.delete('/:id', authMiddleware, (req, res) => subscriptionPlanController.delete(req, res));
+router.delete(
+  '/:id',
+  authMiddleware,
+  requireSaasRole,
+  (req, res) => subscriptionPlanController.delete(req, res)
+);
 
 export default router;
