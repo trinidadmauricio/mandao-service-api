@@ -5,6 +5,7 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { IDriverRepository } from '../../domain/repositories/IDriverRepository';
+import { IUserRepository } from '../../../../shared/users/domain/repositories/IUserRepository';
 import { Driver } from '../../domain/entities/Driver';
 import { CreateDriverDto } from '../dto/CreateDriverDto';
 import { TYPES } from '../../../../../config/types';
@@ -17,9 +18,28 @@ export interface CreateDriverContext {
 
 @injectable()
 export class CreateDriverUseCase {
-  constructor(@inject(TYPES.IDriverRepository) private repository: IDriverRepository) {}
+  constructor(
+    @inject(TYPES.IDriverRepository) private repository: IDriverRepository,
+    @inject(TYPES.IUserRepository) private userRepository: IUserRepository
+  ) {}
 
   async execute(dto: CreateDriverDto, context?: CreateDriverContext): Promise<Driver> {
+    // Validar que el usuario existe y tiene rol DRIVER
+    const user = await this.userRepository.findById(dto.user_id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.role !== UserRole.DRIVER) {
+      throw new Error(`User must have role DRIVER. Current role: ${user.role}`);
+    }
+
+    // Validar que el usuario no esté ya asociado a otro driver
+    const existingDriver = await this.repository.findByUserId(dto.user_id);
+    if (existingDriver) {
+      throw new Error('User is already associated with another driver');
+    }
+
     // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, asignar automáticamente su logistics_provider_id
     let logisticsProviderId = dto.logistics_provider_id;
 
@@ -31,14 +51,24 @@ export class CreateDriverUseCase {
         (currentRole === UserRole.LOGISTICS_PROVIDER || currentRole === UserRole.SUPERVISOR) &&
         currentUserLogisticsProviderId
       ) {
-        // Asignar automáticamente el logistics_provider_id del usuario
-        logisticsProviderId = currentUserLogisticsProviderId;
-
         // Validar que no intenten crear un driver con otro logistics_provider_id
         if (dto.logistics_provider_id && dto.logistics_provider_id !== currentUserLogisticsProviderId) {
           throw new Error('You can only create drivers for your own logistics provider');
         }
+
+        // Validar que el usuario tenga el mismo logistics_provider_id
+        if (user.logistics_provider_id && user.logistics_provider_id !== currentUserLogisticsProviderId) {
+          throw new Error('User logistics_provider_id does not match your logistics provider');
+        }
+
+        // Asignar automáticamente el logistics_provider_id del usuario
+        logisticsProviderId = currentUserLogisticsProviderId;
       }
+    }
+
+    // Validar que el logistics_provider_id del usuario coincida con el del driver (solo si no hay contexto)
+    if (!context && user.logistics_provider_id && logisticsProviderId && user.logistics_provider_id !== logisticsProviderId) {
+      throw new Error('User logistics_provider_id does not match driver logistics_provider_id');
     }
 
     // Crear driver

@@ -12,6 +12,7 @@ export interface DriversListResult {
 
 export interface IDriverRepository {
   findById(id: string): Promise<Driver | null>;
+  findByUserId(user_id: string): Promise<Driver | null>;
   findAll(logistics_provider_id?: string, availability_status?: DriverStatus): Promise<Driver[]>;
   findAllWithFilters(
     logistics_provider_id: string | undefined,
