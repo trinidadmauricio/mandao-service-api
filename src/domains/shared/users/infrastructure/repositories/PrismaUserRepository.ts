@@ -146,23 +146,33 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async update(id: string, data: UpdateUserData): Promise<User> {
+    // Construir objeto de actualización solo con campos definidos
+    const updateData: Prisma.UserUpdateInput = {};
+
+    if (data.first_name !== undefined) updateData.first_name = data.first_name;
+    if (data.last_name !== undefined) updateData.last_name = data.last_name;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.role !== undefined) updateData.role = data.role;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.password_hash !== undefined) updateData.password_hash = data.password_hash;
+    if (data.email_verified_at !== undefined) updateData.email_verified_at = data.email_verified_at;
+    if (data.email_verification_token !== undefined) updateData.email_verification_token = data.email_verification_token;
+    if (data.password_reset_token !== undefined) updateData.password_reset_token = data.password_reset_token;
+    if (data.password_reset_expires_at !== undefined) updateData.password_reset_expires_at = data.password_reset_expires_at;
+    if (data.last_login_at !== undefined) updateData.last_login_at = data.last_login_at;
+    if (data.failed_login_attempts !== undefined) updateData.failed_login_attempts = data.failed_login_attempts;
+    if (data.locked_until !== undefined) updateData.locked_until = data.locked_until;
+    if (data.logistics_provider_id !== undefined) {
+      if (data.logistics_provider_id === null) {
+        updateData.logistics_provider = { disconnect: true };
+      } else {
+        updateData.logistics_provider = { connect: { id: data.logistics_provider_id } };
+      }
+    }
+
     const updated = await this.prisma.user.update({
       where: { id },
-      data: {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        phone: data.phone,
-        role: data.role,
-        status: data.status,
-        password_hash: data.password_hash,
-        email_verified_at: data.email_verified_at,
-        email_verification_token: data.email_verification_token,
-        password_reset_token: data.password_reset_token,
-        password_reset_expires_at: data.password_reset_expires_at,
-        last_login_at: data.last_login_at,
-        failed_login_attempts: data.failed_login_attempts,
-        locked_until: data.locked_until,
-      },
+      data: updateData,
     });
 
     return this.toDomain(updated);

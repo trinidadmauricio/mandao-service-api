@@ -11,6 +11,7 @@ import { StripeWebhookController } from '../controllers/StripeWebhookController'
 import { authMiddleware } from '../../../../../shared/middleware/auth.middleware';
 import { requireTenantMiddleware } from '../../../../../shared/middleware/require-tenant.middleware';
 import { requireSaasRole } from '../../../../../shared/middleware/require-saas-role.middleware';
+import { requirePermission } from '../../../../../shared/middleware/require-permission.middleware';
 
 const router = Router();
 
@@ -94,6 +95,121 @@ router.post(
  *         description: No autenticado
  */
 router.get('/orders/:orderId/payments', authMiddleware, (req, res) => paymentController.getByOrderId(req, res));
+
+/**
+ * @swagger
+ * /api/v1/payments/transactions:
+ *   get:
+ *     summary: Listar transacciones de pago
+ *     description: Obtiene la lista de transacciones de pago del tenant actual con filtros opcionales
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: transaction_type
+ *         schema:
+ *           type: string
+ *           enum: [CHARGE, REFUND, AUTHORIZATION, CAPTURE]
+ *         description: Filtrar por tipo de transacción
+ *       - in: query
+ *         name: payment_method
+ *         schema:
+ *           type: string
+ *           enum: [CARD, CASH, TRANSFER, WALLET]
+ *         description: Filtrar por método de pago
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, COMPLETED, FAILED, CANCELLED]
+ *         description: Filtrar por estado
+ *       - in: query
+ *         name: order_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filtrar por ID de orden
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Fecha de inicio para filtrar transacciones
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Fecha de fin para filtrar transacciones
+ *     responses:
+ *       200:
+ *         description: Lista de transacciones de pago
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       tenant_id:
+ *                         type: string
+ *                       order_id:
+ *                         type: string
+ *                         format: uuid
+ *                         nullable: true
+ *                       transaction_type:
+ *                         type: string
+ *                       payment_method:
+ *                         type: string
+ *                       amount:
+ *                         type: number
+ *                       currency:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       payment_intent_id:
+ *                         type: string
+ *                         nullable: true
+ *                       charge_id:
+ *                         type: string
+ *                         nullable: true
+ *                       refund_id:
+ *                         type: string
+ *                         nullable: true
+ *                       card_last4:
+ *                         type: string
+ *                         nullable: true
+ *                       card_brand:
+ *                         type: string
+ *                         nullable: true
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: No autenticado
+ */
+router.get(
+  '/transactions',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('payments', 'read'),
+  (req, res) => paymentController.listTransactions(req, res)
+);
 
 /**
  * @swagger

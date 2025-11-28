@@ -241,6 +241,7 @@ import { DeleteOAuthClientUseCase } from '../domains/shared/oauth/application/us
 // USE CASES - Shared - Payments
 // ============================================
 import { CreatePaymentTransactionUseCase } from '../domains/shared/payments/application/use-cases/CreatePaymentTransactionUseCase';
+import { ListPaymentTransactionsUseCase } from '../domains/shared/payments/application/use-cases/ListPaymentTransactionsUseCase';
 import { UpdatePaymentStatusUseCase } from '../domains/shared/payments/application/use-cases/UpdatePaymentStatusUseCase';
 import { CreateStripeCheckoutUseCase } from '../domains/shared/payments/application/use-cases/CreateStripeCheckoutUseCase';
 import { CreateRefundUseCase } from '../domains/shared/payments/application/use-cases/CreateRefundUseCase';
@@ -651,11 +652,17 @@ container
 // ============================================
 // USE CASES - Shared - OAuth
 // ============================================
-container.bind<CreateOAuthClientUseCase>(TYPES.CreateOAuthClientUseCase).to(CreateOAuthClientUseCase);
+container
+  .bind<CreateOAuthClientUseCase>(TYPES.CreateOAuthClientUseCase)
+  .to(CreateOAuthClientUseCase);
 container.bind<GetOAuthClientUseCase>(TYPES.GetOAuthClientUseCase).to(GetOAuthClientUseCase);
 container.bind<ListOAuthClientsUseCase>(TYPES.ListOAuthClientsUseCase).to(ListOAuthClientsUseCase);
-container.bind<UpdateOAuthClientUseCase>(TYPES.UpdateOAuthClientUseCase).to(UpdateOAuthClientUseCase);
-container.bind<DeleteOAuthClientUseCase>(TYPES.DeleteOAuthClientUseCase).to(DeleteOAuthClientUseCase);
+container
+  .bind<UpdateOAuthClientUseCase>(TYPES.UpdateOAuthClientUseCase)
+  .to(UpdateOAuthClientUseCase);
+container
+  .bind<DeleteOAuthClientUseCase>(TYPES.DeleteOAuthClientUseCase)
+  .to(DeleteOAuthClientUseCase);
 
 // ============================================
 // USE CASES - Shared - Payments
@@ -663,7 +670,12 @@ container.bind<DeleteOAuthClientUseCase>(TYPES.DeleteOAuthClientUseCase).to(Dele
 container
   .bind<CreatePaymentTransactionUseCase>(TYPES.CreatePaymentTransactionUseCase)
   .to(CreatePaymentTransactionUseCase);
-container.bind<UpdatePaymentStatusUseCase>(TYPES.UpdatePaymentStatusUseCase).to(UpdatePaymentStatusUseCase);
+container
+  .bind<ListPaymentTransactionsUseCase>(TYPES.ListPaymentTransactionsUseCase)
+  .to(ListPaymentTransactionsUseCase);
+container
+  .bind<UpdatePaymentStatusUseCase>(TYPES.UpdatePaymentStatusUseCase)
+  .to(UpdatePaymentStatusUseCase);
 container
   .bind<CreateStripeCheckoutUseCase>(TYPES.CreateStripeCheckoutUseCase)
   .to(CreateStripeCheckoutUseCase);
@@ -678,21 +690,31 @@ container
 container
   .bind<CreateOnDemandOrderUseCase>(TYPES.CreateOnDemandOrderUseCase)
   .to(CreateOnDemandOrderUseCase);
-container.bind<CreateRetailOrderUseCase>(TYPES.CreateRetailOrderUseCase).to(CreateRetailOrderUseCase);
+container
+  .bind<CreateRetailOrderUseCase>(TYPES.CreateRetailOrderUseCase)
+  .to(CreateRetailOrderUseCase);
 container.bind<GetOrderUseCase>(TYPES.GetOrderUseCase).to(GetOrderUseCase);
 container.bind<ListOrdersUseCase>(TYPES.ListOrdersUseCase).to(ListOrdersUseCase);
 container.bind<AssignDriverUseCase>(TYPES.AssignDriverUseCase).to(AssignDriverUseCase);
-container.bind<AssignLogisticsProviderUseCase>(TYPES.AssignLogisticsProviderUseCase).to(AssignLogisticsProviderUseCase);
+container
+  .bind<AssignLogisticsProviderUseCase>(TYPES.AssignLogisticsProviderUseCase)
+  .to(AssignLogisticsProviderUseCase);
 container.bind<MarkAsAutomaticUseCase>(TYPES.MarkAsAutomaticUseCase).to(MarkAsAutomaticUseCase);
 container.bind<ChangeBranchUseCase>(TYPES.ChangeBranchUseCase).to(ChangeBranchUseCase);
-container.bind<UpdateOrderStatusUseCase>(TYPES.UpdateOrderStatusUseCase).to(UpdateOrderStatusUseCase);
+container
+  .bind<UpdateOrderStatusUseCase>(TYPES.UpdateOrderStatusUseCase)
+  .to(UpdateOrderStatusUseCase);
 container.bind<ModifyItemsUseCase>(TYPES.ModifyItemsUseCase).to(ModifyItemsUseCase);
-container.bind<RecalculateTotalsUseCase>(TYPES.RecalculateTotalsUseCase).to(RecalculateTotalsUseCase);
+container
+  .bind<RecalculateTotalsUseCase>(TYPES.RecalculateTotalsUseCase)
+  .to(RecalculateTotalsUseCase);
 container
   .bind<GetOrderByTrackingCodeUseCase>(TYPES.GetOrderByTrackingCodeUseCase)
   .to(GetOrderByTrackingCodeUseCase);
 container.bind<AddDeliveryProofUseCase>(TYPES.AddDeliveryProofUseCase).to(AddDeliveryProofUseCase);
-container.bind<AddDeliveryRatingUseCase>(TYPES.AddDeliveryRatingUseCase).to(AddDeliveryRatingUseCase);
+container
+  .bind<AddDeliveryRatingUseCase>(TYPES.AddDeliveryRatingUseCase)
+  .to(AddDeliveryRatingUseCase);
 
 // ============================================
 // USE CASES - Shared - Auth
@@ -700,23 +722,33 @@ container.bind<AddDeliveryRatingUseCase>(TYPES.AddDeliveryRatingUseCase).to(AddD
 container.bind<LoginUseCase>(TYPES.LoginUseCase).to(LoginUseCase);
 container.bind<RegisterUseCase>(TYPES.RegisterUseCase).to(RegisterUseCase);
 container.bind<VerifyEmailUseCase>(TYPES.VerifyEmailUseCase).to(VerifyEmailUseCase);
-container.bind<RequestPasswordResetUseCase>(TYPES.RequestPasswordResetUseCase).to(RequestPasswordResetUseCase);
+container
+  .bind<RequestPasswordResetUseCase>(TYPES.RequestPasswordResetUseCase)
+  .to(RequestPasswordResetUseCase);
 container.bind<ResetPasswordUseCase>(TYPES.ResetPasswordUseCase).to(ResetPasswordUseCase);
 
 // ============================================
 // USE CASES - Shared - Reports
 // ============================================
 container.bind<GetOrdersReportUseCase>(TYPES.GetOrdersReportUseCase).to(GetOrdersReportUseCase);
-container.bind<ExportOrdersToCsvUseCase>(TYPES.ExportOrdersToCsvUseCase).to(ExportOrdersToCsvUseCase);
-container.bind<GetInventoryReportUseCase>(TYPES.GetInventoryReportUseCase).to(GetInventoryReportUseCase);
+container
+  .bind<ExportOrdersToCsvUseCase>(TYPES.ExportOrdersToCsvUseCase)
+  .to(ExportOrdersToCsvUseCase);
+container
+  .bind<GetInventoryReportUseCase>(TYPES.GetInventoryReportUseCase)
+  .to(GetInventoryReportUseCase);
 container.bind<GetDriversReportUseCase>(TYPES.GetDriversReportUseCase).to(GetDriversReportUseCase);
 container.bind<GetDashboardKpisUseCase>(TYPES.GetDashboardKpisUseCase).to(GetDashboardKpisUseCase);
 
 // ============================================
 // USE CASES - Retail - Storefront
 // ============================================
-container.bind<ListStorefrontProductsUseCase>(TYPES.ListStorefrontProductsUseCase).to(ListStorefrontProductsUseCase);
-container.bind<GetStorefrontProductUseCase>(TYPES.GetStorefrontProductUseCase).to(GetStorefrontProductUseCase);
+container
+  .bind<ListStorefrontProductsUseCase>(TYPES.ListStorefrontProductsUseCase)
+  .to(ListStorefrontProductsUseCase);
+container
+  .bind<GetStorefrontProductUseCase>(TYPES.GetStorefrontProductUseCase)
+  .to(GetStorefrontProductUseCase);
 container.bind<CheckoutUseCase>(TYPES.CheckoutUseCase).to(CheckoutUseCase);
 
 // ============================================
@@ -748,7 +780,9 @@ container.bind<StripeWebhookController>(TYPES.StripeWebhookController).to(Stripe
 container.bind<OrderController>(TYPES.OrderController).to(OrderController);
 container.bind<PublicOrderController>(TYPES.PublicOrderController).to(PublicOrderController);
 container.bind<VehicleController>(TYPES.VehicleController).to(VehicleController);
-container.bind<LogisticsProviderController>(TYPES.LogisticsProviderController).to(LogisticsProviderController);
+container
+  .bind<LogisticsProviderController>(TYPES.LogisticsProviderController)
+  .to(LogisticsProviderController);
 container.bind<DriverController>(TYPES.DriverController).to(DriverController);
 container.bind<DeliveryRateController>(TYPES.DeliveryRateController).to(DeliveryRateController);
 container.bind<DeliveryZoneController>(TYPES.DeliveryZoneController).to(DeliveryZoneController);
