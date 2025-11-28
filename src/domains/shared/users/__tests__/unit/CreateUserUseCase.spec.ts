@@ -33,11 +33,12 @@ describe('CreateUserUseCase', () => {
       first_name: 'John',
       last_name: 'Doe',
       role: UserRole.MERCHANT_USER,
+      tenant_id: 'tenant-id',
     };
 
     const user = new User(
       'user-id',
-      null,
+      'tenant-id',
       'test@example.com',
       'hashed-password',
       UserRole.MERCHANT_USER,
@@ -79,6 +80,7 @@ describe('CreateUserUseCase', () => {
       first_name: 'John',
       last_name: 'Doe',
       role: UserRole.MERCHANT_USER,
+      tenant_id: 'tenant-id',
     };
 
     const existingUser = new User(
@@ -267,7 +269,136 @@ describe('CreateUserUseCase', () => {
       };
 
       await expect(useCase.execute(dto, context)).rejects.toThrow(
-        'LOGISTICS_PROVIDER user must have logistics_provider_id to create SUPERVISOR'
+        'LOGISTICS_PROVIDER user must have logistics_provider_id to create users'
+      );
+    });
+  });
+
+  describe('DRIVER creation restrictions', () => {
+    it('should allow LOGISTICS_PROVIDER to create DRIVER', async () => {
+      const dto = {
+        email: 'driver@example.com',
+        password: 'password123',
+        first_name: 'Driver',
+        last_name: 'User',
+        role: UserRole.DRIVER,
+        // No se pasa logistics_provider_id, debe asignarse automáticamente
+      };
+
+      const driver = new User(
+        'user-id',
+        null, // tenant_id
+        'driver@example.com',
+        'hashed-password',
+        UserRole.DRIVER,
+        'Driver',
+        'User',
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
+        null,
+        'ACTIVE',
+        'logistics-provider-id', // Asignado automáticamente
+        new Date(),
+        new Date()
+      );
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      mockRepository.findByEmail.mockResolvedValue(null);
+      mockRepository.create.mockResolvedValue(driver);
+
+      const result = await useCase.execute(dto, context);
+
+      expect(result).toEqual(driver);
+      const createCall = mockRepository.create.mock.calls[0][0];
+      expect(createCall.role).toBe(UserRole.DRIVER);
+      expect(createCall.logistics_provider_id).toBe('logistics-provider-id');
+      expect(createCall.tenant_id).toBeNull();
+    });
+
+    it('should reject DRIVER creation if LOGISTICS_PROVIDER has no logistics_provider_id', async () => {
+      const dto = {
+        email: 'driver@example.com',
+        password: 'password123',
+        first_name: 'Driver',
+        last_name: 'User',
+        role: UserRole.DRIVER,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: null,
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER user must have logistics_provider_id to create users'
+      );
+    });
+
+    it('should reject DRIVER creation with tenant_id', async () => {
+      const dto = {
+        email: 'driver@example.com',
+        password: 'password123',
+        first_name: 'Driver',
+        last_name: 'User',
+        role: UserRole.DRIVER,
+        tenant_id: 'tenant-id',
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'DRIVER role cannot have tenant_id'
+      );
+    });
+
+    it('should reject DRIVER creation without logistics_provider_id', async () => {
+      const dto = {
+        email: 'driver@example.com',
+        password: 'password123',
+        first_name: 'Driver',
+        last_name: 'User',
+        role: UserRole.DRIVER,
+        // No logistics_provider_id
+      };
+
+      const context = {
+        currentUserRole: UserRole.SAAS_ADMIN,
+        currentUserLogisticsProviderId: null,
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'DRIVER role requires logistics_provider_id'
+      );
+    });
+
+    it('should reject non-DRIVER/SUPERVISOR creation by LOGISTICS_PROVIDER', async () => {
+      const dto = {
+        email: 'merchant@example.com',
+        password: 'password123',
+        first_name: 'Merchant',
+        last_name: 'User',
+        role: UserRole.MERCHANT_USER,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
       );
     });
   });
@@ -277,13 +408,23 @@ describe('CreateUserUseCase', () => {
       const roles = [UserRole.SAAS_EDITOR, UserRole.OWNER, UserRole.LOGISTICS_PROVIDER, UserRole.MERCHANT_USER, UserRole.DRIVER];
       
       for (const role of roles) {
-        const dto = {
+        const dto: any = {
           email: `test-${role}@example.com`,
           password: 'password123',
           first_name: 'Test',
           last_name: 'User',
           role,
         };
+        
+        // Agregar tenant_id para roles que lo requieren
+        if (role === UserRole.OWNER || role === UserRole.MERCHANT_USER) {
+          dto.tenant_id = 'tenant-id';
+        }
+        
+        // Agregar logistics_provider_id para DRIVER
+        if (role === UserRole.DRIVER) {
+          dto.logistics_provider_id = 'logistics-provider-id';
+        }
 
         const user = new User(
           'user-id',
@@ -424,13 +565,23 @@ describe('CreateUserUseCase', () => {
       const allowedRoles = [UserRole.OWNER, UserRole.MERCHANT_USER, UserRole.LOGISTICS_PROVIDER, UserRole.DRIVER];
       
       for (const role of allowedRoles) {
-        const dto = {
+        const dto: any = {
           email: `test-${role}@example.com`,
           password: 'password123',
           first_name: 'Test',
           last_name: 'User',
           role,
         };
+        
+        // Agregar tenant_id para roles que lo requieren
+        if (role === UserRole.OWNER || role === UserRole.MERCHANT_USER) {
+          dto.tenant_id = 'tenant-id';
+        }
+        
+        // Agregar logistics_provider_id para DRIVER
+        if (role === UserRole.DRIVER) {
+          dto.logistics_provider_id = 'logistics-provider-id';
+        }
 
         const user = new User(
           'user-id',
@@ -474,11 +625,12 @@ describe('CreateUserUseCase', () => {
         first_name: 'Merchant',
         last_name: 'User',
         role: UserRole.MERCHANT_USER,
+        tenant_id: 'tenant-id',
       };
 
       const user = new User(
         'user-id',
-        null,
+        'tenant-id',
         'merchant@example.com',
         'hashed-password',
         UserRole.MERCHANT_USER,
@@ -529,7 +681,56 @@ describe('CreateUserUseCase', () => {
       );
     });
 
-    it('should reject user creation by SUPERVISOR', async () => {
+    it('should allow SUPERVISOR to create DRIVER', async () => {
+      const dto = {
+        email: 'driver@example.com',
+        password: 'password123',
+        first_name: 'Driver',
+        last_name: 'User',
+        role: UserRole.DRIVER,
+        // No se pasa logistics_provider_id, debe asignarse automáticamente
+      };
+
+      const user = new User(
+        'user-id',
+        null, // tenant_id
+        'driver@example.com',
+        'hashed-password',
+        UserRole.DRIVER,
+        'Driver',
+        'User',
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
+        null,
+        'ACTIVE',
+        'logistics-provider-id', // Asignado automáticamente
+        new Date(),
+        new Date()
+      );
+
+      const context = {
+        currentUserRole: UserRole.SUPERVISOR,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      mockRepository.findByEmail.mockResolvedValue(null);
+      mockRepository.create.mockResolvedValue(user);
+
+      const result = await useCase.execute(dto, context);
+
+      expect(result).toEqual(user);
+      const createCall = mockRepository.create.mock.calls[0][0];
+      expect(createCall.role).toBe(UserRole.DRIVER);
+      expect(createCall.logistics_provider_id).toBe('logistics-provider-id');
+      expect(createCall.tenant_id).toBeNull();
+    });
+
+    it('should reject non-DRIVER creation by SUPERVISOR', async () => {
       const dto = {
         email: 'test@example.com',
         password: 'password123',
@@ -544,7 +745,26 @@ describe('CreateUserUseCase', () => {
       };
 
       await expect(useCase.execute(dto, context)).rejects.toThrow(
-        'SUPERVISOR role cannot create users'
+        'SUPERVISOR can only create users with role DRIVER'
+      );
+    });
+
+    it('should reject DRIVER creation by SUPERVISOR without logistics_provider_id', async () => {
+      const dto = {
+        email: 'driver@example.com',
+        password: 'password123',
+        first_name: 'Driver',
+        last_name: 'User',
+        role: UserRole.DRIVER,
+      };
+
+      const context = {
+        currentUserRole: UserRole.SUPERVISOR,
+        currentUserLogisticsProviderId: null,
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'SUPERVISOR user must have logistics_provider_id to create DRIVER'
       );
     });
 
