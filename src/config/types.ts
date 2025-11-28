@@ -155,6 +155,7 @@ export const TYPES = {
   // USE CASES - Shared - Payments
   // ============================================
   CreatePaymentTransactionUseCase: Symbol.for('CreatePaymentTransactionUseCase'),
+  ListPaymentTransactionsUseCase: Symbol.for('ListPaymentTransactionsUseCase'),
   UpdatePaymentStatusUseCase: Symbol.for('UpdatePaymentStatusUseCase'),
   CreateStripeCheckoutUseCase: Symbol.for('CreateStripeCheckoutUseCase'),
   ProcessStripeWebhookUseCase: Symbol.for('ProcessStripeWebhookUseCase'),

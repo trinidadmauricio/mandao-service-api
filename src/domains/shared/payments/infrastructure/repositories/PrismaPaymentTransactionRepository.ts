@@ -10,6 +10,9 @@ import {
   IPaymentTransactionRepository,
   CreatePaymentTransactionData,
   UpdatePaymentTransactionData,
+  ListPaymentTransactionsFilters,
+  PaymentTransactionWithOrderId,
+  PaymentTransactionsListResult,
 } from '../../domain/repositories/IPaymentTransactionRepository';
 import {
   PaymentTransaction,
@@ -73,6 +76,97 @@ export class PrismaPaymentTransactionRepository implements IPaymentTransactionRe
     });
 
     return data.map((item) => this.toDomain(item));
+  }
+
+  async findAllWithFilters(
+    tenant_id: string,
+    filters: ListPaymentTransactionsFilters
+  ): Promise<PaymentTransactionsListResult> {
+    const where: Prisma.PaymentTransactionWhereInput = {
+      tenant_id,
+    };
+
+    if (filters.status) where.status = filters.status as PrismaPaymentStatus;
+    if (filters.transaction_type) where.transaction_type = filters.transaction_type as PrismaTransactionType;
+    if (filters.payment_method) where.payment_method = filters.payment_method as PrismaPaymentMethod;
+
+    // Filtrar por fecha
+    if (filters.start_date || filters.end_date) {
+      where.created_at = {};
+      if (filters.start_date) {
+        where.created_at.gte = filters.start_date;
+      }
+      if (filters.end_date) {
+        where.created_at.lte = filters.end_date;
+      }
+    }
+
+    // Filtrar por order_id usando relación
+    if (filters.order_id) {
+      where.order_payments = {
+        some: {
+          order_id: filters.order_id,
+        },
+      };
+    }
+
+    // Paginación
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit;
+
+    // Obtener total de registros (sin paginación)
+    const total = await this.prisma.paymentTransaction.count({ where });
+
+    // Obtener transacciones con paginación e incluir relaciones order_payments
+    const transactions = await this.prisma.paymentTransaction.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { created_at: 'desc' },
+      include: {
+        order_payments: {
+          select: {
+            order_id: true,
+          },
+          take: 1, // Solo necesitamos el primer order_id
+        },
+      },
+    });
+
+    // Mapear a PaymentTransactionWithOrderId
+    const data: PaymentTransactionWithOrderId[] = transactions.map((item) => {
+      const transaction = this.toDomain(item);
+      return {
+        id: transaction.id,
+        tenant_id: transaction.tenant_id,
+        transaction_type: transaction.transaction_type,
+        payment_method: transaction.payment_method,
+        payment_intent_id: transaction.payment_intent_id,
+        charge_id: transaction.charge_id,
+        refund_id: transaction.refund_id,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        status: transaction.status,
+        failure_reason: transaction.failure_reason,
+        card_last4: transaction.card_last4,
+        card_brand: transaction.card_brand,
+        metadata: transaction.metadata,
+        created_at: transaction.created_at,
+        updated_at: transaction.updated_at,
+        order_id: item.order_payments[0]?.order_id || null,
+      };
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async create(data: CreatePaymentTransactionData): Promise<PaymentTransaction> {
