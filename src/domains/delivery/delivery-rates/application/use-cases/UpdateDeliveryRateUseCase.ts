@@ -48,16 +48,6 @@ export class UpdateDeliveryRateUseCase {
         if (existing.logistics_provider_id !== currentUserLogisticsProviderId) {
           throw new Error('You can only update rates from your own logistics provider');
         }
-
-        // No puede cambiar a tenant_id
-        if (dto.tenant_id !== undefined) {
-          throw new Error('LOGISTICS_PROVIDER and SUPERVISOR cannot change rate to tenant_id');
-        }
-
-        // No puede cambiar el logistics_provider_id
-        if (dto.logistics_provider_id !== undefined) {
-          throw new Error('You cannot change the logistics_provider_id of a rate');
-        }
       }
       // Si el usuario es SAAS_ADMIN, SAAS_EDITOR o OWNER
       else if (
@@ -71,11 +61,6 @@ export class UpdateDeliveryRateUseCase {
           if (currentRole !== UserRole.SAAS_ADMIN && currentRole !== UserRole.SAAS_EDITOR) {
             throw new Error('You can only update rates from your own tenant');
           }
-        }
-
-        // No puede cambiar a logistics_provider_id
-        if (dto.logistics_provider_id !== undefined) {
-          throw new Error('SAAS_ADMIN, SAAS_EDITOR and OWNER cannot change rate to logistics_provider_id');
         }
       }
     }

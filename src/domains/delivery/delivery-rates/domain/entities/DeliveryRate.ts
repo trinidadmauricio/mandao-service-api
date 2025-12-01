@@ -33,4 +33,3 @@ export class DeliveryRate {
     return (this.base_price + distanceKm * this.price_per_km) * multiplier;
   }
 }
-

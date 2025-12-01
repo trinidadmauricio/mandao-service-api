@@ -42,16 +42,6 @@ export class UpdateDeliveryZoneUseCase {
         if (existing.logistics_provider_id !== currentUserLogisticsProviderId) {
           throw new Error('You can only update zones from your own logistics provider');
         }
-
-        // No puede cambiar a tenant_id
-        if (dto.tenant_id !== undefined) {
-          throw new Error('LOGISTICS_PROVIDER and SUPERVISOR cannot change zone to tenant_id');
-        }
-
-        // No puede cambiar el logistics_provider_id
-        if (dto.logistics_provider_id !== undefined) {
-          throw new Error('You cannot change the logistics_provider_id of a zone');
-        }
       }
       // Si el usuario es SAAS_ADMIN, SAAS_EDITOR o OWNER
       else if (
@@ -65,11 +55,6 @@ export class UpdateDeliveryZoneUseCase {
           if (currentRole !== UserRole.SAAS_ADMIN && currentRole !== UserRole.SAAS_EDITOR) {
             throw new Error('You can only update zones from your own tenant');
           }
-        }
-
-        // No puede cambiar a logistics_provider_id
-        if (dto.logistics_provider_id !== undefined) {
-          throw new Error('SAAS_ADMIN, SAAS_EDITOR and OWNER cannot change zone to logistics_provider_id');
         }
       }
     }
