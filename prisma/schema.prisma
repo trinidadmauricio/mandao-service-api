@@ -372,10 +372,12 @@ model LogisticsProvider {
   created_at              DateTime           @default(now())
   updated_at              DateTime           @updatedAt
 
-  drivers       Driver[]
-  vehicles      Vehicle[]
-  order_drivers OrderDriver[]
-  users         User[]
+  drivers        Driver[]
+  vehicles       Vehicle[]
+  order_drivers  OrderDriver[]
+  users          User[]
+  delivery_zones DeliveryZone[]
+  delivery_rates DeliveryRate[]
 
   @@map("logistics_providers")
   @@schema("delivery")
@@ -488,39 +490,43 @@ enum VehicleStatus {
 }
 
 model DeliveryZone {
-  id               String   @id @default(uuid())
-  tenant_id        String
-  name             String
-  boundary         String // PostGIS geography - stored as WKT
-  base_rate        Decimal  @db.Decimal(10, 2)
-  rate_per_km      Decimal  @db.Decimal(10, 2)
-  surge_multiplier Decimal  @default(1.0) @db.Decimal(3, 2)
-  currency         String   @default("USD")
-  is_active        Boolean  @default(true)
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  tenant_id            String?
+  logistics_provider_id String?
+  name                 String
+  boundary             String // PostGIS geography - stored as WKT
+  base_rate            Decimal  @db.Decimal(10, 2)
+  rate_per_km          Decimal  @db.Decimal(10, 2)
+  surge_multiplier     Decimal  @default(1.0) @db.Decimal(3, 2)
+  currency             String   @default("USD")
+  is_active            Boolean  @default(true)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
-  delivery_rates DeliveryRate[]
+  logistics_provider LogisticsProvider? @relation(fields: [logistics_provider_id], references: [id])
+  delivery_rates     DeliveryRate[]
 
   @@map("delivery_zones")
   @@schema("delivery")
 }
 
 model DeliveryRate {
-  id                  String      @id @default(uuid())
-  tenant_id           String
-  zone_id             String?
-  vehicle_type        VehicleType
-  distance_km_min     Decimal     @db.Decimal(10, 2)
-  distance_km_max     Decimal     @db.Decimal(10, 2)
-  base_price          Decimal     @db.Decimal(10, 2)
-  price_per_km        Decimal     @db.Decimal(10, 2)
-  currency            String      @default("USD")
-  priority_multiplier Json
-  created_at          DateTime    @default(now())
-  updated_at          DateTime    @updatedAt
+  id                   String      @id @default(uuid())
+  tenant_id            String?
+  logistics_provider_id String?
+  zone_id              String?
+  vehicle_type         VehicleType
+  distance_km_min      Decimal     @db.Decimal(10, 2)
+  distance_km_max      Decimal     @db.Decimal(10, 2)
+  base_price           Decimal     @db.Decimal(10, 2)
+  price_per_km         Decimal     @db.Decimal(10, 2)
+  currency             String      @default("USD")
+  priority_multiplier  Json
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
 
-  zone DeliveryZone? @relation(fields: [zone_id], references: [id])
+  logistics_provider LogisticsProvider? @relation(fields: [logistics_provider_id], references: [id])
+  zone                DeliveryZone? @relation(fields: [zone_id], references: [id])
 
   @@map("delivery_rates")
   @@schema("delivery")
