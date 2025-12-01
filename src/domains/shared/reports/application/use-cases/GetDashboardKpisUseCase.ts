@@ -4,7 +4,7 @@
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { currencyService } from '../../../currency/CurrencyService';
 import { ITenantRepository } from '../../../tenants/domain/repositories/ITenantRepository';
 import { TYPES } from '../../../../../config/types';
@@ -50,48 +50,83 @@ export class GetDashboardKpisUseCase {
     @inject(TYPES.ITenantRepository) private tenantRepository: ITenantRepository
   ) {}
 
-  async execute(tenant_id: string): Promise<DashboardKpis> {
-    const tenant = await this.tenantRepository.findById(tenant_id);
-    if (!tenant) {
-      throw new Error('Tenant not found');
+  async execute(
+    tenant_id: string | null,
+    logistics_provider_id?: string | null
+  ): Promise<DashboardKpis> {
+    // Si hay tenant_id, validar que existe y obtener currency
+    // Si no hay tenant_id pero hay logistics_provider_id, usar USD como default
+    let currency = 'USD';
+    if (tenant_id) {
+      const tenant = await this.tenantRepository.findById(tenant_id);
+      if (!tenant) {
+        throw new Error('Tenant not found');
+      }
+      currency = tenant.default_currency;
     }
 
-    const currency = tenant.default_currency;
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // Construir where clause base para órdenes
+    const orderWhereBase: Prisma.OrderWhereInput = {};
+    if (tenant_id) {
+      orderWhereBase.tenant_id = tenant_id;
+    }
+    if (logistics_provider_id) {
+      orderWhereBase.order_drivers = {
+        some: {
+          is_current: true,
+          logistics_provider_id,
+        },
+      };
+    }
+
     // Órdenes
     const [totalOrders, todayOrders, monthOrders, pendingOrders, inTransitOrders, deliveredOrders] =
       await Promise.all([
-        this.prisma.order.count({ where: { tenant_id } }),
+        this.prisma.order.count({ where: orderWhereBase }),
         this.prisma.order.count({
           where: {
-            tenant_id,
+            ...orderWhereBase,
             created_at: { gte: todayStart },
           },
         }),
         this.prisma.order.count({
           where: {
-            tenant_id,
+            ...orderWhereBase,
             created_at: { gte: monthStart },
           },
         }),
         this.prisma.order.count({
-          where: { tenant_id, status: 'PENDING' },
+          where: { ...orderWhereBase, status: 'PENDING' },
         }),
         this.prisma.order.count({
-          where: { tenant_id, status: 'IN_TRANSIT' },
+          where: { ...orderWhereBase, status: 'IN_TRANSIT' },
         }),
         this.prisma.order.count({
-          where: { tenant_id, status: 'DELIVERED' },
+          where: { ...orderWhereBase, status: 'DELIVERED' },
         }),
       ]);
 
     // Revenue (de OrderSummaryTotal)
+    const revenueOrderWhere: Prisma.OrderWhereInput = {};
+    if (tenant_id) {
+      revenueOrderWhere.tenant_id = tenant_id;
+    }
+    if (logistics_provider_id) {
+      revenueOrderWhere.order_drivers = {
+        some: {
+          is_current: true,
+          logistics_provider_id,
+        },
+      };
+    }
+
     const allOrderTotals = await this.prisma.orderSummaryTotal.findMany({
       where: {
-        order: { tenant_id },
+        order: revenueOrderWhere,
         is_current: true,
         currency,
       },
@@ -102,67 +137,81 @@ export class GetDashboardKpisUseCase {
     const todayOrderTotals = await this.prisma.orderSummaryTotal.findMany({
       where: {
         order: {
-          tenant_id,
+          ...revenueOrderWhere,
           created_at: { gte: todayStart },
         },
         is_current: true,
         currency,
       },
     });
-    const todayRevenue = todayOrderTotals.reduce((sum, total) => sum + Number(total.total_amount), 0);
+    const todayRevenue = todayOrderTotals.reduce(
+      (sum, total) => sum + Number(total.total_amount),
+      0
+    );
 
     const monthOrderTotals = await this.prisma.orderSummaryTotal.findMany({
       where: {
         order: {
-          tenant_id,
+          ...revenueOrderWhere,
           created_at: { gte: monthStart },
         },
         is_current: true,
         currency,
       },
     });
-    const monthRevenue = monthOrderTotals.reduce((sum, total) => sum + Number(total.total_amount), 0);
+    const monthRevenue = monthOrderTotals.reduce(
+      (sum, total) => sum + Number(total.total_amount),
+      0
+    );
 
-    // Products
+    // Products (solo si hay tenant_id, LOGISTICS_PROVIDER no tiene productos)
     const [totalProducts, lowStockProducts] = await Promise.all([
-      this.prisma.product.count({ where: { tenant_id } }),
-      this.prisma.stockByBranch.count({
-        where: {
-          tenant_id,
-          available_stock: { lt: 10 }, // Threshold para low stock
-        },
-      }),
+      tenant_id ? this.prisma.product.count({ where: { tenant_id } }) : Promise.resolve(0),
+      tenant_id
+        ? this.prisma.stockByBranch.count({
+            where: {
+              tenant_id,
+              available_stock: { lt: 10 }, // Threshold para low stock
+            },
+          })
+        : Promise.resolve(0),
     ]);
 
     // Drivers
+    const driverWhere: Prisma.DriverWhereInput = {};
+    if (tenant_id) {
+      driverWhere.logistics_provider = { tenant_id };
+    }
+    if (logistics_provider_id) {
+      driverWhere.logistics_provider_id = logistics_provider_id;
+    }
+
     const [totalDrivers, activeDrivers, availableDrivers] = await Promise.all([
+      this.prisma.driver.count({ where: driverWhere }),
       this.prisma.driver.count({
         where: {
-          logistics_provider: { tenant_id },
-        },
-      }),
-      this.prisma.driver.count({
-        where: {
-          logistics_provider: { tenant_id },
+          ...driverWhere,
           availability_status: { in: ['AVAILABLE', 'BUSY'] },
         },
       }),
       this.prisma.driver.count({
         where: {
-          logistics_provider: { tenant_id },
+          ...driverWhere,
           availability_status: 'AVAILABLE',
         },
       }),
     ]);
 
-    // Branches
+    // Branches (solo si hay tenant_id, LOGISTICS_PROVIDER no tiene branches)
     const [totalBranches, activeBranches] = await Promise.all([
-      this.prisma.branch.count({ where: { tenant_id } }),
-      this.prisma.branch.count({
-        where: {
-          tenant_id,
-        },
-      }),
+      tenant_id ? this.prisma.branch.count({ where: { tenant_id } }) : Promise.resolve(0),
+      tenant_id
+        ? this.prisma.branch.count({
+            where: {
+              tenant_id,
+            },
+          })
+        : Promise.resolve(0),
     ]);
 
     return {
@@ -199,4 +248,3 @@ export class GetDashboardKpisUseCase {
     };
   }
 }
-

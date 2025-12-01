@@ -2,7 +2,13 @@
  * Tests unitarios para el sistema de permisos
  */
 
-import { UserRole, hasPermission, canAccessResource, getAllowedActions, ROLE_PERMISSIONS } from '../../permissions';
+import {
+  UserRole,
+  hasPermission,
+  canAccessResource,
+  getAllowedActions,
+  ROLE_PERMISSIONS,
+} from '../../permissions';
 
 describe('Permissions System', () => {
   describe('DRIVER role', () => {
@@ -133,9 +139,13 @@ describe('Permissions System', () => {
       expect(canAccessResource(UserRole.LOGISTICS_PROVIDER, 'delivery-rates')).toBe(true);
     });
 
-    it('should have access to logistics-providers (read only - their own)', () => {
-      expect(hasPermission(UserRole.LOGISTICS_PROVIDER, 'logistics-providers', 'read')).toBe(true);
-      expect(hasPermission(UserRole.LOGISTICS_PROVIDER, 'logistics-providers', 'create')).toBe(false);
+    it('should NOT have access to logistics-providers', () => {
+      // LOGISTICS_PROVIDER no debe tener acceso a la sección de proveedores
+      expect(hasPermission(UserRole.LOGISTICS_PROVIDER, 'logistics-providers', 'read')).toBe(false);
+      expect(hasPermission(UserRole.LOGISTICS_PROVIDER, 'logistics-providers', 'create')).toBe(
+        false
+      );
+      expect(canAccessResource(UserRole.LOGISTICS_PROVIDER, 'logistics-providers')).toBe(false);
     });
 
     it('should have access to users (read, create, update)', () => {
@@ -201,4 +211,3 @@ describe('Permissions System', () => {
     });
   });
 });
-

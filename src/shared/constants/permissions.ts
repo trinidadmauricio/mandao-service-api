@@ -1,6 +1,6 @@
 /**
  * Sistema de Permisos del Sistema
- * 
+ *
  * Define la matriz de permisos por rol y recurso.
  * Los permisos se almacenan en código para type safety y performance.
  */
@@ -55,15 +55,9 @@ export const USER_ROLE_VALUES = Object.values(UserRole) as [UserRole, ...UserRol
  * Matriz de permisos por rol
  */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  [UserRole.SAAS_ADMIN]: [
-    { resource: '*', action: 'manage' },
-  ],
-  [UserRole.SAAS_EDITOR]: [
-    { resource: '*', action: 'manage' },
-  ],
-  [UserRole.OWNER]: [
-    { resource: '*', action: 'manage' },
-  ],
+  [UserRole.SAAS_ADMIN]: [{ resource: '*', action: 'manage' }],
+  [UserRole.SAAS_EDITOR]: [{ resource: '*', action: 'manage' }],
+  [UserRole.OWNER]: [{ resource: '*', action: 'manage' }],
   [UserRole.SUPERVISOR]: [
     { resource: 'dashboard', action: 'read' },
     { resource: 'orders', action: 'read' },
@@ -84,7 +78,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'delivery-rates', action: 'create' },
     { resource: 'delivery-rates', action: 'update' },
     { resource: 'delivery-rates', action: 'delete' },
-    { resource: 'logistics-providers', action: 'read' },
+    // LOGISTICS_PROVIDER y SUPERVISOR no deben tener acceso a la sección de proveedores
     { resource: 'users', action: 'read' },
     { resource: 'users', action: 'update' },
     { resource: 'reports', action: 'read' },
@@ -135,7 +129,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     { resource: 'delivery-rates', action: 'create' },
     { resource: 'delivery-rates', action: 'update' },
     { resource: 'delivery-rates', action: 'delete' },
-    { resource: 'logistics-providers', action: 'read' },
+    // LOGISTICS_PROVIDER y SUPERVISOR no deben tener acceso a la sección de proveedores
     { resource: 'users', action: 'read' },
     { resource: 'users', action: 'create' },
     { resource: 'users', action: 'update' },
@@ -153,11 +147,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 /**
  * Verifica si un rol tiene un permiso específico
  */
-export function hasPermission(
-  role: UserRole,
-  resource: Resource,
-  action: Action
-): boolean {
+export function hasPermission(role: UserRole, resource: Resource, action: Action): boolean {
   // SAAS_ADMIN y SAAS_EDITOR tienen acceso total
   if (role === UserRole.SAAS_ADMIN || role === UserRole.SAAS_EDITOR) {
     return true;
@@ -210,18 +200,13 @@ export function canAccessResource(role: UserRole, resource: Resource): boolean {
     return true;
   }
 
-  return ROLE_PERMISSIONS[role].some(
-    (p) => p.resource === resource || p.resource === '*'
-  );
+  return ROLE_PERMISSIONS[role].some((p) => p.resource === resource || p.resource === '*');
 }
 
 /**
  * Obtiene todas las acciones permitidas para un recurso y rol
  */
-export function getAllowedActions(
-  role: UserRole,
-  resource: Resource
-): Action[] {
+export function getAllowedActions(role: UserRole, resource: Resource): Action[] {
   // SAAS_ADMIN y SAAS_EDITOR tienen acceso total
   if (role === UserRole.SAAS_ADMIN || role === UserRole.SAAS_EDITOR) {
     return ['read', 'create', 'update', 'delete', 'manage'];
@@ -259,4 +244,3 @@ export function getAllowedActions(
 
   return Array.from(actions);
 }
-
