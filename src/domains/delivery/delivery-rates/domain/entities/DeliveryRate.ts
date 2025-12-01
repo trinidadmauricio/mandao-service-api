@@ -7,7 +7,8 @@ export type VehicleType = 'MOTORCYCLE' | 'SEDAN' | 'MINI_VAN' | 'PANEL' | 'TRUCK
 export class DeliveryRate {
   constructor(
     public readonly id: string,
-    public readonly tenant_id: string,
+    public readonly tenant_id: string | null,
+    public readonly logistics_provider_id: string | null,
     public readonly zone_id: string | null,
     public readonly vehicle_type: VehicleType,
     public readonly distance_km_min: number,

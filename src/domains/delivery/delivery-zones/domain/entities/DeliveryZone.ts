@@ -5,7 +5,8 @@
 export class DeliveryZone {
   constructor(
     public readonly id: string,
-    public readonly tenant_id: string,
+    public readonly tenant_id: string | null,
+    public readonly logistics_provider_id: string | null,
     public readonly name: string,
     public readonly boundary: string, // PostGIS WKT
     public readonly base_rate: number,
