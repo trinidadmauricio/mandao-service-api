@@ -29,11 +29,15 @@ export class DeliveryZoneController {
 
   async create(req: Request, res: Response): Promise<void> {
     try {
-      const dto = createDeliveryZoneSchema.parse({
-        ...req.body,
-        tenant_id: req.tenant?.id || req.body.tenant_id,
-      });
-      const zone = await this.createUseCase.execute(dto);
+      const dto = createDeliveryZoneSchema.parse(req.body);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+            currentUserTenantId: req.user.tenant_id || req.tenant?.id || null,
+          }
+        : undefined;
+      const zone = await this.createUseCase.execute(dto, context);
 
       res.status(201).json({
         status: 'success',
@@ -42,7 +46,9 @@ export class DeliveryZoneController {
     } catch (error) {
       logger.error('Error creating delivery zone', { error });
       if (error instanceof Error) {
-        res.status(400).json({
+        const isPermissionError = error.message.includes('permission') || error.message.includes('can only') || error.message.includes('cannot');
+        const statusCode = isPermissionError ? 403 : 400;
+        res.status(statusCode).json({
           status: 'error',
           message: error.message,
         });
@@ -82,8 +88,32 @@ export class DeliveryZoneController {
 
   async list(req: Request, res: Response): Promise<void> {
     try {
-      const tenant_id = req.tenant?.id;
-      const zones = await this.listUseCase.execute(tenant_id);
+      // Filtrar automáticamente según el rol del usuario
+      let tenant_id: string | null = null;
+      let logistics_provider_id: string | null = null;
+
+      if (req.user) {
+        const userRole = req.user.role as string;
+        // LOGISTICS_PROVIDER y SUPERVISOR filtran por logistics_provider_id
+        if (userRole === 'LOGISTICS_PROVIDER' || userRole === 'SUPERVISOR') {
+          logistics_provider_id = req.user.logistics_provider_id || null;
+        }
+        // OWNER filtra por tenant_id
+        else if (userRole === 'OWNER') {
+          tenant_id = req.user.tenant_id || req.tenant?.id || null;
+        }
+        // SAAS_ADMIN y SAAS_EDITOR pueden ver todos (sin filtro automático)
+        // Pero si hay tenant_id en query, usarlo
+        else if (userRole === 'SAAS_ADMIN' || userRole === 'SAAS_EDITOR') {
+          tenant_id = req.query.tenant_id as string | undefined || req.tenant?.id || null;
+          logistics_provider_id = req.query.logistics_provider_id as string | undefined || null;
+        }
+      } else {
+        // Si no hay usuario, usar tenant del request
+        tenant_id = req.tenant?.id || null;
+      }
+
+      const zones = await this.listUseCase.execute(tenant_id, logistics_provider_id);
 
       res.status(200).json({
         status: 'success',
@@ -102,7 +132,14 @@ export class DeliveryZoneController {
     try {
       const { id } = req.params;
       const dto = updateDeliveryZoneSchema.parse(req.body);
-      const zone = await this.updateUseCase.execute(id, dto);
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+            currentUserTenantId: req.user.tenant_id || req.tenant?.id || null,
+          }
+        : undefined;
+      const zone = await this.updateUseCase.execute(id, dto, context);
 
       res.status(200).json({
         status: 'success',
@@ -110,8 +147,17 @@ export class DeliveryZoneController {
       });
     } catch (error) {
       logger.error('Error updating delivery zone', { error });
-      if (error instanceof Error && error.message === 'Delivery zone not found') {
-        res.status(404).json({
+      if (error instanceof Error) {
+        if (error.message === 'Delivery zone not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        const isPermissionError = error.message.includes('permission') || error.message.includes('can only') || error.message.includes('cannot');
+        const statusCode = isPermissionError ? 403 : 400;
+        res.status(statusCode).json({
           status: 'error',
           message: error.message,
         });

@@ -29,8 +29,14 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
     return this.toDomain(data);
   }
 
-  async findAll(tenant_id?: string): Promise<DeliveryZone[]> {
-    const where = tenant_id ? { tenant_id } : {};
+  async findAll(tenant_id?: string | null, logistics_provider_id?: string | null): Promise<DeliveryZone[]> {
+    const where: Prisma.DeliveryZoneWhereInput = {};
+    if (tenant_id) {
+      where.tenant_id = tenant_id;
+    }
+    if (logistics_provider_id) {
+      where.logistics_provider_id = logistics_provider_id;
+    }
     const data = await this.prisma.deliveryZone.findMany({
       where,
     });
@@ -42,6 +48,7 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
     const created = await this.prisma.deliveryZone.create({
       data: {
         tenant_id: data.tenant_id,
+        logistics_provider_id: data.logistics_provider_id,
         name: data.name,
         boundary: data.boundary,
         base_rate: data.base_rate,
@@ -80,7 +87,8 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
 
   private toDomain(data: {
     id: string;
-    tenant_id: string;
+    tenant_id: string | null;
+    logistics_provider_id: string | null;
     name: string;
     boundary: string;
     base_rate: Prisma.Decimal | number;
@@ -94,6 +102,7 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
     return new DeliveryZone(
       data.id,
       data.tenant_id,
+      data.logistics_provider_id,
       data.name,
       data.boundary,
       Number(data.base_rate),
