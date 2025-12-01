@@ -17,14 +17,14 @@ export const createUserSchema = z.object({
   logistics_provider_id: z.string().uuid().nullable().optional(),
 }).refine(
   (data) => {
-    // Si el rol es SUPERVISOR, logistics_provider_id es requerido
-    if (data.role === UserRole.SUPERVISOR && !data.logistics_provider_id) {
+    // Si el rol es SUPERVISOR o DRIVER, logistics_provider_id es requerido
+    if ((data.role === UserRole.SUPERVISOR || data.role === UserRole.DRIVER) && !data.logistics_provider_id) {
       return false;
     }
     return true;
   },
   {
-    message: 'SUPERVISOR role requires logistics_provider_id',
+    message: 'SUPERVISOR and DRIVER roles require logistics_provider_id',
     path: ['logistics_provider_id'],
   }
 );

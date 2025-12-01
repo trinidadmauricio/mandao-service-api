@@ -31,7 +31,7 @@ export class UserController {
    * Valida si el usuario autenticado puede acceder a un usuario específico
    * según las reglas de permisos:
    * - OWNER: solo puede acceder a MERCHANT_USER de su tenant_id
-   * - LOGISTICS_PROVIDER: solo puede acceder a SUPERVISOR de su logistics_provider_id
+   * - LOGISTICS_PROVIDER: puede acceder a SUPERVISOR y DRIVER de su logistics_provider_id
    * - SAAS_EDITOR: puede acceder a todos excepto SAAS_ADMIN y SAAS_EDITOR
    * - SAAS_ADMIN: puede acceder a todos sin restricciones
    */
@@ -53,10 +53,10 @@ export class UserController {
       return targetUser.role === UserRole.MERCHANT_USER && targetUser.tenant_id === req.tenant?.id;
     }
 
-    // LOGISTICS_PROVIDER solo puede acceder a SUPERVISOR de su logistics_provider_id
+    // LOGISTICS_PROVIDER puede acceder a SUPERVISOR y DRIVER de su logistics_provider_id
     if (currentRole === UserRole.LOGISTICS_PROVIDER) {
       return (
-        targetUser.role === UserRole.SUPERVISOR &&
+        (targetUser.role === UserRole.SUPERVISOR || targetUser.role === UserRole.DRIVER) &&
         targetUser.logistics_provider_id === currentUser.logistics_provider_id
       );
     }
@@ -75,10 +75,10 @@ export class UserController {
       const dto = createUserSchema.parse(req.body);
 
       // Asignar tenant_id automáticamente según el rol del usuario a crear
-      // LOGISTICS_PROVIDER y SUPERVISOR NO deben tener tenant_id (null)
+      // LOGISTICS_PROVIDER, SUPERVISOR y DRIVER NO deben tener tenant_id (null)
       // Los demás roles SÍ deben tener tenant_id del usuario actual o del request
       const newUserRole = dto.role as UserRole;
-      if (newUserRole === UserRole.LOGISTICS_PROVIDER || newUserRole === UserRole.SUPERVISOR) {
+      if (newUserRole === UserRole.LOGISTICS_PROVIDER || newUserRole === UserRole.SUPERVISOR || newUserRole === UserRole.DRIVER) {
         // Estos roles no tienen tenant_id
         dto.tenant_id = null;
       } else {
@@ -210,9 +210,11 @@ export class UserController {
         filtersInput.role = UserRole.MERCHANT_USER;
       }
 
-      // LOGISTICS_PROVIDER solo puede ver usuarios SUPERVISOR de su logistics_provider_id
+      // LOGISTICS_PROVIDER solo puede ver usuarios SUPERVISOR y DRIVER de su logistics_provider_id
+      // No forzar el filtro de rol aquí, permitir que se filtre por logistics_provider_id
+      // El filtro de rol se aplicará en el repository si es necesario
       if (currentUserRole === UserRole.LOGISTICS_PROVIDER) {
-        filtersInput.role = UserRole.SUPERVISOR;
+        // No forzar un rol específico, pero asegurar que se filtre por logistics_provider_id
       }
 
       // SAAS_ADMIN ven todos (no aplicar filtro automático)

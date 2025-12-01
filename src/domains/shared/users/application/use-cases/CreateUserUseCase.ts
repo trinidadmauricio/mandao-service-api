@@ -56,21 +56,33 @@ export class CreateUserUseCase {
         break;
 
       case UserRole.LOGISTICS_PROVIDER:
-        // LOGISTICS_PROVIDER solo puede crear SUPERVISOR
-        if (dtoRole !== UserRole.SUPERVISOR) {
-          throw new Error('LOGISTICS_PROVIDER can only create users with role SUPERVISOR');
+        // LOGISTICS_PROVIDER puede crear SUPERVISOR y DRIVER
+        if (dtoRole !== UserRole.SUPERVISOR && dtoRole !== UserRole.DRIVER) {
+          throw new Error('LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER');
         }
         // Validar que tiene logistics_provider_id
         if (!context.currentUserLogisticsProviderId) {
-          throw new Error('LOGISTICS_PROVIDER user must have logistics_provider_id to create SUPERVISOR');
+          throw new Error('LOGISTICS_PROVIDER user must have logistics_provider_id to create users');
         }
         // Asignar automáticamente el logistics_provider_id del creador
         dto.logistics_provider_id = context.currentUserLogisticsProviderId;
         break;
 
       case UserRole.SUPERVISOR:
+        // SUPERVISOR puede crear DRIVER
+        if (dtoRole !== UserRole.DRIVER) {
+          throw new Error('SUPERVISOR can only create users with role DRIVER');
+        }
+        // Validar que tiene logistics_provider_id
+        if (!context.currentUserLogisticsProviderId) {
+          throw new Error('SUPERVISOR user must have logistics_provider_id to create DRIVER');
+        }
+        // Asignar automáticamente el logistics_provider_id del creador
+        dto.logistics_provider_id = context.currentUserLogisticsProviderId;
+        break;
+
       case UserRole.MERCHANT_USER:
-        // SUPERVISOR y MERCHANT_USER no pueden crear usuarios
+        // MERCHANT_USER no puede crear usuarios
         throw new Error(`${currentRole} role cannot create users`);
         break;
 
@@ -78,14 +90,14 @@ export class CreateUserUseCase {
         throw new Error(`User creation not allowed for role ${currentRole}`);
     }
 
-    // Validar que SUPERVISOR tenga logistics_provider_id (validación final)
-    if (dtoRole === UserRole.SUPERVISOR && !dto.logistics_provider_id) {
-      throw new Error('SUPERVISOR role requires logistics_provider_id');
+    // Validar que SUPERVISOR y DRIVER tengan logistics_provider_id (validación final)
+    if ((dtoRole === UserRole.SUPERVISOR || dtoRole === UserRole.DRIVER) && !dto.logistics_provider_id) {
+      throw new Error(`${dtoRole} role requires logistics_provider_id`);
     }
 
     // Validar tenant_id según el rol
-    // LOGISTICS_PROVIDER y SUPERVISOR NO deben tener tenant_id
-    if ((dtoRole === UserRole.LOGISTICS_PROVIDER || dtoRole === UserRole.SUPERVISOR) && dto.tenant_id) {
+    // LOGISTICS_PROVIDER, SUPERVISOR y DRIVER NO deben tener tenant_id
+    if ((dtoRole === UserRole.LOGISTICS_PROVIDER || dtoRole === UserRole.SUPERVISOR || dtoRole === UserRole.DRIVER) && dto.tenant_id) {
       throw new Error(`${dtoRole} role cannot have tenant_id`);
     }
 
@@ -94,6 +106,7 @@ export class CreateUserUseCase {
     if (
       dtoRole !== UserRole.LOGISTICS_PROVIDER &&
       dtoRole !== UserRole.SUPERVISOR &&
+      dtoRole !== UserRole.DRIVER &&
       dtoRole !== UserRole.SAAS_ADMIN &&
       dtoRole !== UserRole.SAAS_EDITOR &&
       !dto.tenant_id
