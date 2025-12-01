@@ -22,8 +22,10 @@ const prisma = new PrismaClient();
 export class ReportsController {
   constructor(
     @inject(TYPES.GetOrdersReportUseCase) private getOrdersReportUseCase: GetOrdersReportUseCase,
-    @inject(TYPES.ExportOrdersToCsvUseCase) private exportOrdersToCsvUseCase: ExportOrdersToCsvUseCase,
-    @inject(TYPES.GetInventoryReportUseCase) private getInventoryReportUseCase: GetInventoryReportUseCase,
+    @inject(TYPES.ExportOrdersToCsvUseCase)
+    private exportOrdersToCsvUseCase: ExportOrdersToCsvUseCase,
+    @inject(TYPES.GetInventoryReportUseCase)
+    private getInventoryReportUseCase: GetInventoryReportUseCase,
     @inject(TYPES.GetDriversReportUseCase) private getDriversReportUseCase: GetDriversReportUseCase,
     @inject(TYPES.GetDashboardKpisUseCase) private getDashboardKpisUseCase: GetDashboardKpisUseCase
   ) {}
@@ -32,24 +34,36 @@ export class ReportsController {
    * Obtiene el tenant_id de la request, considerando:
    * 1. Si hay tenant en req.tenant, usarlo
    * 2. Si el usuario es SAAS_ADMIN o SAAS_EDITOR, permitir tenant_id como query parameter o header
-   * 3. Si no hay tenant y el usuario no es SAAS_ADMIN, retornar null
+   * 3. LOGISTICS_PROVIDER y SUPERVISOR no tienen tenant_id, retornar null
+   * 4. Si no hay tenant y el usuario no es SAAS_ADMIN, retornar null
    */
   private async getTenantId(req: Request): Promise<string | null> {
+    // LOGISTICS_PROVIDER y SUPERVISOR no tienen tenant_id
+    if (
+      req.user &&
+      (req.user.role === UserRole.LOGISTICS_PROVIDER || req.user.role === UserRole.SUPERVISOR)
+    ) {
+      return null;
+    }
+
     // Si hay tenant en la request, usarlo
     if (req.tenant?.id) {
       return req.tenant.id;
     }
 
     // Si el usuario es SAAS_ADMIN o SAAS_EDITOR, permitir tenant_id como query parameter o header
-    if (req.user && (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR)) {
+    if (
+      req.user &&
+      (req.user.role === UserRole.SAAS_ADMIN || req.user.role === UserRole.SAAS_EDITOR)
+    ) {
       // Intentar obtener tenant_id del query parameter primero
       let tenant_id = req.query.tenant_id as string | undefined;
-      
+
       // Si no está en query, intentar desde el header X-Tenant-Id
       if (!tenant_id) {
         tenant_id = req.headers['x-tenant-id'] as string | undefined;
       }
-      
+
       if (tenant_id) {
         // Verificar que el tenant existe
         const tenant = await prisma.tenant.findUnique({
@@ -71,8 +85,14 @@ export class ReportsController {
   async getOrdersReport(req: Request, res: Response): Promise<void> {
     try {
       const tenant_id = await this.getTenantId(req);
-      if (!tenant_id) {
-        const isSAASAdmin = req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
+      const isLogisticsProvider =
+        req.user &&
+        (req.user.role === UserRole.LOGISTICS_PROVIDER || req.user.role === UserRole.SUPERVISOR);
+
+      // Para LOGISTICS_PROVIDER y SUPERVISOR, no requerir tenant_id
+      if (!tenant_id && !isLogisticsProvider) {
+        const isSAASAdmin =
+          req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
         res.status(400).json({
           status: 'error',
           message: isSAASAdmin
@@ -83,7 +103,14 @@ export class ReportsController {
       }
 
       const filters = orderReportFiltersSchema.parse(req.query);
-      const result = await this.getOrdersReportUseCase.execute(tenant_id, filters);
+      const logistics_provider_id = isLogisticsProvider
+        ? req.user?.logistics_provider_id
+        : undefined;
+      const result = await this.getOrdersReportUseCase.execute(
+        tenant_id,
+        filters,
+        logistics_provider_id
+      );
 
       res.status(200).json({
         status: 'success',
@@ -109,7 +136,8 @@ export class ReportsController {
     try {
       const tenant_id = await this.getTenantId(req);
       if (!tenant_id) {
-        const isSAASAdmin = req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
+        const isSAASAdmin =
+          req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
         res.status(400).json({
           status: 'error',
           message: isSAASAdmin
@@ -148,7 +176,8 @@ export class ReportsController {
     try {
       const tenant_id = await this.getTenantId(req);
       if (!tenant_id) {
-        const isSAASAdmin = req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
+        const isSAASAdmin =
+          req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
         res.status(400).json({
           status: 'error',
           message: isSAASAdmin
@@ -185,7 +214,8 @@ export class ReportsController {
     try {
       const tenant_id = await this.getTenantId(req);
       if (!tenant_id) {
-        const isSAASAdmin = req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
+        const isSAASAdmin =
+          req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
         res.status(400).json({
           status: 'error',
           message: isSAASAdmin
@@ -221,8 +251,14 @@ export class ReportsController {
   async getDashboardKpis(req: Request, res: Response): Promise<void> {
     try {
       const tenant_id = await this.getTenantId(req);
-      if (!tenant_id) {
-        const isSAASAdmin = req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
+      const isLogisticsProvider =
+        req.user &&
+        (req.user.role === UserRole.LOGISTICS_PROVIDER || req.user.role === UserRole.SUPERVISOR);
+
+      // Para LOGISTICS_PROVIDER y SUPERVISOR, no requerir tenant_id
+      if (!tenant_id && !isLogisticsProvider) {
+        const isSAASAdmin =
+          req.user && (req.user.role === 'SAAS_ADMIN' || req.user.role === 'SAAS_EDITOR');
         res.status(400).json({
           status: 'error',
           message: isSAASAdmin
@@ -232,7 +268,10 @@ export class ReportsController {
         return;
       }
 
-      const result = await this.getDashboardKpisUseCase.execute(tenant_id);
+      const logistics_provider_id = isLogisticsProvider
+        ? req.user?.logistics_provider_id
+        : undefined;
+      const result = await this.getDashboardKpisUseCase.execute(tenant_id, logistics_provider_id);
 
       res.status(200).json({
         status: 'success',
@@ -254,4 +293,3 @@ export class ReportsController {
     }
   }
 }
-

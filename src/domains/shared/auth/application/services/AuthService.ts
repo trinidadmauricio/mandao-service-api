@@ -48,15 +48,20 @@ export class AuthService {
     }
 
     // Verificar tenant isolation
-    // Para SAAS_ADMIN y SAAS_EDITOR, permitir login sin tenant_id
+    // Para SAAS_ADMIN, SAAS_EDITOR, LOGISTICS_PROVIDER y SUPERVISOR, permitir login sin tenant_id
     // Para otros usuarios, validar que el tenant_id coincida
     if (tenant_id && user.tenant_id !== tenant_id) {
-      // Si el usuario NO es SAAS_ADMIN/SAAS_EDITOR, validar tenant
-      if (user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR) {
+      // Si el usuario NO es SAAS_ADMIN/SAAS_EDITOR/LOGISTICS_PROVIDER/SUPERVISOR, validar tenant
+      if (
+        user.role !== UserRole.SAAS_ADMIN &&
+        user.role !== UserRole.SAAS_EDITOR &&
+        user.role !== UserRole.LOGISTICS_PROVIDER &&
+        user.role !== UserRole.SUPERVISOR
+      ) {
         throw new Error('Invalid credentials');
       }
-      // Si es SAAS_ADMIN/SAAS_EDITOR, permitir login aunque el tenant_id no coincida
-      // (pueden tener tenant_id null y hacer login desde cualquier tenant)
+      // Si es SAAS_ADMIN/SAAS_EDITOR/LOGISTICS_PROVIDER/SUPERVISOR, permitir login aunque el tenant_id no coincida
+      // (pueden tener tenant_id null y hacer login desde cualquier tenant o sin tenant)
     }
 
     // Verificar que el usuario esté activo
@@ -77,9 +82,7 @@ export class AuthService {
         failed_login_attempts: user.failed_login_attempts + 1,
         // Bloquear después de 5 intentos fallidos (15 minutos)
         locked_until:
-          user.failed_login_attempts >= 4
-            ? new Date(Date.now() + 15 * 60 * 1000)
-            : undefined,
+          user.failed_login_attempts >= 4 ? new Date(Date.now() + 15 * 60 * 1000) : undefined,
       });
       throw new Error('Invalid credentials');
     }
@@ -216,4 +219,3 @@ export class AuthService {
     });
   }
 }
-

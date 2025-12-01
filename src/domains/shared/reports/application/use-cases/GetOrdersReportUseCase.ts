@@ -52,18 +52,39 @@ export class GetOrdersReportUseCase {
     @inject(TYPES.ITenantRepository) private tenantRepository: ITenantRepository
   ) {}
 
-  async execute(tenant_id: string, filters: OrderReportFiltersDto): Promise<OrderReportResult> {
-    const tenant = await this.tenantRepository.findById(tenant_id);
-    if (!tenant) {
-      throw new Error('Tenant not found');
+  async execute(
+    tenant_id: string | null,
+    filters: OrderReportFiltersDto,
+    logistics_provider_id?: string | null
+  ): Promise<OrderReportResult> {
+    // Si hay tenant_id, validar que existe y obtener currency
+    // Si no hay tenant_id pero hay logistics_provider_id, usar USD como default
+    let currency = 'USD';
+    if (tenant_id) {
+      const tenant = await this.tenantRepository.findById(tenant_id);
+      if (!tenant) {
+        throw new Error('Tenant not found');
+      }
+      currency = tenant.default_currency;
     }
 
-    const currency = tenant.default_currency;
-
     // Construir where clause
-    const where: Prisma.OrderWhereInput = {
-      tenant_id,
-    };
+    const where: Prisma.OrderWhereInput = {};
+
+    // Si hay tenant_id, filtrar por tenant
+    if (tenant_id) {
+      where.tenant_id = tenant_id;
+    }
+
+    // Si hay logistics_provider_id, filtrar por logistics_provider en order_drivers
+    if (logistics_provider_id) {
+      where.order_drivers = {
+        some: {
+          is_current: true,
+          logistics_provider_id,
+        },
+      };
+    }
 
     if (filters.status) {
       where.status = filters.status;
@@ -151,8 +172,12 @@ export class GetOrdersReportUseCase {
       },
     });
 
-    const branchMap = new Map(branches.map((b) => [b.order_id, b.branch_snapshot as Record<string, unknown>]));
-    const driverMap = new Map(drivers.map((d) => [d.order_id, d.driver_snapshot as Record<string, unknown>]));
+    const branchMap = new Map(
+      branches.map((b) => [b.order_id, b.branch_snapshot as Record<string, unknown>])
+    );
+    const driverMap = new Map(
+      drivers.map((d) => [d.order_id, d.driver_snapshot as Record<string, unknown>])
+    );
 
     // Transformar a formato de reporte
     const items: OrderReportItem[] = orders.map((order) => {
@@ -172,15 +197,39 @@ export class GetOrdersReportUseCase {
         tracking_code: order.tracking_code,
         order_type: order.order_type,
         status: order.status,
-        customer_name: (customer && typeof customer === 'object' && 'name' in customer && typeof customer.name === 'string') ? customer.name : 'N/A',
-        delivery_address: (delivery && typeof delivery === 'object' && 'street' in delivery && typeof delivery.street === 'string') ? delivery.street : 'N/A',
+        customer_name:
+          customer &&
+          typeof customer === 'object' &&
+          'name' in customer &&
+          typeof customer.name === 'string'
+            ? customer.name
+            : 'N/A',
+        delivery_address:
+          delivery &&
+          typeof delivery === 'object' &&
+          'street' in delivery &&
+          typeof delivery.street === 'string'
+            ? delivery.street
+            : 'N/A',
         total_amount: totalAmount,
         currency: orderCurrency,
         formatted_total: currencyService.format(totalAmount, orderCurrency as CurrencyCode),
         created_at: order.created_at,
         estimated_delivery_at: order.estimated_delivery_at,
-        driver_name: (driverSnapshot && typeof driverSnapshot === 'object' && 'name' in driverSnapshot && typeof driverSnapshot.name === 'string') ? driverSnapshot.name : null,
-        branch_name: (branchSnapshot && typeof branchSnapshot === 'object' && 'name' in branchSnapshot && typeof branchSnapshot.name === 'string') ? branchSnapshot.name : null,
+        driver_name:
+          driverSnapshot &&
+          typeof driverSnapshot === 'object' &&
+          'name' in driverSnapshot &&
+          typeof driverSnapshot.name === 'string'
+            ? driverSnapshot.name
+            : null,
+        branch_name:
+          branchSnapshot &&
+          typeof branchSnapshot === 'object' &&
+          'name' in branchSnapshot &&
+          typeof branchSnapshot.name === 'string'
+            ? branchSnapshot.name
+            : null,
       };
     });
 
@@ -231,7 +280,10 @@ export class GetOrdersReportUseCase {
       return sum;
     }, 0);
 
-    summary.formatted_total = currencyService.format(summary.total_amount, currency as CurrencyCode);
+    summary.formatted_total = currencyService.format(
+      summary.total_amount,
+      currency as CurrencyCode
+    );
 
     return {
       items,
@@ -243,4 +295,3 @@ export class GetOrdersReportUseCase {
     };
   }
 }
-
