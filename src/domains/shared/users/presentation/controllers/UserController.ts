@@ -215,10 +215,32 @@ export class UserController {
       }
 
       // LOGISTICS_PROVIDER solo puede ver usuarios SUPERVISOR y DRIVER de su logistics_provider_id
-      // No forzar el filtro de rol aquí, permitir que se filtre por logistics_provider_id
-      // El filtro de rol se aplicará en el repository si es necesario
+      // Si no hay filtro de rol específico, no aplicar restricción aquí (se filtrará después)
+      // Pero si se especifica un rol, validar que sea SUPERVISOR o DRIVER
       if (currentUserRole === UserRole.LOGISTICS_PROVIDER) {
-        // No forzar un rol específico, pero asegurar que se filtre por logistics_provider_id
+        if (filtersInput.role && filtersInput.role !== UserRole.SUPERVISOR && filtersInput.role !== UserRole.DRIVER) {
+          res.status(403).json({
+            status: 'error',
+            message: 'LOGISTICS_PROVIDER can only view SUPERVISOR and DRIVER users',
+          });
+          return;
+        }
+        // Si no hay filtro de rol, no forzarlo aquí - se filtrará después de obtener resultados
+      }
+
+      // SUPERVISOR solo puede ver usuarios DRIVER de su logistics_provider_id
+      if (currentUserRole === UserRole.SUPERVISOR) {
+        // Si no se especificó un rol en los filtros, forzar DRIVER
+        if (!filtersInput.role) {
+          filtersInput.role = UserRole.DRIVER;
+        } else if (filtersInput.role !== UserRole.DRIVER) {
+          // Si se especificó un rol diferente, rechazar
+          res.status(403).json({
+            status: 'error',
+            message: 'SUPERVISOR can only view DRIVER users',
+          });
+          return;
+        }
       }
 
       // SAAS_ADMIN ven todos (no aplicar filtro automático)
@@ -274,6 +296,19 @@ export class UserController {
       if (currentUserRole === UserRole.SAAS_EDITOR) {
         usersResponse = usersResponse.filter(
           (user) => user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR
+        );
+        // Ajustar total si es necesario
+        if (isPaginatedResult) {
+          total = usersResponse.length;
+          totalPages = Math.ceil(total / (limit || 10));
+        }
+      }
+
+      // Filtrar resultados para LOGISTICS_PROVIDER (solo SUPERVISOR y DRIVER)
+      // Esto se aplica cuando no hay filtro de rol específico en la query
+      if (currentUserRole === UserRole.LOGISTICS_PROVIDER && !req.query.role) {
+        usersResponse = usersResponse.filter(
+          (user) => user.role === UserRole.SUPERVISOR || user.role === UserRole.DRIVER
         );
         // Ajustar total si es necesario
         if (isPaginatedResult) {

@@ -88,7 +88,9 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
         base_price: data.base_price,
         price_per_km: data.price_per_km,
         currency: data.currency,
-        priority_multiplier: data.priority_multiplier ? (data.priority_multiplier as Prisma.InputJsonValue) : undefined,
+        priority_multiplier: data.priority_multiplier
+          ? (data.priority_multiplier as Prisma.InputJsonValue)
+          : undefined,
       },
     });
 
@@ -136,4 +138,3 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
     );
   }
 }
-
