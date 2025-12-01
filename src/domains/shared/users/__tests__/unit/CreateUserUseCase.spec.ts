@@ -267,7 +267,102 @@ describe('CreateUserUseCase', () => {
       };
 
       await expect(useCase.execute(dto, context)).rejects.toThrow(
-        'LOGISTICS_PROVIDER user must have logistics_provider_id to create SUPERVISOR'
+        'LOGISTICS_PROVIDER user must have logistics_provider_id to create users'
+      );
+    });
+
+    it('should reject OWNER creation by LOGISTICS_PROVIDER', async () => {
+      const dto = {
+        email: 'owner@example.com',
+        password: 'password123',
+        first_name: 'Owner',
+        last_name: 'User',
+        role: UserRole.OWNER,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
+      );
+    });
+
+    it('should reject MERCHANT_USER creation by LOGISTICS_PROVIDER', async () => {
+      const dto = {
+        email: 'merchant@example.com',
+        password: 'password123',
+        first_name: 'Merchant',
+        last_name: 'User',
+        role: UserRole.MERCHANT_USER,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
+      );
+    });
+
+    it('should reject SAAS_ADMIN creation by LOGISTICS_PROVIDER', async () => {
+      const dto = {
+        email: 'saas@example.com',
+        password: 'password123',
+        first_name: 'SAAS',
+        last_name: 'Admin',
+        role: UserRole.SAAS_ADMIN,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
+      );
+    });
+
+    it('should reject SAAS_EDITOR creation by LOGISTICS_PROVIDER', async () => {
+      const dto = {
+        email: 'editor@example.com',
+        password: 'password123',
+        first_name: 'SAAS',
+        last_name: 'Editor',
+        role: UserRole.SAAS_EDITOR,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
+      );
+    });
+
+    it('should reject LOGISTICS_PROVIDER creation by LOGISTICS_PROVIDER', async () => {
+      const dto = {
+        email: 'provider2@example.com',
+        password: 'password123',
+        first_name: 'Logistics',
+        last_name: 'Provider',
+        role: UserRole.LOGISTICS_PROVIDER,
+      };
+
+      const context = {
+        currentUserRole: UserRole.LOGISTICS_PROVIDER,
+        currentUserLogisticsProviderId: 'logistics-provider-id',
+      };
+
+      await expect(useCase.execute(dto, context)).rejects.toThrow(
+        'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
       );
     });
   });

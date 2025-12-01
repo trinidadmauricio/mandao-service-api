@@ -218,7 +218,11 @@ export class UserController {
       // Si no hay filtro de rol específico, no aplicar restricción aquí (se filtrará después)
       // Pero si se especifica un rol, validar que sea SUPERVISOR o DRIVER
       if (currentUserRole === UserRole.LOGISTICS_PROVIDER) {
-        if (filtersInput.role && filtersInput.role !== UserRole.SUPERVISOR && filtersInput.role !== UserRole.DRIVER) {
+        if (
+          filtersInput.role &&
+          filtersInput.role !== UserRole.SUPERVISOR &&
+          filtersInput.role !== UserRole.DRIVER
+        ) {
           res.status(403).json({
             status: 'error',
             message: 'LOGISTICS_PROVIDER can only view SUPERVISOR and DRIVER users',
