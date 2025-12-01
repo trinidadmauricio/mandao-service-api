@@ -5,7 +5,8 @@
 import { z } from 'zod';
 
 export const createDeliveryRateSchema = z.object({
-  tenant_id: z.string().uuid(),
+  tenant_id: z.string().uuid().optional(),
+  logistics_provider_id: z.string().uuid().optional(),
   zone_id: z.string().uuid().optional().nullable(),
   vehicle_type: z.enum(['MOTORCYCLE', 'SEDAN', 'MINI_VAN', 'PANEL', 'TRUCK', 'PICKUP']),
   distance_km_min: z.number().min(0),
@@ -14,7 +15,13 @@ export const createDeliveryRateSchema = z.object({
   price_per_km: z.number().min(0),
   currency: z.string().length(3).optional(),
   priority_multiplier: z.record(z.number()),
-});
+}).refine(
+  (data) => !!data.tenant_id || !!data.logistics_provider_id,
+  {
+    message: 'Either tenant_id or logistics_provider_id must be provided',
+    path: ['tenant_id'],
+  }
+);
 
 export const updateDeliveryRateSchema = z.object({
   zone_id: z.string().uuid().optional().nullable(),

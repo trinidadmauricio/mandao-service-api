@@ -6,14 +6,15 @@ import { DeliveryZone } from '../entities/DeliveryZone';
 
 export interface IDeliveryZoneRepository {
   findById(id: string): Promise<DeliveryZone | null>;
-  findAll(tenant_id?: string): Promise<DeliveryZone[]>;
+  findAll(tenant_id?: string | null, logistics_provider_id?: string | null): Promise<DeliveryZone[]>;
   create(data: CreateDeliveryZoneData): Promise<DeliveryZone>;
   update(id: string, data: UpdateDeliveryZoneData): Promise<DeliveryZone>;
   delete(id: string): Promise<void>;
 }
 
 export interface CreateDeliveryZoneData {
-  tenant_id: string;
+  tenant_id: string | null;
+  logistics_provider_id: string | null;
   name: string;
   boundary: string;
   base_rate: number;

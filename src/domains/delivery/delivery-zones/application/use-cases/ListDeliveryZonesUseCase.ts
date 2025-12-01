@@ -12,7 +12,7 @@ import { TYPES } from '../../../../../config/types';
 export class ListDeliveryZonesUseCase {
   constructor(@inject(TYPES.IDeliveryZoneRepository) private repository: IDeliveryZoneRepository) {}
 
-  async execute(tenant_id?: string): Promise<DeliveryZone[]> {
-    return await this.repository.findAll(tenant_id);
+  async execute(tenant_id?: string | null, logistics_provider_id?: string | null): Promise<DeliveryZone[]> {
+    return await this.repository.findAll(tenant_id, logistics_provider_id);
   }
 }

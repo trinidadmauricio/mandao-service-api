@@ -29,9 +29,10 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
     return this.toDomain(data);
   }
 
-  async findAll(tenant_id?: string, zone_id?: string): Promise<DeliveryRate[]> {
+  async findAll(tenant_id?: string | null, logistics_provider_id?: string | null, zone_id?: string): Promise<DeliveryRate[]> {
     const where: Prisma.DeliveryRateWhereInput = {};
     if (tenant_id) where.tenant_id = tenant_id;
+    if (logistics_provider_id) where.logistics_provider_id = logistics_provider_id;
     if (zone_id) where.zone_id = zone_id;
 
     const data = await this.prisma.deliveryRate.findMany({
@@ -63,6 +64,7 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
     const created = await this.prisma.deliveryRate.create({
       data: {
         tenant_id: data.tenant_id,
+        logistics_provider_id: data.logistics_provider_id,
         zone_id: data.zone_id ?? null,
         vehicle_type: data.vehicle_type,
         distance_km_min: data.distance_km_min,
@@ -103,7 +105,8 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
 
   private toDomain(data: {
     id: string;
-    tenant_id: string;
+    tenant_id: string | null;
+    logistics_provider_id: string | null;
     zone_id: string | null;
     vehicle_type: string;
     distance_km_min: Prisma.Decimal | number;
@@ -118,6 +121,7 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
     return new DeliveryRate(
       data.id,
       data.tenant_id,
+      data.logistics_provider_id,
       data.zone_id,
       data.vehicle_type as VehicleType,
       Number(data.distance_km_min),

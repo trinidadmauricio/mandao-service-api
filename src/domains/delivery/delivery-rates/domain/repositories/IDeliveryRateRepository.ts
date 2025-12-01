@@ -6,7 +6,7 @@ import { DeliveryRate, VehicleType } from '../entities/DeliveryRate';
 
 export interface IDeliveryRateRepository {
   findById(id: string): Promise<DeliveryRate | null>;
-  findAll(tenant_id?: string, zone_id?: string): Promise<DeliveryRate[]>;
+  findAll(tenant_id?: string | null, logistics_provider_id?: string | null, zone_id?: string): Promise<DeliveryRate[]>;
   findByZoneAndVehicleType(
     zone_id: string,
     vehicle_type: VehicleType
@@ -17,7 +17,8 @@ export interface IDeliveryRateRepository {
 }
 
 export interface CreateDeliveryRateData {
-  tenant_id: string;
+  tenant_id: string | null;
+  logistics_provider_id: string | null;
   zone_id?: string | null;
   vehicle_type: VehicleType;
   distance_km_min: number;
