@@ -32,7 +32,9 @@ export class CreateUserUseCase {
 
     // Validación CRÍTICA: NINGÚN rol del backoffice puede crear CUSTOMER
     if (dtoRole === UserRole.CUSTOMER) {
-      throw new Error('CUSTOMER role cannot be created from backoffice. CUSTOMER users are created exclusively through storefront signup.');
+      throw new Error(
+        'CUSTOMER role cannot be created from backoffice. CUSTOMER users are created exclusively through storefront signup.'
+      );
     }
 
     // Validar restricciones según el rol del usuario actual
@@ -58,11 +60,15 @@ export class CreateUserUseCase {
       case UserRole.LOGISTICS_PROVIDER:
         // LOGISTICS_PROVIDER puede crear SUPERVISOR y DRIVER
         if (dtoRole !== UserRole.SUPERVISOR && dtoRole !== UserRole.DRIVER) {
-          throw new Error('LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER');
+          throw new Error(
+            'LOGISTICS_PROVIDER can only create users with role SUPERVISOR or DRIVER'
+          );
         }
         // Validar que tiene logistics_provider_id
         if (!context.currentUserLogisticsProviderId) {
-          throw new Error('LOGISTICS_PROVIDER user must have logistics_provider_id to create users');
+          throw new Error(
+            'LOGISTICS_PROVIDER user must have logistics_provider_id to create users'
+          );
         }
         // Asignar automáticamente el logistics_provider_id del creador
         dto.logistics_provider_id = context.currentUserLogisticsProviderId;
@@ -91,13 +97,21 @@ export class CreateUserUseCase {
     }
 
     // Validar que SUPERVISOR y DRIVER tengan logistics_provider_id (validación final)
-    if ((dtoRole === UserRole.SUPERVISOR || dtoRole === UserRole.DRIVER) && !dto.logistics_provider_id) {
+    if (
+      (dtoRole === UserRole.SUPERVISOR || dtoRole === UserRole.DRIVER) &&
+      !dto.logistics_provider_id
+    ) {
       throw new Error(`${dtoRole} role requires logistics_provider_id`);
     }
 
     // Validar tenant_id según el rol
     // LOGISTICS_PROVIDER, SUPERVISOR y DRIVER NO deben tener tenant_id
-    if ((dtoRole === UserRole.LOGISTICS_PROVIDER || dtoRole === UserRole.SUPERVISOR || dtoRole === UserRole.DRIVER) && dto.tenant_id) {
+    if (
+      (dtoRole === UserRole.LOGISTICS_PROVIDER ||
+        dtoRole === UserRole.SUPERVISOR ||
+        dtoRole === UserRole.DRIVER) &&
+      dto.tenant_id
+    ) {
       throw new Error(`${dtoRole} role cannot have tenant_id`);
     }
 
@@ -139,4 +153,3 @@ export class CreateUserUseCase {
     return user;
   }
 }
-

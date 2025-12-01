@@ -78,7 +78,11 @@ export class UserController {
       // LOGISTICS_PROVIDER, SUPERVISOR y DRIVER NO deben tener tenant_id (null)
       // Los demás roles SÍ deben tener tenant_id del usuario actual o del request
       const newUserRole = dto.role as UserRole;
-      if (newUserRole === UserRole.LOGISTICS_PROVIDER || newUserRole === UserRole.SUPERVISOR || newUserRole === UserRole.DRIVER) {
+      if (
+        newUserRole === UserRole.LOGISTICS_PROVIDER ||
+        newUserRole === UserRole.SUPERVISOR ||
+        newUserRole === UserRole.DRIVER
+      ) {
         // Estos roles no tienen tenant_id
         dto.tenant_id = null;
       } else {
