@@ -369,8 +369,14 @@ describe('CreateUserUseCase', () => {
 
   describe('User creation restrictions by role', () => {
     it('should allow SAAS_ADMIN to create all roles except CUSTOMER', async () => {
-      const roles = [UserRole.SAAS_EDITOR, UserRole.OWNER, UserRole.LOGISTICS_PROVIDER, UserRole.MERCHANT_USER, UserRole.DRIVER];
-      
+      const roles = [
+        UserRole.SAAS_EDITOR,
+        UserRole.OWNER,
+        UserRole.LOGISTICS_PROVIDER,
+        UserRole.MERCHANT_USER,
+        UserRole.DRIVER,
+      ];
+
       for (const role of roles) {
         const dto = {
           email: `test-${role}@example.com`,
@@ -413,7 +419,7 @@ describe('CreateUserUseCase', () => {
         await useCase.execute(dto, context);
         expect(mockRepository.create).toHaveBeenCalled();
       }
-      
+
       // Test SUPERVISOR separately (requires logistics_provider_id)
       const supervisorDto = {
         email: 'supervisor@example.com',
@@ -516,8 +522,13 @@ describe('CreateUserUseCase', () => {
     });
 
     it('should allow SAAS_EDITOR to create any role except SAAS roles', async () => {
-      const allowedRoles = [UserRole.OWNER, UserRole.MERCHANT_USER, UserRole.LOGISTICS_PROVIDER, UserRole.DRIVER];
-      
+      const allowedRoles = [
+        UserRole.OWNER,
+        UserRole.MERCHANT_USER,
+        UserRole.LOGISTICS_PROVIDER,
+        UserRole.DRIVER,
+      ];
+
       for (const role of allowedRoles) {
         const dto = {
           email: `test-${role}@example.com`,
@@ -663,4 +674,3 @@ describe('CreateUserUseCase', () => {
     });
   });
 });
-
