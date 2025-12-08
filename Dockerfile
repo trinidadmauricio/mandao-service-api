@@ -6,13 +6,26 @@ WORKDIR /app
 # Instalar dependencias del sistema necesarias para Prisma
 RUN apk add --no-cache libc6-compat openssl
 
-# Copiar archivos de dependencias (copiar explícitamente package-lock.json)
-COPY package.json package-lock.json ./
+# Copiar archivos de dependencias
+# Copiar package.json primero (siempre existe)
+COPY package.json ./
 COPY tsconfig.json ./
 COPY prisma ./prisma
 
+# Copiar package-lock.json si existe (para builds reproducibles)
+# Si no existe, npm install generará uno nuevo
+COPY package-lock.json* ./
+
 # Instalar dependencias (incluyendo devDependencies para build)
-RUN npm ci
+# Usar npm ci si package-lock.json existe (más rápido y determinístico)
+# Si no existe, usar npm install (generará package-lock.json)
+RUN if [ -f package-lock.json ]; then \
+      echo "📦 Usando package-lock.json para instalación determinística" && \
+      npm ci; \
+    else \
+      echo "⚠️  package-lock.json no encontrado, usando npm install" && \
+      npm install; \
+    fi
 
 # Copiar código fuente
 COPY . .
@@ -32,10 +45,26 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl curl
 
 # Instalar solo dependencias de producción
-# Deshabilitar scripts de prepare (husky) en producción
-# Copiar explícitamente package-lock.json para npm ci
-COPY package.json package-lock.json ./
-RUN npm ci --only=production --ignore-scripts && npm cache clean --force
+# Excluir devDependencies (husky, jest, etc.) y deshabilitar scripts
+COPY package.json ./
+# Copiar package-lock.json si existe
+COPY package-lock.json* ./
+# Usar npm ci si package-lock.json existe, sino npm install
+# --omit=dev excluye devDependencies (husky, jest, etc.)
+# --ignore-scripts evita ejecutar scripts de prepare (husky install)
+RUN if [ -f package-lock.json ]; then \
+      echo "📦 Usando package-lock.json para instalación determinística" && \
+      npm ci --omit=dev --ignore-scripts; \
+    else \
+      echo "⚠️  package-lock.json no encontrado, usando npm install" && \
+      npm install --omit=dev --ignore-scripts; \
+    fi && \
+    npm cache clean --force && \
+    # Verificar que husky no esté instalado en producción
+    if [ -d "node_modules/husky" ]; then \
+      echo "⚠️  ADVERTENCIA: husky encontrado en producción, removiendo..." && \
+      rm -rf node_modules/husky; \
+    fi
 
 # Copiar archivos compilados y Prisma
 COPY --from=builder /app/dist ./dist
