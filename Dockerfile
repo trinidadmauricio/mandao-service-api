@@ -41,35 +41,50 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Instalar dependencias del sistema necesarias para Prisma en producción
-RUN apk add --no-cache libc6-compat openssl curl
+# Instalar dependencias del sistema necesarias para Prisma y módulos nativos (bcrypt)
+# python3, make, g++ son necesarios para compilar módulos nativos como bcrypt
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    curl \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
 
 # Instalar solo dependencias de producción
-# Excluir devDependencies (husky, jest, etc.) y deshabilitar scripts
+# Excluir devDependencies (husky, jest, etc.)
 COPY package.json ./
 # Copiar package-lock.json si existe
 COPY package-lock.json* ./
-# Usar npm ci si package-lock.json existe, sino npm install
-# --omit=dev excluye devDependencies (husky, jest, etc.)
-# --ignore-scripts evita ejecutar scripts de prepare (husky install)
+# Deshabilitar script de prepare temporalmente para evitar husky install
+# Luego reinstalar con scripts habilitados para compilar módulos nativos
 RUN if [ -f package-lock.json ]; then \
-      echo "📦 Usando package-lock.json para instalación determinística" && \
+      echo "📦 Instalando dependencias sin scripts (para evitar husky)..." && \
       npm ci --omit=dev --ignore-scripts; \
     else \
       echo "⚠️  package-lock.json no encontrado, usando npm install" && \
       npm install --omit=dev --ignore-scripts; \
     fi && \
-    npm cache clean --force && \
-    # Verificar que husky no esté instalado en producción
+    # Verificar que husky no esté instalado
     if [ -d "node_modules/husky" ]; then \
-      echo "⚠️  ADVERTENCIA: husky encontrado en producción, removiendo..." && \
+      echo "⚠️  Removiendo husky de producción..." && \
       rm -rf node_modules/husky; \
-    fi
+    fi && \
+    # Reconstruir módulos nativos (bcrypt necesita compilar sus bindings)
+    echo "🔨 Compilando módulos nativos (bcrypt)..." && \
+    npm rebuild bcrypt --build-from-source && \
+    npm cache clean --force
 
 # Copiar archivos compilados y Prisma
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Remover herramientas de build después de compilar módulos nativos
+# (reducir tamaño de imagen)
+RUN apk del python3 make g++ && \
+    rm -rf /var/cache/apk/*
 
 # Crear usuario no-root
 RUN addgroup -g 1001 -S nodejs && \
