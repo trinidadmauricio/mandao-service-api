@@ -3,12 +3,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copiar archivos de dependencias
-COPY package*.json ./
+# Instalar dependencias del sistema necesarias para Prisma
+RUN apk add --no-cache libc6-compat openssl
+
+# Copiar archivos de dependencias (copiar explícitamente package-lock.json)
+COPY package.json package-lock.json ./
 COPY tsconfig.json ./
 COPY prisma ./prisma
 
-# Instalar dependencias
+# Instalar dependencias (incluyendo devDependencies para build)
 RUN npm ci
 
 # Copiar código fuente
@@ -25,9 +28,14 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
+# Instalar dependencias del sistema necesarias para Prisma en producción
+RUN apk add --no-cache libc6-compat openssl curl
+
 # Instalar solo dependencias de producción
-COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+# Deshabilitar scripts de prepare (husky) en producción
+# Copiar explícitamente package-lock.json para npm ci
+COPY package.json package-lock.json ./
+RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
 # Copiar archivos compilados y Prisma
 COPY --from=builder /app/dist ./dist
@@ -46,9 +54,15 @@ USER nodejs
 # Exponer puerto
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Health check mejorado
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Comando de inicio
+# Nota: Las migraciones deben ejecutarse manualmente antes de iniciar el contenedor
+# o usando un script de orquestación (Kubernetes init container, docker-compose, etc.)
 CMD ["node", "dist/server.js"]
