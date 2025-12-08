@@ -19,12 +19,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          'https://unpkg.com',
-          'https://cdn.jsdelivr.net',
-        ],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com', 'https://cdn.jsdelivr.net'],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
@@ -45,11 +40,73 @@ app.use(
   })
 );
 
-// CORS
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
-  credentials: true,
+// CORS Configuration
+const getCorsOrigins = ():
+  | string[]
+  | ((
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) => void) => {
+  const corsOrigin = process.env.CORS_ORIGIN;
+
+  // En desarrollo, permitir localhost por defecto
+  if (process.env.NODE_ENV === 'development') {
+    const defaultOrigins = [
+      'http://localhost:3001',
+      'http://localhost:3000',
+      'http://localhost:3002',
+    ];
+    if (corsOrigin) {
+      return [...corsOrigin.split(',').map((origin) => origin.trim()), ...defaultOrigins];
+    }
+    return defaultOrigins;
+  }
+
+  // En producción, CORS_ORIGIN es obligatorio
+  if (!corsOrigin) {
+    logger.warn(
+      '⚠️  CORS_ORIGIN no está configurado en producción. Esto puede causar errores de CORS.'
+    );
+    // En producción sin CORS_ORIGIN, rechazar todas las peticiones excepto las del mismo origen
+    return (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Permitir requests sin origin (mismo origen, mobile apps, Postman, etc.)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      logger.warn(`🚫 CORS bloqueado: origen ${origin} no permitido (CORS_ORIGIN no configurado)`);
+      callback(new Error('CORS: Origin not allowed. Configure CORS_ORIGIN environment variable.'));
+    };
+  }
+
+  // Parsear orígenes separados por comas y limpiar espacios
+  const origins = corsOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  logger.info('✅ CORS configurado con orígenes:', { origins, count: origins.length });
+
+  return origins;
 };
+
+const corsOptions = {
+  origin: getCorsOrigins(),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Tenant-Id',
+    'Accept-Language',
+    'X-Requested-With',
+  ],
+  exposedHeaders: ['Content-Range', 'X-Total-Count'],
+  maxAge: 86400, // 24 horas
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
 app.use(cors(corsOptions));
 
 // Compression

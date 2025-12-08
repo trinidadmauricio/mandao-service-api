@@ -98,7 +98,10 @@ Ver `.env.example` para todas las variables requeridas:
 - `JWT_SECRET`: Secret para JWT tokens
 - `STRIPE_SECRET_KEY`: Stripe secret key
 - `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret
-- `CORS_ORIGIN`: Orígenes permitidos para CORS
+- `CORS_ORIGIN`: **OBLIGATORIO en producción** - Orígenes permitidos para CORS, separados por comas
+  - Ejemplo desarrollo: `http://localhost:3001,http://localhost:3000`
+  - Ejemplo producción: `https://backoffice.tudominio.com,https://store.tudominio.com,https://driver.tudominio.com`
+  - ⚠️ **IMPORTANTE**: En producción, si `CORS_ORIGIN` no está configurado, las peticiones CORS serán rechazadas
 
 ## 🏗️ Arquitectura
 
