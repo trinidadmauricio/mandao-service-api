@@ -80,7 +80,8 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
 
   private toDomain(data: {
     id: string;
-    tenant_id: string;
+    tenant_id: string | null;
+    logistics_provider_id?: string | null;
     name: string;
     boundary: string;
     base_rate: Prisma.Decimal | number;
@@ -91,6 +92,10 @@ export class PrismaDeliveryZoneRepository implements IDeliveryZoneRepository {
     created_at: Date;
     updated_at: Date;
   }): DeliveryZone {
+    // Si tenant_id es null, lanzar error ya que la entidad requiere tenant_id
+    if (!data.tenant_id) {
+      throw new Error('DeliveryZone must have tenant_id');
+    }
     return new DeliveryZone(
       data.id,
       data.tenant_id,

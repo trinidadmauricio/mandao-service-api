@@ -88,7 +88,9 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
         base_price: data.base_price,
         price_per_km: data.price_per_km,
         currency: data.currency,
-        priority_multiplier: data.priority_multiplier ? (data.priority_multiplier as Prisma.InputJsonValue) : undefined,
+        priority_multiplier: data.priority_multiplier
+          ? (data.priority_multiplier as Prisma.InputJsonValue)
+          : undefined,
       },
     });
 
@@ -103,7 +105,8 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
 
   private toDomain(data: {
     id: string;
-    tenant_id: string;
+    tenant_id: string | null;
+    logistics_provider_id?: string | null;
     zone_id: string | null;
     vehicle_type: string;
     distance_km_min: Prisma.Decimal | number;
@@ -115,6 +118,10 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
     created_at: Date;
     updated_at: Date;
   }): DeliveryRate {
+    // Si tenant_id es null, lanzar error ya que la entidad requiere tenant_id
+    if (!data.tenant_id) {
+      throw new Error('DeliveryRate must have tenant_id');
+    }
     return new DeliveryRate(
       data.id,
       data.tenant_id,
@@ -131,4 +138,3 @@ export class PrismaDeliveryRateRepository implements IDeliveryRateRepository {
     );
   }
 }
-
