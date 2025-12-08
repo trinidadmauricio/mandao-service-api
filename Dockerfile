@@ -45,19 +45,26 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl curl
 
 # Instalar solo dependencias de producción
-# Deshabilitar scripts de prepare (husky) en producción
+# Excluir devDependencies (husky, jest, etc.) y deshabilitar scripts
 COPY package.json ./
 # Copiar package-lock.json si existe
 COPY package-lock.json* ./
 # Usar npm ci si package-lock.json existe, sino npm install
+# --omit=dev excluye devDependencies (husky, jest, etc.)
+# --ignore-scripts evita ejecutar scripts de prepare (husky install)
 RUN if [ -f package-lock.json ]; then \
       echo "📦 Usando package-lock.json para instalación determinística" && \
-      npm ci --only=production --ignore-scripts; \
+      npm ci --omit=dev --ignore-scripts; \
     else \
       echo "⚠️  package-lock.json no encontrado, usando npm install" && \
-      npm install --only=production --ignore-scripts; \
+      npm install --omit=dev --ignore-scripts; \
     fi && \
-    npm cache clean --force
+    npm cache clean --force && \
+    # Verificar que husky no esté instalado en producción
+    if [ -d "node_modules/husky" ]; then \
+      echo "⚠️  ADVERTENCIA: husky encontrado en producción, removiendo..." && \
+      rm -rf node_modules/husky; \
+    fi
 
 # Copiar archivos compilados y Prisma
 COPY --from=builder /app/dist ./dist
