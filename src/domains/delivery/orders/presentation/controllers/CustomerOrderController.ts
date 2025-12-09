@@ -6,8 +6,6 @@
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
 import { Request, Response } from 'express';
-import { GetOrderUseCase } from '../../application/use-cases/GetOrderUseCase';
-import { ListOrdersUseCase } from '../../application/use-cases/ListOrdersUseCase';
 import { listOrdersFiltersSchema } from '../../application/dto/ListOrdersFiltersDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { serializeForResponse } from '../../../../../shared/utils/serializer.util';
@@ -16,11 +14,7 @@ import { PrismaClient } from '@prisma/client';
 
 @injectable()
 export class CustomerOrderController {
-  constructor(
-    @inject(TYPES.GetOrderUseCase) private getOrderUseCase: GetOrderUseCase,
-    @inject(TYPES.ListOrdersUseCase) private listOrdersUseCase: ListOrdersUseCase,
-    @inject(TYPES.PrismaClient) private prisma: PrismaClient
-  ) {}
+  constructor(@inject(TYPES.PrismaClient) private prisma: PrismaClient) {}
 
   async list(req: Request, res: Response): Promise<void> {
     try {
