@@ -65,6 +65,8 @@ import { IInventoryMovementRepository } from '../domains/retail/inventory/domain
 import { PrismaInventoryMovementRepository } from '../domains/retail/inventory/infrastructure/repositories/PrismaInventoryMovementRepository';
 import { ICartRepository } from '../domains/retail/cart/domain/repositories/ICartRepository';
 import { PrismaCartRepository } from '../domains/retail/cart/infrastructure/repositories/PrismaCartRepository';
+import { IWishlistRepository } from '../domains/retail/wishlist/domain/repositories/IWishlistRepository';
+import { PrismaWishlistRepository } from '../domains/retail/wishlist/infrastructure/repositories/PrismaWishlistRepository';
 
 // ============================================
 // REPOSITORIES - Payments
