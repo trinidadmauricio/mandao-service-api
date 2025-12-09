@@ -7,6 +7,7 @@ import { injectable, inject } from 'inversify';
 import { Request, Response } from 'express';
 import { ListStorefrontProductsUseCase } from '../../application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../../application/use-cases/GetStorefrontProductUseCase';
+import { GetStorefrontConfigUseCase } from '../../application/use-cases/GetStorefrontConfigUseCase';
 import { CheckoutUseCase } from '../../application/use-cases/CheckoutUseCase';
 import { checkoutSchema } from '../../application/dto/CheckoutDto';
 import { logger } from '../../../../../shared/utils/logger';
@@ -17,6 +18,7 @@ export class StorefrontController {
   constructor(
     @inject(TYPES.ListStorefrontProductsUseCase) private listProductsUseCase: ListStorefrontProductsUseCase,
     @inject(TYPES.GetStorefrontProductUseCase) private getProductUseCase: GetStorefrontProductUseCase,
+    @inject(TYPES.GetStorefrontConfigUseCase) private getConfigUseCase: GetStorefrontConfigUseCase,
     @inject(TYPES.CheckoutUseCase) private checkoutUseCase: CheckoutUseCase
   ) {}
 
@@ -91,6 +93,42 @@ export class StorefrontController {
       logger.error('Error getting storefront product', { error });
       if (error instanceof Error && error.message === 'Product not found') {
         res.status(404).json({
+          status: 'error',
+          message: error.message,
+        });
+        return;
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async getConfig(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const config = await this.getConfigUseCase.execute({
+        tenant_id,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: config,
+      });
+    } catch (error) {
+      logger.error('Error getting storefront config', { error });
+      if (error instanceof Error) {
+        const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
           status: 'error',
           message: error.message,
         });

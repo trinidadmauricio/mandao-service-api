@@ -15,6 +15,56 @@ const controller = container.get<StorefrontController>(TYPES.StorefrontControlle
 
 /**
  * @swagger
+ * /api/v1/storefront/config:
+ *   get:
+ *     summary: Obtener configuración pública del storefront
+ *     description: Obtiene la configuración del storefront incluyendo theme_config, seo_config, business_hours y datos del tenant. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     responses:
+ *       200:
+ *         description: Configuración del storefront
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     storefront:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         subdomain:
+ *                           type: string
+ *                         theme_config:
+ *                           type: object
+ *                         seo_config:
+ *                           type: object
+ *                         business_hours:
+ *                           type: object
+ *                     tenant:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         default_currency:
+ *                           type: string
+ *                         default_locale:
+ *                           type: string
+ *       404:
+ *         description: Storefront o Tenant no encontrado
+ */
+router.get('/config', (req, res) => controller.getConfig(req, res));
+
+/**
+ * @swagger
  * /api/v1/storefront/products:
  *   get:
  *     summary: Listar productos del storefront (público)

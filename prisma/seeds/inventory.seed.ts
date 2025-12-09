@@ -10,12 +10,15 @@ const prisma = new PrismaClient();
 export async function seedInventory(): Promise<void> {
   console.log('🌱 Seeding inventory...');
 
+  // Solo trabajar con los primeros 2 tenants (donde tenemos usuarios)
   const tenants = await prisma.tenant.findMany({
     where: {
       type: {
         in: [TenantType.RETAIL, TenantType.HYBRID],
       },
     },
+    take: 2,
+    orderBy: { created_at: 'asc' },
   });
 
   if (tenants.length === 0) {
@@ -41,12 +44,12 @@ export async function seedInventory(): Promise<void> {
       continue;
     }
 
-    // Obtener usuarios para created_by_user_id
+    // Obtener usuarios para created_by_user_id (SUPERVISOR ya no pertenece a tenants, solo OWNER y MERCHANT_USER)
     const users = await prisma.user.findMany({
       where: {
         tenant_id: tenant.id,
         role: {
-          in: ['OWNER', 'SUPERVISOR', 'MERCHANT_USER'],
+          in: ['OWNER', 'MERCHANT_USER'],
         },
       },
     });

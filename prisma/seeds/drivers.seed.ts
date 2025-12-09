@@ -5,17 +5,11 @@
 import { PrismaClient, WorkType, DriverStatus, UserRole, UserStatus } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { hashPassword } from '../../src/shared/utils/password.util';
-import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-function generateSecurePassword(): string {
-  const length = 16;
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-  const values = new Uint32Array(length);
-  crypto.getRandomValues(values);
-  return Array.from(values, (x) => charset[x % charset.length]).join('');
-}
+// Contraseña fija para todos los drivers
+const FIXED_PASSWORD = '12345678@a';
 
 export async function seedDrivers(): Promise<void> {
   console.log('🌱 Seeding drivers...');
@@ -35,10 +29,11 @@ export async function seedDrivers(): Promise<void> {
     DriverStatus.SUSPENDED,
   ];
 
-  // 15-20 drivers total
-  const driverCount = faker.number.int({ min: 15, max: 20 });
+  // Crear exactamente 4 drivers
+  const driverCount = 4;
   const usedIdentityDocs = new Set<string>();
   const usedDrivingLicenses = new Set<string>();
+  const passwordHash = await hashPassword(FIXED_PASSWORD);
 
   for (let i = 0; i < driverCount; i++) {
     const provider = faker.helpers.arrayElement(logisticsProviders);
@@ -107,16 +102,14 @@ export async function seedDrivers(): Promise<void> {
     }
 
     // Crear el usuario para el driver
-    const password = generateSecurePassword();
-    const passwordHash = await hashPassword(password);
     const driverUser = await prisma.user.create({
       data: {
         email,
         password_hash: passwordHash,
         first_name: firstName,
         last_name: lastName,
-        role: UserRole.LOGISTICS_PROVIDER, // Usar LOGISTICS_PROVIDER para drivers
-        tenant_id: provider.tenant_id,
+        role: UserRole.DRIVER, // Rol correcto para drivers
+        tenant_id: null, // Drivers pertenecen a logistics provider, NO a tenant
         logistics_provider_id: provider.id,
         phone: faker.phone.number(),
         email_verified_at: new Date(),

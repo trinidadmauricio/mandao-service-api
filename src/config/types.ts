@@ -265,6 +265,7 @@ export const TYPES = {
   // ============================================
   ListStorefrontProductsUseCase: Symbol.for('ListStorefrontProductsUseCase'),
   GetStorefrontProductUseCase: Symbol.for('GetStorefrontProductUseCase'),
+  GetStorefrontConfigUseCase: Symbol.for('GetStorefrontConfigUseCase'),
   CheckoutUseCase: Symbol.for('CheckoutUseCase'),
 
   // ============================================

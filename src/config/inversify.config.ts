@@ -270,6 +270,7 @@ import { GetDashboardKpisUseCase } from '../domains/shared/reports/application/u
 // ============================================
 import { ListStorefrontProductsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontProductUseCase';
+import { GetStorefrontConfigUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontConfigUseCase';
 import { CheckoutUseCase } from '../domains/retail/storefront/application/use-cases/CheckoutUseCase';
 
 // ============================================
@@ -749,6 +750,9 @@ container
 container
   .bind<GetStorefrontProductUseCase>(TYPES.GetStorefrontProductUseCase)
   .to(GetStorefrontProductUseCase);
+container
+  .bind<GetStorefrontConfigUseCase>(TYPES.GetStorefrontConfigUseCase)
+  .to(GetStorefrontConfigUseCase);
 container.bind<CheckoutUseCase>(TYPES.CheckoutUseCase).to(CheckoutUseCase);
 
 // ============================================

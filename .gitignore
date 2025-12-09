@@ -39,7 +39,7 @@ Thumbs.db
 prisma/migrations/
 
 # Seeds credentials
-*users-credentials.txt
+*users-credentials-*.txt
 
 # Docker
 docker-compose.override.yml
