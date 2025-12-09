@@ -11,6 +11,7 @@ import { GetStorefrontConfigUseCase } from '../../application/use-cases/GetStore
 import { ListStorefrontCategoriesUseCase } from '../../application/use-cases/ListStorefrontCategoriesUseCase';
 import { GetStorefrontCategoryBySlugUseCase } from '../../application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { ListStorefrontBrandsUseCase } from '../../application/use-cases/ListStorefrontBrandsUseCase';
+import { SearchStorefrontUseCase } from '../../application/use-cases/SearchStorefrontUseCase';
 import { CheckoutUseCase } from '../../application/use-cases/CheckoutUseCase';
 import { checkoutSchema } from '../../application/dto/CheckoutDto';
 import { logger } from '../../../../../shared/utils/logger';
@@ -25,6 +26,7 @@ export class StorefrontController {
     @inject(TYPES.ListStorefrontCategoriesUseCase) private listCategoriesUseCase: ListStorefrontCategoriesUseCase,
     @inject(TYPES.GetStorefrontCategoryBySlugUseCase) private getCategoryBySlugUseCase: GetStorefrontCategoryBySlugUseCase,
     @inject(TYPES.ListStorefrontBrandsUseCase) private listBrandsUseCase: ListStorefrontBrandsUseCase,
+    @inject(TYPES.SearchStorefrontUseCase) private searchUseCase: SearchStorefrontUseCase,
     @inject(TYPES.CheckoutUseCase) private checkoutUseCase: CheckoutUseCase
   ) {}
 
@@ -238,6 +240,35 @@ export class StorefrontController {
       });
     } catch (error) {
       logger.error('Error listing storefront brands', { error });
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async search(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const query = (req.query.q as string) || '';
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+      const results = await this.searchUseCase.execute(tenant_id, query, limit);
+
+      res.status(200).json({
+        status: 'success',
+        data: results,
+      });
+    } catch (error) {
+      logger.error('Error searching storefront', { error });
       res.status(500).json({
         status: 'error',
         message: 'Internal server error',

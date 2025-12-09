@@ -187,6 +187,56 @@ router.get('/products/:id', optionalAuthMiddleware, (req, res) => controller.get
 
 /**
  * @swagger
+ * /api/v1/storefront/search:
+ *   get:
+ *     summary: Buscar en storefront
+ *     description: Busca productos, categorías y marcas en el storefront. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Término de búsqueda
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           maximum: 100
+ *         description: Cantidad máxima de resultados por tipo
+ *     responses:
+ *       200:
+ *         description: Resultados de búsqueda
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     products:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     categories:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     brands:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ */
+router.get('/search', (req, res) => controller.search(req, res));
+
+/**
+ * @swagger
  * /api/v1/storefront/checkout:
  *   post:
  *     summary: Procesar checkout (público con auth opcional)

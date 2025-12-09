@@ -285,6 +285,7 @@ import { GetStorefrontConfigUseCase } from '../domains/retail/storefront/applica
 import { ListStorefrontCategoriesUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontCategoriesUseCase';
 import { GetStorefrontCategoryBySlugUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { ListStorefrontBrandsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontBrandsUseCase';
+import { SearchStorefrontUseCase } from '../domains/retail/storefront/application/use-cases/SearchStorefrontUseCase';
 import { CheckoutUseCase } from '../domains/retail/storefront/application/use-cases/CheckoutUseCase';
 import { GetCartUseCase } from '../domains/retail/cart/application/use-cases/GetCartUseCase';
 import { AddCartItemUseCase } from '../domains/retail/cart/application/use-cases/AddCartItemUseCase';
@@ -828,6 +829,9 @@ container
 container
   .bind<ListStorefrontBrandsUseCase>(TYPES.ListStorefrontBrandsUseCase)
   .to(ListStorefrontBrandsUseCase);
+container
+  .bind<SearchStorefrontUseCase>(TYPES.SearchStorefrontUseCase)
+  .to(SearchStorefrontUseCase);
 container.bind<CheckoutUseCase>(TYPES.CheckoutUseCase).to(CheckoutUseCase);
 container.bind<GetCartUseCase>(TYPES.GetCartUseCase).to(GetCartUseCase);
 container.bind<AddCartItemUseCase>(TYPES.AddCartItemUseCase).to(AddCartItemUseCase);
