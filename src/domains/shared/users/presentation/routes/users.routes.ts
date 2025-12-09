@@ -159,6 +159,134 @@ router.get(
  *       401:
  *         description: No autenticado
  */
+/**
+ * @swagger
+ * /api/v1/users/me:
+ *   get:
+ *     summary: Obtener perfil del usuario actual
+ *     description: Obtiene los detalles del usuario autenticado
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Perfil del usuario
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     email:
+ *                       type: string
+ *                     first_name:
+ *                       type: string
+ *                     last_name:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                       nullable: true
+ *                     role:
+ *                       type: string
+ *                     email_verified:
+ *                       type: boolean
+ *       401:
+ *         description: No autenticado
+ */
+router.get(
+  '/me',
+  authMiddleware,
+  requireTenantMiddleware,
+  (req, res) => userController.getMe(req, res)
+);
+
+/**
+ * @swagger
+ * /api/v1/users/me:
+ *   patch:
+ *     summary: Actualizar perfil del usuario actual
+ *     description: Actualiza los datos del usuario autenticado. Todos los campos son opcionales.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 255
+ *                 description: Nombre del usuario
+ *                 example: John
+ *               last_name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 255
+ *                 description: Apellido del usuario
+ *                 example: Doe
+ *               phone:
+ *                 type: string
+ *                 maxLength: 20
+ *                 nullable: true
+ *                 description: Teléfono del usuario
+ *                 example: "+1234567890"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *                 maxLength: 255
+ *                 description: Nueva contraseña (opcional)
+ *                 example: newSecurePassword123
+ *     responses:
+ *       200:
+ *         description: Perfil actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     email:
+ *                       type: string
+ *                     first_name:
+ *                       type: string
+ *                     last_name:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                       nullable: true
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: No autenticado
+ */
+router.patch(
+  '/me',
+  authMiddleware,
+  requireTenantMiddleware,
+  (req, res) => userController.updateMe(req, res)
+);
+
 router.get(
   '/:id',
   authMiddleware,

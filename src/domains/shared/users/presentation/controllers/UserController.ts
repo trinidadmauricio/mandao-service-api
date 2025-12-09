@@ -353,6 +353,79 @@ export class UserController {
     }
   }
 
+  async getMe(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const user = await this.getUserUseCase.execute(req.user.id);
+
+      // No retornar password_hash en la respuesta
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { password_hash, ...userResponse } = user as any;
+
+      res.status(200).json({
+        status: 'success',
+        data: userResponse,
+      });
+    } catch (error) {
+      logger.error('Error getting current user', { error });
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({
+          status: 'error',
+          message: error.message,
+        });
+        return;
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async updateMe(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          status: 'error',
+          message: 'Unauthorized',
+        });
+        return;
+      }
+
+      const dto = updateUserSchema.parse(req.body);
+      const user = await this.updateUserUseCase.execute(req.user.id, dto);
+
+      // No retornar password_hash en la respuesta
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { password_hash, ...userResponse } = user as any;
+
+      res.status(200).json({
+        status: 'success',
+        data: userResponse,
+      });
+    } catch (error) {
+      logger.error('Error updating current user', { error });
+      if (error instanceof Error && error.message === 'User not found') {
+        res.status(404).json({
+          status: 'error',
+          message: error.message,
+        });
+        return;
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
   async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
