@@ -292,6 +292,11 @@ export const TYPES = {
   UpdateCartItemUseCase: Symbol.for('UpdateCartItemUseCase'),
   RemoveCartItemUseCase: Symbol.for('RemoveCartItemUseCase'),
   ClearCartUseCase: Symbol.for('ClearCartUseCase'),
+  ApplyCouponUseCase: Symbol.for('ApplyCouponUseCase'),
+  RemoveCouponUseCase: Symbol.for('RemoveCouponUseCase'),
+  // Coupon
+  ICouponRepository: Symbol.for('ICouponRepository'),
+  CouponRepository: Symbol.for('CouponRepository'),
 
   // ============================================
   // USE CASES - Retail - Wishlist

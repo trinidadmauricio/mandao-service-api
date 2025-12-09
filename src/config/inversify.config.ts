@@ -65,6 +65,8 @@ import { IInventoryMovementRepository } from '../domains/retail/inventory/domain
 import { PrismaInventoryMovementRepository } from '../domains/retail/inventory/infrastructure/repositories/PrismaInventoryMovementRepository';
 import { ICartRepository } from '../domains/retail/cart/domain/repositories/ICartRepository';
 import { PrismaCartRepository } from '../domains/retail/cart/infrastructure/repositories/PrismaCartRepository';
+import { ICouponRepository } from '../domains/retail/coupon/domain/repositories/ICouponRepository';
+import { PrismaCouponRepository } from '../domains/retail/coupon/infrastructure/repositories/PrismaCouponRepository';
 import { IWishlistRepository } from '../domains/retail/wishlist/domain/repositories/IWishlistRepository';
 import { PrismaWishlistRepository } from '../domains/retail/wishlist/infrastructure/repositories/PrismaWishlistRepository';
 
@@ -292,6 +294,8 @@ import { AddCartItemUseCase } from '../domains/retail/cart/application/use-cases
 import { UpdateCartItemUseCase } from '../domains/retail/cart/application/use-cases/UpdateCartItemUseCase';
 import { RemoveCartItemUseCase } from '../domains/retail/cart/application/use-cases/RemoveCartItemUseCase';
 import { ClearCartUseCase } from '../domains/retail/cart/application/use-cases/ClearCartUseCase';
+import { ApplyCouponUseCase } from '../domains/retail/cart/application/use-cases/ApplyCouponUseCase';
+import { RemoveCouponUseCase } from '../domains/retail/cart/application/use-cases/RemoveCouponUseCase';
 import { GetWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/GetWishlistUseCase';
 import { AddToWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/AddToWishlistUseCase';
 import { RemoveFromWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/RemoveFromWishlistUseCase';
@@ -838,6 +842,8 @@ container.bind<AddCartItemUseCase>(TYPES.AddCartItemUseCase).to(AddCartItemUseCa
 container.bind<UpdateCartItemUseCase>(TYPES.UpdateCartItemUseCase).to(UpdateCartItemUseCase);
 container.bind<RemoveCartItemUseCase>(TYPES.RemoveCartItemUseCase).to(RemoveCartItemUseCase);
 container.bind<ClearCartUseCase>(TYPES.ClearCartUseCase).to(ClearCartUseCase);
+container.bind<ApplyCouponUseCase>(TYPES.ApplyCouponUseCase).to(ApplyCouponUseCase);
+container.bind<RemoveCouponUseCase>(TYPES.RemoveCouponUseCase).to(RemoveCouponUseCase);
 
 // ============================================
 // USE CASES - Wishlist

@@ -164,5 +164,75 @@ router.delete('/items/:item_id', optionalAuthMiddleware, (req, res) => controlle
  */
 router.delete('/clear', optionalAuthMiddleware, (req, res) => controller.clearCart(req, res));
 
+/**
+ * @swagger
+ * /api/v1/cart/coupon:
+ *   post:
+ *     summary: Aplicar cupón al carrito
+ *     description: Aplica un cupón de descuento al carrito del usuario. Requiere autenticación opcional (guest o logged in).
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - coupon_code
+ *             properties:
+ *               coupon_code:
+ *                 type: string
+ *                 example: "SUMMER2024"
+ *     responses:
+ *       200:
+ *         description: Cupón aplicado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/Cart'
+ *       400:
+ *         description: Error de validación
+ *       404:
+ *         description: Carrito o cupón no encontrado
+ */
+router.post('/coupon', optionalAuthMiddleware, (req, res) => controller.applyCoupon(req, res));
+
+/**
+ * @swagger
+ * /api/v1/cart/coupon:
+ *   delete:
+ *     summary: Remover cupón del carrito
+ *     description: Remueve el cupón aplicado al carrito del usuario. Requiere autenticación opcional (guest o logged in).
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cupón removido exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   $ref: '#/components/schemas/Cart'
+ *       400:
+ *         description: Error de validación
+ *       404:
+ *         description: Carrito no encontrado
+ */
+router.delete('/coupon', optionalAuthMiddleware, (req, res) => controller.removeCoupon(req, res));
+
 export default router;
 

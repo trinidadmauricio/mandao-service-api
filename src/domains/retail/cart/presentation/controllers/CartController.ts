@@ -10,6 +10,8 @@ import { AddCartItemUseCase } from '../../application/use-cases/AddCartItemUseCa
 import { UpdateCartItemUseCase } from '../../application/use-cases/UpdateCartItemUseCase';
 import { RemoveCartItemUseCase } from '../../application/use-cases/RemoveCartItemUseCase';
 import { ClearCartUseCase } from '../../application/use-cases/ClearCartUseCase';
+import { ApplyCouponUseCase } from '../../application/use-cases/ApplyCouponUseCase';
+import { RemoveCouponUseCase } from '../../application/use-cases/RemoveCouponUseCase';
 import { addCartItemSchema } from '../../application/dto/AddCartItemDto';
 import { updateCartItemSchema } from '../../application/dto/UpdateCartItemDto';
 import { logger } from '../../../../../shared/utils/logger';
@@ -23,7 +25,9 @@ export class CartController {
     @inject(TYPES.AddCartItemUseCase) private addCartItemUseCase: AddCartItemUseCase,
     @inject(TYPES.UpdateCartItemUseCase) private updateCartItemUseCase: UpdateCartItemUseCase,
     @inject(TYPES.RemoveCartItemUseCase) private removeCartItemUseCase: RemoveCartItemUseCase,
-    @inject(TYPES.ClearCartUseCase) private clearCartUseCase: ClearCartUseCase
+    @inject(TYPES.ClearCartUseCase) private clearCartUseCase: ClearCartUseCase,
+    @inject(TYPES.ApplyCouponUseCase) private applyCouponUseCase: ApplyCouponUseCase,
+    @inject(TYPES.RemoveCouponUseCase) private removeCouponUseCase: RemoveCouponUseCase
   ) {}
 
   private mapCartToResponse(cart: Cart) {
@@ -256,6 +260,84 @@ export class CartController {
       res.status(500).json({
         status: 'error',
         message: 'Internal server error',
+      });
+    }
+  }
+
+  async applyCoupon(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const customer_id = req.user?.id || null;
+      const session_id = req.headers['x-session-id'] as string | undefined;
+      const { coupon_code } = req.body;
+
+      if (!coupon_code || typeof coupon_code !== 'string') {
+        res.status(400).json({
+          status: 'error',
+          message: 'Coupon code is required',
+        });
+        return;
+      }
+
+      const cart = await this.applyCouponUseCase.execute({
+        tenant_id,
+        customer_id,
+        session_id,
+        coupon_code,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: this.mapCartToResponse(cart),
+      });
+    } catch (error: any) {
+      logger.error('Error applying coupon to cart', { error });
+      const statusCode = this.getErrorStatusCode(error);
+      res.status(statusCode).json({
+        status: 'error',
+        message: error.message || 'Internal server error',
+      });
+    }
+  }
+
+  async removeCoupon(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const customer_id = req.user?.id || null;
+      const session_id = req.headers['x-session-id'] as string | undefined;
+
+      const cart = await this.removeCouponUseCase.execute({
+        tenant_id,
+        customer_id,
+        session_id,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: this.mapCartToResponse(cart),
+      });
+    } catch (error: any) {
+      logger.error('Error removing coupon from cart', { error });
+      const statusCode = this.getErrorStatusCode(error);
+      res.status(statusCode).json({
+        status: 'error',
+        message: error.message || 'Internal server error',
       });
     }
   }
