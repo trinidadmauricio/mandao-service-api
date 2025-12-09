@@ -14,6 +14,7 @@ import { addCartItemSchema } from '../../application/dto/AddCartItemDto';
 import { updateCartItemSchema } from '../../application/dto/UpdateCartItemDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
+import { Cart } from '../../domain/entities/Cart';
 
 @injectable()
 export class CartController {
@@ -24,6 +25,36 @@ export class CartController {
     @inject(TYPES.RemoveCartItemUseCase) private removeCartItemUseCase: RemoveCartItemUseCase,
     @inject(TYPES.ClearCartUseCase) private clearCartUseCase: ClearCartUseCase
   ) {}
+
+  private mapCartToResponse(cart: Cart) {
+    return {
+      id: cart.id,
+      items: cart.items.map((item) => ({
+        id: item.id,
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+      })),
+      subtotal: cart.calculateSubtotal(),
+      total_items: cart.getTotalItems(),
+      coupon_code: cart.coupon_code,
+    };
+  }
+
+  private getErrorStatusCode(error: Error): number {
+    if (error.message.includes('not found') || error.message.includes('not active')) {
+      return 404;
+    }
+    if (error.message.includes('Insufficient stock')) {
+      return 400;
+    }
+    if (error.message.includes('belongs to different tenant')) {
+      return 403;
+    }
+    return 400;
+  }
 
   async getCart(req: Request, res: Response): Promise<void> {
     try {
@@ -55,20 +86,7 @@ export class CartController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          id: cart.id,
-          items: cart.items.map((item) => ({
-            id: item.id,
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          })),
-          subtotal: cart.calculateSubtotal(),
-          total_items: cart.getTotalItems(),
-          coupon_code: cart.coupon_code,
-        },
+        data: this.mapCartToResponse(cart),
       });
     } catch (error) {
       logger.error('Error getting cart', { error });
@@ -104,29 +122,12 @@ export class CartController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          id: cart.id,
-          items: cart.items.map((item) => ({
-            id: item.id,
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          })),
-          subtotal: cart.calculateSubtotal(),
-          total_items: cart.getTotalItems(),
-        },
+        data: this.mapCartToResponse(cart),
       });
     } catch (error) {
       logger.error('Error adding cart item', { error });
       if (error instanceof Error) {
-        const statusCode = error.message.includes('not found') || error.message.includes('not active')
-          ? 404
-          : error.message.includes('Insufficient stock')
-          ? 400
-          : 400;
-        res.status(statusCode).json({
+        res.status(this.getErrorStatusCode(error)).json({
           status: 'error',
           message: error.message,
         });
@@ -161,25 +162,12 @@ export class CartController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          id: cart.id,
-          items: cart.items.map((item) => ({
-            id: item.id,
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          })),
-          subtotal: cart.calculateSubtotal(),
-          total_items: cart.getTotalItems(),
-        },
+        data: this.mapCartToResponse(cart),
       });
     } catch (error) {
       logger.error('Error updating cart item', { error });
       if (error instanceof Error) {
-        const statusCode = error.message.includes('not found') ? 404 : error.message.includes('Insufficient stock') ? 400 : 400;
-        res.status(statusCode).json({
+        res.status(this.getErrorStatusCode(error)).json({
           status: 'error',
           message: error.message,
         });
@@ -212,19 +200,7 @@ export class CartController {
 
       res.status(200).json({
         status: 'success',
-        data: {
-          id: cart.id,
-          items: cart.items.map((item) => ({
-            id: item.id,
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          })),
-          subtotal: cart.calculateSubtotal(),
-          total_items: cart.getTotalItems(),
-        },
+        data: this.mapCartToResponse(cart),
       });
     } catch (error) {
       logger.error('Error removing cart item', { error });

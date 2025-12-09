@@ -143,8 +143,9 @@ export class AddCartItemUseCase {
     }
 
     // Crear nuevo carrito
+    const CART_EXPIRATION_DAYS = 30;
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // Expira en 30 días
+    expiresAt.setDate(expiresAt.getDate() + CART_EXPIRATION_DAYS);
 
     return await this.cartRepository.create({
       tenant_id,

@@ -55,6 +55,14 @@ export class UpdateCartItemUseCase {
       if (!variant) {
         throw new Error('Product variant not found');
       }
+
+      if (variant.product_id !== product.id) {
+        throw new Error('Variant does not belong to product');
+      }
+
+      if (!variant.is_active) {
+        throw new Error('Product variant is not active');
+      }
     }
 
     // Validar stock

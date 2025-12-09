@@ -4,7 +4,7 @@
 
 import 'reflect-metadata';
 import { injectable, inject } from 'inversify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import {
   ICartRepository,
   CreateCartData,
@@ -182,7 +182,7 @@ export class PrismaCartRepository implements ICartRepository {
       product_id: string;
       variant_id: string | null;
       quantity: number;
-      unit_price: number | any; // Prisma Decimal type
+      unit_price: Prisma.Decimal | number
       created_at: Date;
       updated_at: Date;
     }>;
