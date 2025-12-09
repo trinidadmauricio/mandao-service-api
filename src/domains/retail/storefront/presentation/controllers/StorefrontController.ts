@@ -16,10 +16,12 @@ import { CheckoutUseCase } from '../../application/use-cases/CheckoutUseCase';
 import { checkoutSchema } from '../../application/dto/CheckoutDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
+import { PrismaClient } from '@prisma/client';
 
 @injectable()
 export class StorefrontController {
   constructor(
+    @inject(TYPES.PrismaClient) private prisma: PrismaClient,
     @inject(TYPES.ListStorefrontProductsUseCase) private listProductsUseCase: ListStorefrontProductsUseCase,
     @inject(TYPES.GetStorefrontProductUseCase) private getProductUseCase: GetStorefrontProductUseCase,
     @inject(TYPES.GetStorefrontConfigUseCase) private getConfigUseCase: GetStorefrontConfigUseCase,
