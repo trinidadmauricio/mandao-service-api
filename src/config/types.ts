@@ -18,6 +18,7 @@ export const TYPES = {
   IOAuthClientRepository: Symbol.for('IOAuthClientRepository'),
   IOAuthAuthorizationCodeRepository: Symbol.for('IOAuthAuthorizationCodeRepository'),
   IOAuthTokenRepository: Symbol.for('IOAuthTokenRepository'),
+  CustomerAddressRepository: Symbol.for('CustomerAddressRepository'),
 
   // ============================================
   // REPOSITORIES - Delivery
@@ -95,6 +96,15 @@ export const TYPES = {
   ListUsersUseCase: Symbol.for('ListUsersUseCase'),
   UpdateUserUseCase: Symbol.for('UpdateUserUseCase'),
   DeleteUserUseCase: Symbol.for('DeleteUserUseCase'),
+
+  // ============================================
+  // USE CASES - Shared - Customer Addresses
+  // ============================================
+  GetCustomerAddressesUseCase: Symbol.for('GetCustomerAddressesUseCase'),
+  GetCustomerAddressUseCase: Symbol.for('GetCustomerAddressUseCase'),
+  CreateCustomerAddressUseCase: Symbol.for('CreateCustomerAddressUseCase'),
+  UpdateCustomerAddressUseCase: Symbol.for('UpdateCustomerAddressUseCase'),
+  DeleteCustomerAddressUseCase: Symbol.for('DeleteCustomerAddressUseCase'),
 
   // ============================================
   // USE CASES - Shared - Branches
@@ -317,6 +327,7 @@ export const TYPES = {
   ProductVariantController: Symbol.for('ProductVariantController'),
   StorefrontController: Symbol.for('StorefrontController'),
   CartController: Symbol.for('CartController'),
+  CustomerAddressController: Symbol.for('CustomerAddressController'),
 
   // ============================================
   // CLIENTS

@@ -27,6 +27,8 @@ import { IOAuthAuthorizationCodeRepository } from '../domains/shared/oauth/domai
 import { PrismaOAuthAuthorizationCodeRepository } from '../domains/shared/oauth/infrastructure/repositories/PrismaOAuthAuthorizationCodeRepository';
 import { IOAuthTokenRepository } from '../domains/shared/oauth/domain/repositories/IOAuthTokenRepository';
 import { PrismaOAuthTokenRepository } from '../domains/shared/oauth/infrastructure/repositories/PrismaOAuthTokenRepository';
+import { ICustomerAddressRepository } from '../domains/shared/customer-addresses/domain/repositories/ICustomerAddressRepository';
+import { PrismaCustomerAddressRepository } from '../domains/shared/customer-addresses/infrastructure/repositories/PrismaCustomerAddressRepository';
 
 // ============================================
 // REPOSITORIES - Delivery
@@ -119,6 +121,11 @@ import { GetUserUseCase } from '../domains/shared/users/application/use-cases/Ge
 import { ListUsersUseCase } from '../domains/shared/users/application/use-cases/ListUsersUseCase';
 import { UpdateUserUseCase } from '../domains/shared/users/application/use-cases/UpdateUserUseCase';
 import { DeleteUserUseCase } from '../domains/shared/users/application/use-cases/DeleteUserUseCase';
+import { GetCustomerAddressesUseCase } from '../domains/shared/customer-addresses/application/use-cases/GetCustomerAddressesUseCase';
+import { GetCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/GetCustomerAddressUseCase';
+import { CreateCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/CreateCustomerAddressUseCase';
+import { UpdateCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/UpdateCustomerAddressUseCase';
+import { DeleteCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/DeleteCustomerAddressUseCase';
 
 // ============================================
 // USE CASES - Shared - Branches
@@ -342,6 +349,7 @@ import { ProductController } from '../domains/retail/products/presentation/contr
 import { ProductVariantController } from '../domains/retail/product-variants/presentation/controllers/ProductVariantController';
 import { StorefrontController } from '../domains/retail/storefront/presentation/controllers/StorefrontController';
 import { CartController } from '../domains/retail/cart/presentation/controllers/CartController';
+import { CustomerAddressController } from '../domains/shared/customer-addresses/presentation/controllers/CustomerAddressController';
 
 // ============================================
 // CONTROLLERS - Shared - Auth
@@ -497,6 +505,25 @@ container.bind<GetUserUseCase>(TYPES.GetUserUseCase).to(GetUserUseCase);
 container.bind<ListUsersUseCase>(TYPES.ListUsersUseCase).to(ListUsersUseCase);
 container.bind<UpdateUserUseCase>(TYPES.UpdateUserUseCase).to(UpdateUserUseCase);
 container.bind<DeleteUserUseCase>(TYPES.DeleteUserUseCase).to(DeleteUserUseCase);
+
+// ============================================
+// USE CASES - Customer Addresses
+// ============================================
+container
+  .bind<GetCustomerAddressesUseCase>(TYPES.GetCustomerAddressesUseCase)
+  .to(GetCustomerAddressesUseCase);
+container
+  .bind<GetCustomerAddressUseCase>(TYPES.GetCustomerAddressUseCase)
+  .to(GetCustomerAddressUseCase);
+container
+  .bind<CreateCustomerAddressUseCase>(TYPES.CreateCustomerAddressUseCase)
+  .to(CreateCustomerAddressUseCase);
+container
+  .bind<UpdateCustomerAddressUseCase>(TYPES.UpdateCustomerAddressUseCase)
+  .to(UpdateCustomerAddressUseCase);
+container
+  .bind<DeleteCustomerAddressUseCase>(TYPES.DeleteCustomerAddressUseCase)
+  .to(DeleteCustomerAddressUseCase);
 
 // ============================================
 // USE CASES - Shared - Branches
@@ -828,6 +855,9 @@ container
   .to(ProductVariantController);
 container.bind<StorefrontController>(TYPES.StorefrontController).to(StorefrontController);
 container.bind<CartController>(TYPES.CartController).to(CartController);
+container
+  .bind<CustomerAddressController>(TYPES.CustomerAddressController)
+  .to(CustomerAddressController);
 
 // ============================================
 // CONTROLLERS - Shared - Auth
