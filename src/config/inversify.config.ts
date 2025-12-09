@@ -398,6 +398,13 @@ container
   .bind<IOAuthAuthorizationCodeRepository>(TYPES.IOAuthAuthorizationCodeRepository)
   .to(PrismaOAuthAuthorizationCodeRepository);
 container.bind<IOAuthTokenRepository>(TYPES.IOAuthTokenRepository).to(PrismaOAuthTokenRepository);
+container
+  .bind<ICustomerAddressRepository>(TYPES.CustomerAddressRepository)
+  .toDynamicValue((context) => {
+    const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+    return new PrismaCustomerAddressRepository(prisma);
+  })
+  .inSingletonScope();
 
 // ============================================
 // REPOSITORIES - Delivery
