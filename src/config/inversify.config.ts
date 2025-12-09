@@ -271,6 +271,8 @@ import { GetDashboardKpisUseCase } from '../domains/shared/reports/application/u
 import { ListStorefrontProductsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontProductUseCase';
 import { GetStorefrontConfigUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontConfigUseCase';
+import { ListStorefrontCategoriesUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontCategoriesUseCase';
+import { GetStorefrontCategoryBySlugUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { CheckoutUseCase } from '../domains/retail/storefront/application/use-cases/CheckoutUseCase';
 
 // ============================================
@@ -753,6 +755,12 @@ container
 container
   .bind<GetStorefrontConfigUseCase>(TYPES.GetStorefrontConfigUseCase)
   .to(GetStorefrontConfigUseCase);
+container
+  .bind<ListStorefrontCategoriesUseCase>(TYPES.ListStorefrontCategoriesUseCase)
+  .to(ListStorefrontCategoriesUseCase);
+container
+  .bind<GetStorefrontCategoryBySlugUseCase>(TYPES.GetStorefrontCategoryBySlugUseCase)
+  .to(GetStorefrontCategoryBySlugUseCase);
 container.bind<CheckoutUseCase>(TYPES.CheckoutUseCase).to(CheckoutUseCase);
 
 // ============================================

@@ -65,6 +65,54 @@ router.get('/config', (req, res) => controller.getConfig(req, res));
 
 /**
  * @swagger
+ * /api/v1/storefront/categories:
+ *   get:
+ *     summary: Listar categorías públicas del storefront
+ *     description: Obtiene la lista de categorías activas con jerarquía parent/child. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: query
+ *         name: include_children
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Incluir categorías hijas en la respuesta
+ *       - in: query
+ *         name: include_product_count
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Incluir conteo de productos por categoría
+ *     responses:
+ *       200:
+ *         description: Lista de categorías del storefront
+ */
+router.get('/categories', (req, res) => controller.listCategories(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/categories/{slug}:
+ *   get:
+ *     summary: Obtener categoría pública por slug
+ *     description: Obtiene los detalles de una categoría específica con breadcrumbs. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slug de la categoría
+ *     responses:
+ *       200:
+ *         description: Categoría encontrada
+ *       404:
+ *         description: Categoría no encontrada o inactiva
+ */
+router.get('/categories/:slug', (req, res) => controller.getCategoryBySlug(req, res));
+
+/**
+ * @swagger
  * /api/v1/storefront/products:
  *   get:
  *     summary: Listar productos del storefront (público)

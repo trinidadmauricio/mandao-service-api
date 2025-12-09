@@ -8,6 +8,8 @@ import { Request, Response } from 'express';
 import { ListStorefrontProductsUseCase } from '../../application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../../application/use-cases/GetStorefrontProductUseCase';
 import { GetStorefrontConfigUseCase } from '../../application/use-cases/GetStorefrontConfigUseCase';
+import { ListStorefrontCategoriesUseCase } from '../../application/use-cases/ListStorefrontCategoriesUseCase';
+import { GetStorefrontCategoryBySlugUseCase } from '../../application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { CheckoutUseCase } from '../../application/use-cases/CheckoutUseCase';
 import { checkoutSchema } from '../../application/dto/CheckoutDto';
 import { logger } from '../../../../../shared/utils/logger';
@@ -19,6 +21,8 @@ export class StorefrontController {
     @inject(TYPES.ListStorefrontProductsUseCase) private listProductsUseCase: ListStorefrontProductsUseCase,
     @inject(TYPES.GetStorefrontProductUseCase) private getProductUseCase: GetStorefrontProductUseCase,
     @inject(TYPES.GetStorefrontConfigUseCase) private getConfigUseCase: GetStorefrontConfigUseCase,
+    @inject(TYPES.ListStorefrontCategoriesUseCase) private listCategoriesUseCase: ListStorefrontCategoriesUseCase,
+    @inject(TYPES.GetStorefrontCategoryBySlugUseCase) private getCategoryBySlugUseCase: GetStorefrontCategoryBySlugUseCase,
     @inject(TYPES.CheckoutUseCase) private checkoutUseCase: CheckoutUseCase
   ) {}
 
@@ -128,6 +132,76 @@ export class StorefrontController {
       logger.error('Error getting storefront config', { error });
       if (error instanceof Error) {
         const statusCode = error.message.includes('not found') ? 404 : 500;
+        res.status(statusCode).json({
+          status: 'error',
+          message: error.message,
+        });
+        return;
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async listCategories(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const include_children = req.query.include_children === 'true' || req.query.include_children === undefined;
+
+      const categories = await this.listCategoriesUseCase.execute({
+        tenant_id,
+        include_children,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: categories,
+      });
+    } catch (error) {
+      logger.error('Error listing storefront categories', { error });
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async getCategoryBySlug(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const { slug } = req.params;
+
+      const category = await this.getCategoryBySlugUseCase.execute({
+        tenant_id,
+        slug,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: category,
+      });
+    } catch (error) {
+      logger.error('Error getting storefront category', { error });
+      if (error instanceof Error) {
+        const statusCode = error.message.includes('not found') || error.message.includes('not active') ? 404 : 500;
         res.status(statusCode).json({
           status: 'error',
           message: error.message,
