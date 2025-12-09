@@ -350,6 +350,7 @@ import { ProductVariantController } from '../domains/retail/product-variants/pre
 import { StorefrontController } from '../domains/retail/storefront/presentation/controllers/StorefrontController';
 import { CartController } from '../domains/retail/cart/presentation/controllers/CartController';
 import { CustomerAddressController } from '../domains/shared/customer-addresses/presentation/controllers/CustomerAddressController';
+import { CustomerOrderController } from '../domains/delivery/orders/presentation/controllers/CustomerOrderController';
 
 // ============================================
 // CONTROLLERS - Shared - Auth
@@ -865,6 +866,9 @@ container.bind<CartController>(TYPES.CartController).to(CartController);
 container
   .bind<CustomerAddressController>(TYPES.CustomerAddressController)
   .to(CustomerAddressController);
+container
+  .bind<CustomerOrderController>(TYPES.CustomerOrderController)
+  .to(CustomerOrderController);
 
 // ============================================
 // CONTROLLERS - Shared - Auth

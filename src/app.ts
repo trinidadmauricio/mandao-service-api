@@ -224,6 +224,7 @@ import productVariantsRoutes from './domains/retail/product-variants/presentatio
 import storefrontRoutes from './domains/retail/storefront/presentation/routes/storefront.routes';
 import cartRoutes from './domains/retail/cart/presentation/routes/cart.routes';
 import customerAddressesRoutes from './domains/shared/customer-addresses/presentation/routes/customer-addresses.routes';
+import customerOrdersRoutes from './domains/delivery/orders/presentation/routes/customer-orders.routes';
 import paymentsRoutes from './domains/shared/payments/presentation/routes/payments.routes';
 import subscriptionsRoutes from './domains/shared/subscription-plans/presentation/routes/subscriptions.routes';
 import reportsRoutes from './domains/shared/reports/presentation/routes/reports.routes';
@@ -251,6 +252,7 @@ app.use('/api/v1/product-variants', productVariantsRoutes);
 app.use('/api/v1/storefront', storefrontRoutes);
 app.use('/api/v1/cart', cartRoutes);
 app.use('/api/v1/customer/addresses', customerAddressesRoutes);
+app.use('/api/v1/customer/orders', customerOrdersRoutes);
 app.use('/api/v1/payments', paymentsRoutes);
 app.use('/api/v1/subscriptions', subscriptionsRoutes);
 app.use('/api/v1/reports', reportsRoutes);

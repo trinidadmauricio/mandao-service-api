@@ -328,6 +328,7 @@ export const TYPES = {
   StorefrontController: Symbol.for('StorefrontController'),
   CartController: Symbol.for('CartController'),
   CustomerAddressController: Symbol.for('CustomerAddressController'),
+  CustomerOrderController: Symbol.for('CustomerOrderController'),
 
   // ============================================
   // CLIENTS
