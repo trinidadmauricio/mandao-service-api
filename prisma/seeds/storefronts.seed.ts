@@ -42,6 +42,7 @@ export async function seedStorefronts(): Promise<void> {
       usedSubdomains.add(subdomain);
 
       const themeConfig = {
+        template: 'classic', // Template por defecto
         primary_color: faker.color.rgb(),
         secondary_color: faker.color.rgb(),
         font_family: faker.helpers.arrayElement(['Arial', 'Roboto', 'Open Sans', 'Lato']),

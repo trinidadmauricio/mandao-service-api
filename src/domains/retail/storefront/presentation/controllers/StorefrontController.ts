@@ -115,11 +115,33 @@ export class StorefrontController {
 
   async getConfig(req: Request, res: Response): Promise<void> {
     try {
-      const tenant_id = req.tenant?.id;
+      // Intentar obtener tenant_id de múltiples fuentes
+      let tenant_id = req.tenant?.id;
+      
+      // Si no hay tenant del middleware, intentar desde header X-Subdomain
+      if (!tenant_id) {
+        const subdomain = req.headers['x-subdomain'] as string;
+        if (subdomain) {
+          // Buscar storefront por subdomain y obtener tenant_id
+          const storefront = await this.prisma.storefront.findUnique({
+            where: { subdomain },
+            select: { tenant_id: true },
+          });
+          if (storefront) {
+            tenant_id = storefront.tenant_id;
+          }
+        }
+      }
+      
+      // Si aún no hay tenant_id, intentar desde header X-Tenant-Id
+      if (!tenant_id) {
+        tenant_id = req.headers['x-tenant-id'] as string;
+      }
+      
       if (!tenant_id) {
         res.status(400).json({
           status: 'error',
-          message: 'Tenant not found',
+          message: 'Tenant not found. Please provide X-Tenant-Id header or X-Subdomain header.',
         });
         return;
       }
