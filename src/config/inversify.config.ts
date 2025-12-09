@@ -61,6 +61,8 @@ import { IStockByBranchRepository } from '../domains/retail/inventory/domain/rep
 import { PrismaStockByBranchRepository } from '../domains/retail/inventory/infrastructure/repositories/PrismaStockByBranchRepository';
 import { IInventoryMovementRepository } from '../domains/retail/inventory/domain/repositories/IInventoryMovementRepository';
 import { PrismaInventoryMovementRepository } from '../domains/retail/inventory/infrastructure/repositories/PrismaInventoryMovementRepository';
+import { ICartRepository } from '../domains/retail/cart/domain/repositories/ICartRepository';
+import { PrismaCartRepository } from '../domains/retail/cart/infrastructure/repositories/PrismaCartRepository';
 
 // ============================================
 // REPOSITORIES - Payments
@@ -275,6 +277,11 @@ import { ListStorefrontCategoriesUseCase } from '../domains/retail/storefront/ap
 import { GetStorefrontCategoryBySlugUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { ListStorefrontBrandsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontBrandsUseCase';
 import { CheckoutUseCase } from '../domains/retail/storefront/application/use-cases/CheckoutUseCase';
+import { GetCartUseCase } from '../domains/retail/cart/application/use-cases/GetCartUseCase';
+import { AddCartItemUseCase } from '../domains/retail/cart/application/use-cases/AddCartItemUseCase';
+import { UpdateCartItemUseCase } from '../domains/retail/cart/application/use-cases/UpdateCartItemUseCase';
+import { RemoveCartItemUseCase } from '../domains/retail/cart/application/use-cases/RemoveCartItemUseCase';
+import { ClearCartUseCase } from '../domains/retail/cart/application/use-cases/ClearCartUseCase';
 
 // ============================================
 // USE CASES - Delivery - Orders
@@ -334,6 +341,7 @@ import { BrandController } from '../domains/retail/brands/presentation/controlle
 import { ProductController } from '../domains/retail/products/presentation/controllers/ProductController';
 import { ProductVariantController } from '../domains/retail/product-variants/presentation/controllers/ProductVariantController';
 import { StorefrontController } from '../domains/retail/storefront/presentation/controllers/StorefrontController';
+import { CartController } from '../domains/retail/cart/presentation/controllers/CartController';
 
 // ============================================
 // CONTROLLERS - Shared - Auth
@@ -417,6 +425,7 @@ container
 container
   .bind<IInventoryMovementRepository>(TYPES.IInventoryMovementRepository)
   .to(PrismaInventoryMovementRepository);
+container.bind<ICartRepository>(TYPES.ICartRepository).to(PrismaCartRepository);
 
 // ============================================
 // REPOSITORIES - Payments
@@ -766,6 +775,11 @@ container
   .bind<ListStorefrontBrandsUseCase>(TYPES.ListStorefrontBrandsUseCase)
   .to(ListStorefrontBrandsUseCase);
 container.bind<CheckoutUseCase>(TYPES.CheckoutUseCase).to(CheckoutUseCase);
+container.bind<GetCartUseCase>(TYPES.GetCartUseCase).to(GetCartUseCase);
+container.bind<AddCartItemUseCase>(TYPES.AddCartItemUseCase).to(AddCartItemUseCase);
+container.bind<UpdateCartItemUseCase>(TYPES.UpdateCartItemUseCase).to(UpdateCartItemUseCase);
+container.bind<RemoveCartItemUseCase>(TYPES.RemoveCartItemUseCase).to(RemoveCartItemUseCase);
+container.bind<ClearCartUseCase>(TYPES.ClearCartUseCase).to(ClearCartUseCase);
 
 // ============================================
 // CONTROLLERS - Shared
@@ -813,6 +827,7 @@ container
   .bind<ProductVariantController>(TYPES.ProductVariantController)
   .to(ProductVariantController);
 container.bind<StorefrontController>(TYPES.StorefrontController).to(StorefrontController);
+container.bind<CartController>(TYPES.CartController).to(CartController);
 
 // ============================================
 // CONTROLLERS - Shared - Auth
