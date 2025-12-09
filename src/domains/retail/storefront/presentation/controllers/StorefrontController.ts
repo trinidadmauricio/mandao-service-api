@@ -10,6 +10,7 @@ import { GetStorefrontProductUseCase } from '../../application/use-cases/GetStor
 import { GetStorefrontConfigUseCase } from '../../application/use-cases/GetStorefrontConfigUseCase';
 import { ListStorefrontCategoriesUseCase } from '../../application/use-cases/ListStorefrontCategoriesUseCase';
 import { GetStorefrontCategoryBySlugUseCase } from '../../application/use-cases/GetStorefrontCategoryBySlugUseCase';
+import { ListStorefrontBrandsUseCase } from '../../application/use-cases/ListStorefrontBrandsUseCase';
 import { CheckoutUseCase } from '../../application/use-cases/CheckoutUseCase';
 import { checkoutSchema } from '../../application/dto/CheckoutDto';
 import { logger } from '../../../../../shared/utils/logger';
@@ -23,6 +24,7 @@ export class StorefrontController {
     @inject(TYPES.GetStorefrontConfigUseCase) private getConfigUseCase: GetStorefrontConfigUseCase,
     @inject(TYPES.ListStorefrontCategoriesUseCase) private listCategoriesUseCase: ListStorefrontCategoriesUseCase,
     @inject(TYPES.GetStorefrontCategoryBySlugUseCase) private getCategoryBySlugUseCase: GetStorefrontCategoryBySlugUseCase,
+    @inject(TYPES.ListStorefrontBrandsUseCase) private listBrandsUseCase: ListStorefrontBrandsUseCase,
     @inject(TYPES.CheckoutUseCase) private checkoutUseCase: CheckoutUseCase
   ) {}
 
@@ -208,6 +210,34 @@ export class StorefrontController {
         });
         return;
       }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async listBrands(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const brands = await this.listBrandsUseCase.execute({
+        tenant_id,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: brands,
+      });
+    } catch (error) {
+      logger.error('Error listing storefront brands', { error });
       res.status(500).json({
         status: 'error',
         message: 'Internal server error',

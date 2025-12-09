@@ -268,6 +268,7 @@ export const TYPES = {
   GetStorefrontConfigUseCase: Symbol.for('GetStorefrontConfigUseCase'),
   ListStorefrontCategoriesUseCase: Symbol.for('ListStorefrontCategoriesUseCase'),
   GetStorefrontCategoryBySlugUseCase: Symbol.for('GetStorefrontCategoryBySlugUseCase'),
+  ListStorefrontBrandsUseCase: Symbol.for('ListStorefrontBrandsUseCase'),
   CheckoutUseCase: Symbol.for('CheckoutUseCase'),
 
   // ============================================

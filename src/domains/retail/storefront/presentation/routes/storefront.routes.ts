@@ -113,6 +113,19 @@ router.get('/categories/:slug', (req, res) => controller.getCategoryBySlug(req, 
 
 /**
  * @swagger
+ * /api/v1/storefront/brands:
+ *   get:
+ *     summary: Listar marcas públicas del storefront
+ *     description: Obtiene la lista de marcas activas. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     responses:
+ *       200:
+ *         description: Lista de marcas del storefront
+ */
+router.get('/brands', (req, res) => controller.listBrands(req, res));
+
+/**
+ * @swagger
  * /api/v1/storefront/products:
  *   get:
  *     summary: Listar productos del storefront (público)
