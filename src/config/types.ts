@@ -41,6 +41,7 @@ export const TYPES = {
   IStockByBranchRepository: Symbol.for('IStockByBranchRepository'),
   IInventoryMovementRepository: Symbol.for('IInventoryMovementRepository'),
   ICartRepository: Symbol.for('ICartRepository'),
+  WishlistRepository: Symbol.for('WishlistRepository'),
 
   // ============================================
   // REPOSITORIES - Payments
@@ -292,6 +293,13 @@ export const TYPES = {
   ClearCartUseCase: Symbol.for('ClearCartUseCase'),
 
   // ============================================
+  // USE CASES - Retail - Wishlist
+  // ============================================
+  GetWishlistUseCase: Symbol.for('GetWishlistUseCase'),
+  AddToWishlistUseCase: Symbol.for('AddToWishlistUseCase'),
+  RemoveFromWishlistUseCase: Symbol.for('RemoveFromWishlistUseCase'),
+
+  // ============================================
   // CONTROLLERS - Shared
   // ============================================
   TenantController: Symbol.for('TenantController'),
@@ -329,6 +337,7 @@ export const TYPES = {
   CartController: Symbol.for('CartController'),
   CustomerAddressController: Symbol.for('CustomerAddressController'),
   CustomerOrderController: Symbol.for('CustomerOrderController'),
+  WishlistController: Symbol.for('WishlistController'),
 
   // ============================================
   // CLIENTS

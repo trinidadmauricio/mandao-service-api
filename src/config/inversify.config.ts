@@ -289,6 +289,9 @@ import { AddCartItemUseCase } from '../domains/retail/cart/application/use-cases
 import { UpdateCartItemUseCase } from '../domains/retail/cart/application/use-cases/UpdateCartItemUseCase';
 import { RemoveCartItemUseCase } from '../domains/retail/cart/application/use-cases/RemoveCartItemUseCase';
 import { ClearCartUseCase } from '../domains/retail/cart/application/use-cases/ClearCartUseCase';
+import { GetWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/GetWishlistUseCase';
+import { AddToWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/AddToWishlistUseCase';
+import { RemoveFromWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/RemoveFromWishlistUseCase';
 
 // ============================================
 // USE CASES - Delivery - Orders
@@ -351,6 +354,7 @@ import { StorefrontController } from '../domains/retail/storefront/presentation/
 import { CartController } from '../domains/retail/cart/presentation/controllers/CartController';
 import { CustomerAddressController } from '../domains/shared/customer-addresses/presentation/controllers/CustomerAddressController';
 import { CustomerOrderController } from '../domains/delivery/orders/presentation/controllers/CustomerOrderController';
+import { WishlistController } from '../domains/retail/wishlist/presentation/controllers/WishlistController';
 
 // ============================================
 // CONTROLLERS - Shared - Auth
@@ -441,7 +445,20 @@ container
 container
   .bind<IInventoryMovementRepository>(TYPES.IInventoryMovementRepository)
   .to(PrismaInventoryMovementRepository);
-container.bind<ICartRepository>(TYPES.ICartRepository).to(PrismaCartRepository);
+container
+  .bind<ICartRepository>(TYPES.ICartRepository)
+  .toDynamicValue((context) => {
+    const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+    return new PrismaCartRepository(prisma);
+  })
+  .inSingletonScope();
+  container
+    .bind<IWishlistRepository>(TYPES.WishlistRepository)
+    .toDynamicValue((context) => {
+      const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+      return new PrismaWishlistRepository(prisma);
+    })
+    .inSingletonScope();
 
 // ============================================
 // REPOSITORIES - Payments
@@ -817,6 +834,19 @@ container.bind<RemoveCartItemUseCase>(TYPES.RemoveCartItemUseCase).to(RemoveCart
 container.bind<ClearCartUseCase>(TYPES.ClearCartUseCase).to(ClearCartUseCase);
 
 // ============================================
+// USE CASES - Wishlist
+// ============================================
+container
+  .bind<GetWishlistUseCase>(TYPES.GetWishlistUseCase)
+  .to(GetWishlistUseCase);
+container
+  .bind<AddToWishlistUseCase>(TYPES.AddToWishlistUseCase)
+  .to(AddToWishlistUseCase);
+container
+  .bind<RemoveFromWishlistUseCase>(TYPES.RemoveFromWishlistUseCase)
+  .to(RemoveFromWishlistUseCase);
+
+// ============================================
 // CONTROLLERS - Shared
 // ============================================
 container.bind<TenantController>(TYPES.TenantController).to(TenantController);
@@ -869,6 +899,9 @@ container
 container
   .bind<CustomerOrderController>(TYPES.CustomerOrderController)
   .to(CustomerOrderController);
+container
+  .bind<WishlistController>(TYPES.WishlistController)
+  .to(WishlistController);
 
 // ============================================
 // CONTROLLERS - Shared - Auth
