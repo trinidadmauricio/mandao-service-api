@@ -459,8 +459,15 @@ container
     return new PrismaCartRepository(prisma);
   })
   .inSingletonScope();
-  container
-    .bind<IWishlistRepository>(TYPES.WishlistRepository)
+container
+  .bind<ICouponRepository>(TYPES.ICouponRepository)
+  .toDynamicValue((context) => {
+    const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+    return new PrismaCouponRepository(prisma);
+  })
+  .inSingletonScope();
+container
+  .bind<IWishlistRepository>(TYPES.WishlistRepository)
     .toDynamicValue((context) => {
       const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
       return new PrismaWishlistRepository(prisma);
