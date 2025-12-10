@@ -6,7 +6,8 @@ import { Router } from 'express';
 import { container } from '../../../../../config/inversify.config';
 import { TYPES } from '../../../../../config/types';
 import { StorefrontController } from '../controllers/StorefrontController';
-import { optionalAuthMiddleware } from '../../../../../shared/middleware/auth.middleware';
+import { optionalAuthMiddleware, authMiddleware } from '../../../../../shared/middleware/auth.middleware';
+import { requirePermission } from '../../../../../shared/middleware/require-permission.middleware';
 
 const router = Router();
 
@@ -62,6 +63,70 @@ const controller = container.get<StorefrontController>(TYPES.StorefrontControlle
  *         description: Storefront o Tenant no encontrado
  */
 router.get('/config', (req, res) => controller.getConfig(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront:
+ *   patch:
+ *     summary: Actualizar configuración del storefront
+ *     description: Actualiza la configuración del storefront, específicamente el template. Requiere autenticación y permisos de OWNER.
+ *     tags: [Storefront]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - theme_config
+ *             properties:
+ *               theme_config:
+ *                 type: object
+ *                 required:
+ *                   - template
+ *                 properties:
+ *                   template:
+ *                     type: string
+ *                     enum: [classic, modern, minimal, fashion]
+ *                     description: Template a usar en el storefront
+ *                     example: modern
+ *     responses:
+ *       200:
+ *         description: Storefront actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     tenant_id:
+ *                       type: string
+ *                     theme_config:
+ *                       type: object
+ *       400:
+ *         description: Error de validación
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Sin permisos (requiere OWNER)
+ *       404:
+ *         description: Storefront no encontrado
+ */
+router.patch(
+  '/',
+  authMiddleware,
+  requirePermission('tenants', 'update'),
+  (req, res) => controller.updateStorefront(req, res)
+);
 
 /**
  * @swagger

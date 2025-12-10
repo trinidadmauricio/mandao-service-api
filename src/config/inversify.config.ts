@@ -284,6 +284,7 @@ import { GetDashboardKpisUseCase } from '../domains/shared/reports/application/u
 import { ListStorefrontProductsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontProductUseCase';
 import { GetStorefrontConfigUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontConfigUseCase';
+import { UpdateStorefrontUseCase } from '../domains/retail/storefront/application/use-cases/UpdateStorefrontUseCase';
 import { ListStorefrontCategoriesUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontCategoriesUseCase';
 import { GetStorefrontCategoryBySlugUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { ListStorefrontBrandsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontBrandsUseCase';
@@ -831,6 +832,9 @@ container
 container
   .bind<GetStorefrontConfigUseCase>(TYPES.GetStorefrontConfigUseCase)
   .to(GetStorefrontConfigUseCase);
+container
+  .bind<UpdateStorefrontUseCase>(TYPES.UpdateStorefrontUseCase)
+  .to(UpdateStorefrontUseCase);
 container
   .bind<ListStorefrontCategoriesUseCase>(TYPES.ListStorefrontCategoriesUseCase)
   .to(ListStorefrontCategoriesUseCase);

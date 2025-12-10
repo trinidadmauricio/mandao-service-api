@@ -8,12 +8,14 @@ import { Request, Response } from 'express';
 import { ListStorefrontProductsUseCase } from '../../application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../../application/use-cases/GetStorefrontProductUseCase';
 import { GetStorefrontConfigUseCase } from '../../application/use-cases/GetStorefrontConfigUseCase';
+import { UpdateStorefrontUseCase } from '../../application/use-cases/UpdateStorefrontUseCase';
 import { ListStorefrontCategoriesUseCase } from '../../application/use-cases/ListStorefrontCategoriesUseCase';
 import { GetStorefrontCategoryBySlugUseCase } from '../../application/use-cases/GetStorefrontCategoryBySlugUseCase';
 import { ListStorefrontBrandsUseCase } from '../../application/use-cases/ListStorefrontBrandsUseCase';
 import { SearchStorefrontUseCase } from '../../application/use-cases/SearchStorefrontUseCase';
 import { CheckoutUseCase } from '../../application/use-cases/CheckoutUseCase';
 import { checkoutSchema } from '../../application/dto/CheckoutDto';
+import { updateStorefrontSchema } from '../../application/dto/UpdateStorefrontDto';
 import { logger } from '../../../../../shared/utils/logger';
 import { TYPES } from '../../../../../config/types';
 import { PrismaClient } from '@prisma/client';
@@ -25,6 +27,7 @@ export class StorefrontController {
     @inject(TYPES.ListStorefrontProductsUseCase) private listProductsUseCase: ListStorefrontProductsUseCase,
     @inject(TYPES.GetStorefrontProductUseCase) private getProductUseCase: GetStorefrontProductUseCase,
     @inject(TYPES.GetStorefrontConfigUseCase) private getConfigUseCase: GetStorefrontConfigUseCase,
+    @inject(TYPES.UpdateStorefrontUseCase) private updateStorefrontUseCase: UpdateStorefrontUseCase,
     @inject(TYPES.ListStorefrontCategoriesUseCase) private listCategoriesUseCase: ListStorefrontCategoriesUseCase,
     @inject(TYPES.GetStorefrontCategoryBySlugUseCase) private getCategoryBySlugUseCase: GetStorefrontCategoryBySlugUseCase,
     @inject(TYPES.ListStorefrontBrandsUseCase) private listBrandsUseCase: ListStorefrontBrandsUseCase,
@@ -165,6 +168,55 @@ export class StorefrontController {
           message: error.message,
         });
         return;
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async updateStorefront(req: Request, res: Response): Promise<void> {
+    try {
+      const tenant_id = req.tenant?.id;
+      if (!tenant_id) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Tenant not found',
+        });
+        return;
+      }
+
+      const dto = updateStorefrontSchema.parse(req.body);
+
+      const updated = await this.updateStorefrontUseCase.execute({
+        tenant_id,
+        theme_config: dto.theme_config,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: updated,
+      });
+    } catch (error) {
+      logger.error('Error updating storefront', { error });
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        // Zod validation errors
+        if (error.name === 'ZodError') {
+          res.status(400).json({
+            status: 'error',
+            message: 'Validation error',
+            errors: (error as any).errors,
+          });
+          return;
+        }
       }
       res.status(500).json({
         status: 'error',
