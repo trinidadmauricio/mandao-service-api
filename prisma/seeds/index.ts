@@ -15,6 +15,7 @@ import { seedDrivers } from './drivers.seed';
 import { seedDeliveryZones } from './delivery-zones.seed';
 import { seedDeliveryRates } from './delivery-rates.seed';
 import { seedStorefronts } from './storefronts.seed';
+import { seedDefaultStorefront } from './storefront-default.seed';
 import { seedCategories } from './categories.seed';
 import { seedBrands } from './brands.seed';
 import { seedProducts } from './products.seed';
@@ -68,6 +69,9 @@ async function main() {
 
     // 13. Seed Storefronts (depende de Tenants)
     await seedStorefronts();
+
+    // 13.1. Seed Default Storefront (para producción/Railway)
+    await seedDefaultStorefront();
 
     // 14. Seed Categories (depende de Tenants)
     await seedCategories();
