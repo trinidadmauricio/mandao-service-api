@@ -334,10 +334,11 @@ export const authMiddleware = async (
 /**
  * Middleware opcional de autenticación
  * No falla si no hay token, pero agrega usuario si existe
+ * Si el token es inválido, continúa sin autenticación en lugar de retornar 401
  */
 export const optionalAuthMiddleware = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
@@ -347,10 +348,115 @@ export const optionalAuthMiddleware = async (
       return;
     }
 
-    // Si hay token, usar el middleware normal
-    await authMiddleware(req, res, next);
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verificar si el token es válido antes de intentar autenticar
+    let decoded: JWTPayload;
+    try {
+      decoded = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
+    } catch (error) {
+      // Token inválido o expirado - continuar sin autenticación
+      logger.debug('Invalid token in optional auth middleware, continuing without auth', { error });
+      next();
+      return;
+    }
+
+    // Si el token es válido, intentar autenticar
+    // Pero si falla, no enviar error, solo continuar sin autenticación
+    try {
+      // Detectar tipo de token: OAuth (tiene client_id y sub) vs JWT tradicional (tiene userId o client_id='internal')
+      if (decoded.client_id === 'internal' && decoded.sub) {
+        // Token tradicional generado por login endpoint
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.sub },
+          include: { tenant: true },
+        });
+
+        if (user && user.status === 'ACTIVE') {
+          // Verificar tenant isolation si hay tenant en la request
+          if (req.tenant && user.tenant_id !== req.tenant.id) {
+            // Si el usuario NO es SAAS_ADMIN/SAAS_EDITOR, validar tenant
+            if (user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR) {
+              // No pertenece al tenant, continuar sin autenticación
+              logger.debug('User does not belong to tenant, continuing without auth');
+              next();
+              return;
+            }
+          }
+
+          req.user = user;
+          if (user.tenant) {
+            req.tenant = user.tenant;
+          }
+        }
+      } else if (decoded.client_id && decoded.sub && !decoded.userId) {
+        // Token OAuth
+        const oauthClient = await prisma.oAuthClient.findUnique({
+          where: { client_id: decoded.client_id },
+        });
+
+        if (oauthClient && oauthClient.is_active) {
+          req.oauthClient = oauthClient;
+
+          // Si el token tiene user_id (Authorization Code flow), buscar el usuario
+          try {
+            const accessToken = await prisma.oAuthAccessToken.findUnique({
+              where: { token },
+            });
+
+            if (accessToken && !accessToken.is_revoked && new Date() < accessToken.expires_at) {
+              if (accessToken.user_id) {
+                const user = await prisma.user.findUnique({
+                  where: { id: accessToken.user_id },
+                  include: { tenant: true },
+                });
+
+                if (user && user.status === 'ACTIVE') {
+                  req.user = user;
+                  if (user.tenant) {
+                    req.tenant = user.tenant;
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            // Si hay error al buscar el token en BD, continuar sin autenticación
+            logger.debug('Error checking OAuth token in DB, continuing without auth', { error });
+          }
+        }
+      } else if (decoded.userId) {
+        // Token JWT tradicional (tiene userId)
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          include: { tenant: true },
+        });
+
+        if (user && user.status === 'ACTIVE') {
+          // Verificar tenant isolation
+          if (req.tenant && user.tenant_id !== req.tenant.id) {
+            if (user.role !== UserRole.SAAS_ADMIN && user.role !== UserRole.SAAS_EDITOR) {
+              // No pertenece al tenant, continuar sin autenticación
+              logger.debug('User does not belong to tenant, continuing without auth');
+              next();
+              return;
+            }
+          }
+
+          req.user = user;
+          if (user.tenant) {
+            req.tenant = user.tenant;
+          }
+        }
+      }
+    } catch (error) {
+      // Si hay error al buscar usuario, continuar sin autenticación
+      logger.debug('Error in optional auth middleware, continuing without auth', { error });
+    }
+
+    next();
   } catch (error) {
     // Si hay error, continuar sin autenticación
+    logger.debug('Error in optional auth middleware, continuing without auth', { error });
     next();
   }
 };
