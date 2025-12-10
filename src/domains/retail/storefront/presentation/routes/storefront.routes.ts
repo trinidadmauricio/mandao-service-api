@@ -15,6 +15,117 @@ const controller = container.get<StorefrontController>(TYPES.StorefrontControlle
 
 /**
  * @swagger
+ * /api/v1/storefront/config:
+ *   get:
+ *     summary: Obtener configuración pública del storefront
+ *     description: Obtiene la configuración del storefront incluyendo theme_config, seo_config, business_hours y datos del tenant. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     responses:
+ *       200:
+ *         description: Configuración del storefront
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     storefront:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         subdomain:
+ *                           type: string
+ *                         theme_config:
+ *                           type: object
+ *                         seo_config:
+ *                           type: object
+ *                         business_hours:
+ *                           type: object
+ *                     tenant:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         default_currency:
+ *                           type: string
+ *                         default_locale:
+ *                           type: string
+ *       404:
+ *         description: Storefront o Tenant no encontrado
+ */
+router.get('/config', (req, res) => controller.getConfig(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/categories:
+ *   get:
+ *     summary: Listar categorías públicas del storefront
+ *     description: Obtiene la lista de categorías activas con jerarquía parent/child. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: query
+ *         name: include_children
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Incluir categorías hijas en la respuesta
+ *       - in: query
+ *         name: include_product_count
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Incluir conteo de productos por categoría
+ *     responses:
+ *       200:
+ *         description: Lista de categorías del storefront
+ */
+router.get('/categories', (req, res) => controller.listCategories(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/categories/{slug}:
+ *   get:
+ *     summary: Obtener categoría pública por slug
+ *     description: Obtiene los detalles de una categoría específica con breadcrumbs. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slug de la categoría
+ *     responses:
+ *       200:
+ *         description: Categoría encontrada
+ *       404:
+ *         description: Categoría no encontrada o inactiva
+ */
+router.get('/categories/:slug', (req, res) => controller.getCategoryBySlug(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/brands:
+ *   get:
+ *     summary: Listar marcas públicas del storefront
+ *     description: Obtiene la lista de marcas activas. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     responses:
+ *       200:
+ *         description: Lista de marcas del storefront
+ */
+router.get('/brands', (req, res) => controller.listBrands(req, res));
+
+/**
+ * @swagger
  * /api/v1/storefront/products:
  *   get:
  *     summary: Listar productos del storefront (público)
@@ -73,6 +184,56 @@ router.get('/products', optionalAuthMiddleware, (req, res) => controller.listPro
  *         description: Producto no encontrado
  */
 router.get('/products/:id', optionalAuthMiddleware, (req, res) => controller.getProduct(req, res));
+
+/**
+ * @swagger
+ * /api/v1/storefront/search:
+ *   get:
+ *     summary: Buscar en storefront
+ *     description: Busca productos, categorías y marcas en el storefront. Endpoint público, no requiere autenticación.
+ *     tags: [Storefront]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Término de búsqueda
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           maximum: 100
+ *         description: Cantidad máxima de resultados por tipo
+ *     responses:
+ *       200:
+ *         description: Resultados de búsqueda
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     products:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     categories:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     brands:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ */
+router.get('/search', (req, res) => controller.search(req, res));
 
 /**
  * @swagger

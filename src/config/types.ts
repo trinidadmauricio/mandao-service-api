@@ -18,6 +18,7 @@ export const TYPES = {
   IOAuthClientRepository: Symbol.for('IOAuthClientRepository'),
   IOAuthAuthorizationCodeRepository: Symbol.for('IOAuthAuthorizationCodeRepository'),
   IOAuthTokenRepository: Symbol.for('IOAuthTokenRepository'),
+  CustomerAddressRepository: Symbol.for('CustomerAddressRepository'),
 
   // ============================================
   // REPOSITORIES - Delivery
@@ -39,6 +40,8 @@ export const TYPES = {
   IBrandRepository: Symbol.for('IBrandRepository'),
   IStockByBranchRepository: Symbol.for('IStockByBranchRepository'),
   IInventoryMovementRepository: Symbol.for('IInventoryMovementRepository'),
+  ICartRepository: Symbol.for('ICartRepository'),
+  WishlistRepository: Symbol.for('WishlistRepository'),
 
   // ============================================
   // REPOSITORIES - Payments
@@ -94,6 +97,15 @@ export const TYPES = {
   ListUsersUseCase: Symbol.for('ListUsersUseCase'),
   UpdateUserUseCase: Symbol.for('UpdateUserUseCase'),
   DeleteUserUseCase: Symbol.for('DeleteUserUseCase'),
+
+  // ============================================
+  // USE CASES - Shared - Customer Addresses
+  // ============================================
+  GetCustomerAddressesUseCase: Symbol.for('GetCustomerAddressesUseCase'),
+  GetCustomerAddressUseCase: Symbol.for('GetCustomerAddressUseCase'),
+  CreateCustomerAddressUseCase: Symbol.for('CreateCustomerAddressUseCase'),
+  UpdateCustomerAddressUseCase: Symbol.for('UpdateCustomerAddressUseCase'),
+  DeleteCustomerAddressUseCase: Symbol.for('DeleteCustomerAddressUseCase'),
 
   // ============================================
   // USE CASES - Shared - Branches
@@ -265,7 +277,33 @@ export const TYPES = {
   // ============================================
   ListStorefrontProductsUseCase: Symbol.for('ListStorefrontProductsUseCase'),
   GetStorefrontProductUseCase: Symbol.for('GetStorefrontProductUseCase'),
+  GetStorefrontConfigUseCase: Symbol.for('GetStorefrontConfigUseCase'),
+  ListStorefrontCategoriesUseCase: Symbol.for('ListStorefrontCategoriesUseCase'),
+  GetStorefrontCategoryBySlugUseCase: Symbol.for('GetStorefrontCategoryBySlugUseCase'),
+  ListStorefrontBrandsUseCase: Symbol.for('ListStorefrontBrandsUseCase'),
+  SearchStorefrontUseCase: Symbol.for('SearchStorefrontUseCase'),
   CheckoutUseCase: Symbol.for('CheckoutUseCase'),
+
+  // ============================================
+  // USE CASES - Retail - Cart
+  // ============================================
+  GetCartUseCase: Symbol.for('GetCartUseCase'),
+  AddCartItemUseCase: Symbol.for('AddCartItemUseCase'),
+  UpdateCartItemUseCase: Symbol.for('UpdateCartItemUseCase'),
+  RemoveCartItemUseCase: Symbol.for('RemoveCartItemUseCase'),
+  ClearCartUseCase: Symbol.for('ClearCartUseCase'),
+  ApplyCouponUseCase: Symbol.for('ApplyCouponUseCase'),
+  RemoveCouponUseCase: Symbol.for('RemoveCouponUseCase'),
+  // Coupon
+  ICouponRepository: Symbol.for('ICouponRepository'),
+  CouponRepository: Symbol.for('CouponRepository'),
+
+  // ============================================
+  // USE CASES - Retail - Wishlist
+  // ============================================
+  GetWishlistUseCase: Symbol.for('GetWishlistUseCase'),
+  AddToWishlistUseCase: Symbol.for('AddToWishlistUseCase'),
+  RemoveFromWishlistUseCase: Symbol.for('RemoveFromWishlistUseCase'),
 
   // ============================================
   // CONTROLLERS - Shared
@@ -302,6 +340,10 @@ export const TYPES = {
   ProductController: Symbol.for('ProductController'),
   ProductVariantController: Symbol.for('ProductVariantController'),
   StorefrontController: Symbol.for('StorefrontController'),
+  CartController: Symbol.for('CartController'),
+  CustomerAddressController: Symbol.for('CustomerAddressController'),
+  CustomerOrderController: Symbol.for('CustomerOrderController'),
+  WishlistController: Symbol.for('WishlistController'),
 
   // ============================================
   // CLIENTS

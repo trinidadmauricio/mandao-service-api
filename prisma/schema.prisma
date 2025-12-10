@@ -115,6 +115,7 @@ model User {
   oauth_access_tokens       OAuthAccessToken[]
   oauth_refresh_tokens      OAuthRefreshToken[]
   audit_logs                AuditLog[]
+  addresses                 CustomerAddress[]
 
   @@map("users")
   @@schema("shared")
@@ -320,6 +321,32 @@ model PaymentTransaction {
   @@index([tenant_id])
   @@index([status])
   @@map("payment_transactions")
+  @@schema("shared")
+}
+
+model CustomerAddress {
+  id             String   @id @default(uuid())
+  tenant_id      String
+  customer_id    String
+  label          String   // "Casa", "Oficina", etc.
+  recipient_name String
+  phone          String
+  street         String
+  street_line_2  String?
+  city           String
+  state          String
+  zip_code       String
+  country        String
+  lat            Decimal? @db.Decimal(10, 8)
+  lng            Decimal? @db.Decimal(11, 8)
+  instructions   String?
+  is_default     Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  customer       User     @relation(fields: [customer_id], references: [id])
+
+  @@index([tenant_id, customer_id])
+  @@map("customer_addresses")
   @@schema("shared")
 }
 
@@ -963,5 +990,77 @@ model StockByBranch {
   @@unique([product_id, variant_id, branch_id])
   @@index([tenant_id, branch_id])
   @@map("stock_by_branch")
+  @@schema("retail")
+}
+
+model Cart {
+  id           String     @id @default(uuid())
+  tenant_id    String
+  customer_id  String?    // null = guest cart
+  session_id   String?    // identificador para guests
+  coupon_code  String?
+  expires_at   DateTime?
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  items        CartItem[]
+
+  @@unique([tenant_id, customer_id])
+  @@index([tenant_id, session_id])
+  @@map("carts")
+  @@schema("retail")
+}
+
+model CartItem {
+  id          String   @id @default(uuid())
+  cart_id     String
+  product_id  String
+  variant_id  String?
+  quantity    Int
+  unit_price  Decimal  @db.Decimal(10, 2)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  cart        Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+  @@schema("retail")
+}
+
+model WishlistItem {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  customer_id String
+  product_id  String
+  variant_id  String?
+  created_at  DateTime @default(now())
+
+  @@unique([tenant_id, customer_id, product_id, variant_id])
+  @@map("wishlist_items")
+  @@schema("retail")
+}
+
+model Coupon {
+  id              String       @id @default(uuid())
+  tenant_id       String
+  code            String
+  discount_type   DiscountType
+  discount_value  Decimal      @db.Decimal(10, 2)
+  min_order_value Decimal?     @db.Decimal(10, 2)
+  max_uses        Int?
+  current_uses    Int          @default(0)
+  valid_from      DateTime
+  valid_until     DateTime
+  is_active       Boolean      @default(true)
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+
+  @@unique([tenant_id, code])
+  @@map("coupons")
+  @@schema("retail")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+
   @@schema("retail")
 }

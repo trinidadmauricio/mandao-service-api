@@ -10,32 +10,24 @@ const prisma = new PrismaClient();
 export async function seedLogisticsProviders(): Promise<void> {
   console.log('🌱 Seeding logistics providers...');
 
-  const tenants = await prisma.tenant.findMany();
-  const tenantIds = tenants.map((t) => t.id);
-
-  // 5-7 logistics providers
-  const providerCount = faker.number.int({ min: 5, max: 7 });
+  // Crear exactamente 2 logistics providers (sin tenant_id - funcionan separados)
+  const providerCount = 2;
   const verificationStatuses: VerificationStatus[] = [
-    VerificationStatus.PENDING,
     VerificationStatus.VERIFIED,
     VerificationStatus.VERIFIED,
-    VerificationStatus.VERIFIED,
-    VerificationStatus.REJECTED,
   ];
   const providerStatuses: ProviderStatus[] = [
     ProviderStatus.ACTIVE,
     ProviderStatus.ACTIVE,
-    ProviderStatus.ACTIVE,
-    ProviderStatus.SUSPENDED,
-    ProviderStatus.INACTIVE,
   ];
 
   for (let i = 0; i < providerCount; i++) {
     const companyName = faker.company.name() + ' Logistics';
     const taxId = faker.string.alphanumeric(10).toUpperCase();
-    const verificationStatus = faker.helpers.arrayElement(verificationStatuses);
-    const status = faker.helpers.arrayElement(providerStatuses);
-    const tenantId = faker.datatype.boolean({ probability: 0.6 }) ? faker.helpers.arrayElement(tenantIds) : null;
+    const verificationStatus = verificationStatuses[i] || VerificationStatus.VERIFIED;
+    const status = providerStatuses[i] || ProviderStatus.ACTIVE;
+    // Logistics providers NO tienen tenant_id - funcionan separados
+    const tenantId = null;
 
     const ratingAvg = verificationStatus === VerificationStatus.VERIFIED
       ? parseFloat(faker.number.float({ min: 3.5, max: 5.0, fractionDigits: 2 }).toFixed(2))

@@ -98,7 +98,10 @@ const corsOptions = {
     'Content-Type',
     'Authorization',
     'X-Tenant-Id',
+    'X-Session-Id',
+    'X-Subdomain',
     'Accept-Language',
+    'Accept-Currency',
     'X-Requested-With',
   ],
   exposedHeaders: ['Content-Range', 'X-Total-Count'],
@@ -222,6 +225,10 @@ import brandsRoutes from './domains/retail/brands/presentation/routes/brands.rou
 import productsRoutes from './domains/retail/products/presentation/routes/products.routes';
 import productVariantsRoutes from './domains/retail/product-variants/presentation/routes/product-variants.routes';
 import storefrontRoutes from './domains/retail/storefront/presentation/routes/storefront.routes';
+import cartRoutes from './domains/retail/cart/presentation/routes/cart.routes';
+import customerAddressesRoutes from './domains/shared/customer-addresses/presentation/routes/customer-addresses.routes';
+import customerOrdersRoutes from './domains/delivery/orders/presentation/routes/customer-orders.routes';
+import wishlistRoutes from './domains/retail/wishlist/presentation/routes/wishlist.routes';
 import paymentsRoutes from './domains/shared/payments/presentation/routes/payments.routes';
 import subscriptionsRoutes from './domains/shared/subscription-plans/presentation/routes/subscriptions.routes';
 import reportsRoutes from './domains/shared/reports/presentation/routes/reports.routes';
@@ -247,6 +254,10 @@ app.use('/api/v1/brands', brandsRoutes);
 app.use('/api/v1/products', productsRoutes);
 app.use('/api/v1/product-variants', productVariantsRoutes);
 app.use('/api/v1/storefront', storefrontRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/customer/addresses', customerAddressesRoutes);
+app.use('/api/v1/customer/orders', customerOrdersRoutes);
+app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/payments', paymentsRoutes);
 app.use('/api/v1/subscriptions', subscriptionsRoutes);
 app.use('/api/v1/reports', reportsRoutes);

@@ -27,6 +27,8 @@ import { IOAuthAuthorizationCodeRepository } from '../domains/shared/oauth/domai
 import { PrismaOAuthAuthorizationCodeRepository } from '../domains/shared/oauth/infrastructure/repositories/PrismaOAuthAuthorizationCodeRepository';
 import { IOAuthTokenRepository } from '../domains/shared/oauth/domain/repositories/IOAuthTokenRepository';
 import { PrismaOAuthTokenRepository } from '../domains/shared/oauth/infrastructure/repositories/PrismaOAuthTokenRepository';
+import { ICustomerAddressRepository } from '../domains/shared/customer-addresses/domain/repositories/ICustomerAddressRepository';
+import { PrismaCustomerAddressRepository } from '../domains/shared/customer-addresses/infrastructure/repositories/PrismaCustomerAddressRepository';
 
 // ============================================
 // REPOSITORIES - Delivery
@@ -61,6 +63,12 @@ import { IStockByBranchRepository } from '../domains/retail/inventory/domain/rep
 import { PrismaStockByBranchRepository } from '../domains/retail/inventory/infrastructure/repositories/PrismaStockByBranchRepository';
 import { IInventoryMovementRepository } from '../domains/retail/inventory/domain/repositories/IInventoryMovementRepository';
 import { PrismaInventoryMovementRepository } from '../domains/retail/inventory/infrastructure/repositories/PrismaInventoryMovementRepository';
+import { ICartRepository } from '../domains/retail/cart/domain/repositories/ICartRepository';
+import { PrismaCartRepository } from '../domains/retail/cart/infrastructure/repositories/PrismaCartRepository';
+import { ICouponRepository } from '../domains/retail/coupon/domain/repositories/ICouponRepository';
+import { PrismaCouponRepository } from '../domains/retail/coupon/infrastructure/repositories/PrismaCouponRepository';
+import { IWishlistRepository } from '../domains/retail/wishlist/domain/repositories/IWishlistRepository';
+import { PrismaWishlistRepository } from '../domains/retail/wishlist/infrastructure/repositories/PrismaWishlistRepository';
 
 // ============================================
 // REPOSITORIES - Payments
@@ -117,6 +125,11 @@ import { GetUserUseCase } from '../domains/shared/users/application/use-cases/Ge
 import { ListUsersUseCase } from '../domains/shared/users/application/use-cases/ListUsersUseCase';
 import { UpdateUserUseCase } from '../domains/shared/users/application/use-cases/UpdateUserUseCase';
 import { DeleteUserUseCase } from '../domains/shared/users/application/use-cases/DeleteUserUseCase';
+import { GetCustomerAddressesUseCase } from '../domains/shared/customer-addresses/application/use-cases/GetCustomerAddressesUseCase';
+import { GetCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/GetCustomerAddressUseCase';
+import { CreateCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/CreateCustomerAddressUseCase';
+import { UpdateCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/UpdateCustomerAddressUseCase';
+import { DeleteCustomerAddressUseCase } from '../domains/shared/customer-addresses/application/use-cases/DeleteCustomerAddressUseCase';
 
 // ============================================
 // USE CASES - Shared - Branches
@@ -270,7 +283,22 @@ import { GetDashboardKpisUseCase } from '../domains/shared/reports/application/u
 // ============================================
 import { ListStorefrontProductsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontProductsUseCase';
 import { GetStorefrontProductUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontProductUseCase';
+import { GetStorefrontConfigUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontConfigUseCase';
+import { ListStorefrontCategoriesUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontCategoriesUseCase';
+import { GetStorefrontCategoryBySlugUseCase } from '../domains/retail/storefront/application/use-cases/GetStorefrontCategoryBySlugUseCase';
+import { ListStorefrontBrandsUseCase } from '../domains/retail/storefront/application/use-cases/ListStorefrontBrandsUseCase';
+import { SearchStorefrontUseCase } from '../domains/retail/storefront/application/use-cases/SearchStorefrontUseCase';
 import { CheckoutUseCase } from '../domains/retail/storefront/application/use-cases/CheckoutUseCase';
+import { GetCartUseCase } from '../domains/retail/cart/application/use-cases/GetCartUseCase';
+import { AddCartItemUseCase } from '../domains/retail/cart/application/use-cases/AddCartItemUseCase';
+import { UpdateCartItemUseCase } from '../domains/retail/cart/application/use-cases/UpdateCartItemUseCase';
+import { RemoveCartItemUseCase } from '../domains/retail/cart/application/use-cases/RemoveCartItemUseCase';
+import { ClearCartUseCase } from '../domains/retail/cart/application/use-cases/ClearCartUseCase';
+import { ApplyCouponUseCase } from '../domains/retail/cart/application/use-cases/ApplyCouponUseCase';
+import { RemoveCouponUseCase } from '../domains/retail/cart/application/use-cases/RemoveCouponUseCase';
+import { GetWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/GetWishlistUseCase';
+import { AddToWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/AddToWishlistUseCase';
+import { RemoveFromWishlistUseCase } from '../domains/retail/wishlist/application/use-cases/RemoveFromWishlistUseCase';
 
 // ============================================
 // USE CASES - Delivery - Orders
@@ -330,6 +358,10 @@ import { BrandController } from '../domains/retail/brands/presentation/controlle
 import { ProductController } from '../domains/retail/products/presentation/controllers/ProductController';
 import { ProductVariantController } from '../domains/retail/product-variants/presentation/controllers/ProductVariantController';
 import { StorefrontController } from '../domains/retail/storefront/presentation/controllers/StorefrontController';
+import { CartController } from '../domains/retail/cart/presentation/controllers/CartController';
+import { CustomerAddressController } from '../domains/shared/customer-addresses/presentation/controllers/CustomerAddressController';
+import { CustomerOrderController } from '../domains/delivery/orders/presentation/controllers/CustomerOrderController';
+import { WishlistController } from '../domains/retail/wishlist/presentation/controllers/WishlistController';
 
 // ============================================
 // CONTROLLERS - Shared - Auth
@@ -378,6 +410,13 @@ container
   .bind<IOAuthAuthorizationCodeRepository>(TYPES.IOAuthAuthorizationCodeRepository)
   .to(PrismaOAuthAuthorizationCodeRepository);
 container.bind<IOAuthTokenRepository>(TYPES.IOAuthTokenRepository).to(PrismaOAuthTokenRepository);
+container
+  .bind<ICustomerAddressRepository>(TYPES.CustomerAddressRepository)
+  .toDynamicValue((context) => {
+    const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+    return new PrismaCustomerAddressRepository(prisma);
+  })
+  .inSingletonScope();
 
 // ============================================
 // REPOSITORIES - Delivery
@@ -413,6 +452,27 @@ container
 container
   .bind<IInventoryMovementRepository>(TYPES.IInventoryMovementRepository)
   .to(PrismaInventoryMovementRepository);
+container
+  .bind<ICartRepository>(TYPES.ICartRepository)
+  .toDynamicValue((context) => {
+    const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+    return new PrismaCartRepository(prisma);
+  })
+  .inSingletonScope();
+container
+  .bind<ICouponRepository>(TYPES.ICouponRepository)
+  .toDynamicValue((context) => {
+    const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+    return new PrismaCouponRepository(prisma);
+  })
+  .inSingletonScope();
+container
+  .bind<IWishlistRepository>(TYPES.WishlistRepository)
+    .toDynamicValue((context) => {
+      const prisma = context.container.get<PrismaClient>(TYPES.PrismaClient);
+      return new PrismaWishlistRepository(prisma);
+    })
+    .inSingletonScope();
 
 // ============================================
 // REPOSITORIES - Payments
@@ -484,6 +544,25 @@ container.bind<GetUserUseCase>(TYPES.GetUserUseCase).to(GetUserUseCase);
 container.bind<ListUsersUseCase>(TYPES.ListUsersUseCase).to(ListUsersUseCase);
 container.bind<UpdateUserUseCase>(TYPES.UpdateUserUseCase).to(UpdateUserUseCase);
 container.bind<DeleteUserUseCase>(TYPES.DeleteUserUseCase).to(DeleteUserUseCase);
+
+// ============================================
+// USE CASES - Customer Addresses
+// ============================================
+container
+  .bind<GetCustomerAddressesUseCase>(TYPES.GetCustomerAddressesUseCase)
+  .to(GetCustomerAddressesUseCase);
+container
+  .bind<GetCustomerAddressUseCase>(TYPES.GetCustomerAddressUseCase)
+  .to(GetCustomerAddressUseCase);
+container
+  .bind<CreateCustomerAddressUseCase>(TYPES.CreateCustomerAddressUseCase)
+  .to(CreateCustomerAddressUseCase);
+container
+  .bind<UpdateCustomerAddressUseCase>(TYPES.UpdateCustomerAddressUseCase)
+  .to(UpdateCustomerAddressUseCase);
+container
+  .bind<DeleteCustomerAddressUseCase>(TYPES.DeleteCustomerAddressUseCase)
+  .to(DeleteCustomerAddressUseCase);
 
 // ============================================
 // USE CASES - Shared - Branches
@@ -749,7 +828,42 @@ container
 container
   .bind<GetStorefrontProductUseCase>(TYPES.GetStorefrontProductUseCase)
   .to(GetStorefrontProductUseCase);
+container
+  .bind<GetStorefrontConfigUseCase>(TYPES.GetStorefrontConfigUseCase)
+  .to(GetStorefrontConfigUseCase);
+container
+  .bind<ListStorefrontCategoriesUseCase>(TYPES.ListStorefrontCategoriesUseCase)
+  .to(ListStorefrontCategoriesUseCase);
+container
+  .bind<GetStorefrontCategoryBySlugUseCase>(TYPES.GetStorefrontCategoryBySlugUseCase)
+  .to(GetStorefrontCategoryBySlugUseCase);
+container
+  .bind<ListStorefrontBrandsUseCase>(TYPES.ListStorefrontBrandsUseCase)
+  .to(ListStorefrontBrandsUseCase);
+container
+  .bind<SearchStorefrontUseCase>(TYPES.SearchStorefrontUseCase)
+  .to(SearchStorefrontUseCase);
 container.bind<CheckoutUseCase>(TYPES.CheckoutUseCase).to(CheckoutUseCase);
+container.bind<GetCartUseCase>(TYPES.GetCartUseCase).to(GetCartUseCase);
+container.bind<AddCartItemUseCase>(TYPES.AddCartItemUseCase).to(AddCartItemUseCase);
+container.bind<UpdateCartItemUseCase>(TYPES.UpdateCartItemUseCase).to(UpdateCartItemUseCase);
+container.bind<RemoveCartItemUseCase>(TYPES.RemoveCartItemUseCase).to(RemoveCartItemUseCase);
+container.bind<ClearCartUseCase>(TYPES.ClearCartUseCase).to(ClearCartUseCase);
+container.bind<ApplyCouponUseCase>(TYPES.ApplyCouponUseCase).to(ApplyCouponUseCase);
+container.bind<RemoveCouponUseCase>(TYPES.RemoveCouponUseCase).to(RemoveCouponUseCase);
+
+// ============================================
+// USE CASES - Wishlist
+// ============================================
+container
+  .bind<GetWishlistUseCase>(TYPES.GetWishlistUseCase)
+  .to(GetWishlistUseCase);
+container
+  .bind<AddToWishlistUseCase>(TYPES.AddToWishlistUseCase)
+  .to(AddToWishlistUseCase);
+container
+  .bind<RemoveFromWishlistUseCase>(TYPES.RemoveFromWishlistUseCase)
+  .to(RemoveFromWishlistUseCase);
 
 // ============================================
 // CONTROLLERS - Shared
@@ -797,6 +911,16 @@ container
   .bind<ProductVariantController>(TYPES.ProductVariantController)
   .to(ProductVariantController);
 container.bind<StorefrontController>(TYPES.StorefrontController).to(StorefrontController);
+container.bind<CartController>(TYPES.CartController).to(CartController);
+container
+  .bind<CustomerAddressController>(TYPES.CustomerAddressController)
+  .to(CustomerAddressController);
+container
+  .bind<CustomerOrderController>(TYPES.CustomerOrderController)
+  .to(CustomerOrderController);
+container
+  .bind<WishlistController>(TYPES.WishlistController)
+  .to(WishlistController);
 
 // ============================================
 // CONTROLLERS - Shared - Auth

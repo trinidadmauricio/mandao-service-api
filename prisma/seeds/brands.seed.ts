@@ -10,12 +10,15 @@ const prisma = new PrismaClient();
 export async function seedBrands(): Promise<void> {
   console.log('🌱 Seeding brands...');
 
+  // Solo trabajar con los primeros 2 tenants (donde tenemos usuarios)
   const tenants = await prisma.tenant.findMany({
     where: {
       type: {
         in: [TenantType.RETAIL, TenantType.HYBRID],
       },
     },
+    take: 2,
+    orderBy: { created_at: 'asc' },
   });
 
   if (tenants.length === 0) {

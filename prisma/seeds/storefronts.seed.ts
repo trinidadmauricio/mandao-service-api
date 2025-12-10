@@ -10,12 +10,15 @@ const prisma = new PrismaClient();
 export async function seedStorefronts(): Promise<void> {
   console.log('🌱 Seeding storefronts...');
 
+  // Solo trabajar con los primeros 2 tenants (donde tenemos usuarios)
   const tenants = await prisma.tenant.findMany({
     where: {
       type: {
         in: [TenantType.RETAIL, TenantType.HYBRID],
       },
     },
+    take: 2,
+    orderBy: { created_at: 'asc' },
   });
 
   if (tenants.length === 0) {
@@ -39,6 +42,7 @@ export async function seedStorefronts(): Promise<void> {
       usedSubdomains.add(subdomain);
 
       const themeConfig = {
+        template: 'classic', // Template por defecto
         primary_color: faker.color.rgb(),
         secondary_color: faker.color.rgb(),
         font_family: faker.helpers.arrayElement(['Arial', 'Roboto', 'Open Sans', 'Lato']),

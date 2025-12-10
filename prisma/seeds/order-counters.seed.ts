@@ -10,7 +10,16 @@ const prisma = new PrismaClient();
 export async function seedOrderCounters(): Promise<void> {
   console.log('🌱 Seeding order counters...');
 
-  const tenants = await prisma.tenant.findMany();
+  // Trabajar con tenants RETAIL y ON_DEMAND (donde tenemos usuarios)
+  const allTenants = await prisma.tenant.findMany({
+    orderBy: { created_at: 'asc' },
+  });
+  const tenants = allTenants.filter(t => {
+    const retailTenants = allTenants.filter(tt => tt.type === 'RETAIL').slice(0, 1);
+    const onDemandTenants = allTenants.filter(tt => tt.type === 'ON_DEMAND').slice(0, 1);
+    return retailTenants.some(rt => rt.id === t.id) || onDemandTenants.some(od => od.id === t.id);
+  });
+  
   if (tenants.length === 0) {
     throw new Error('No tenants found. Please run tenants seed first.');
   }
