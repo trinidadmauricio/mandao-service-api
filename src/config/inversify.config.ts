@@ -107,6 +107,7 @@ import { StripeService } from '../domains/shared/payments/application/services/S
 // ============================================
 import { CurrencyService } from '../domains/shared/currency/CurrencyService';
 import { i18nService } from '../domains/shared/i18n/I18nService';
+import { FCMService } from '../shared/infrastructure/push/FCMService';
 
 // ============================================
 // USE CASES - Shared - Tenants
@@ -526,6 +527,7 @@ container
 // ============================================
 container.bind<CurrencyService>(TYPES.CurrencyService).toConstantValue(new CurrencyService());
 container.bind<typeof i18nService>(TYPES.I18nService).toConstantValue(i18nService);
+container.bind<FCMService>(TYPES.FCMService).to(FCMService).inSingletonScope();
 
 // ============================================
 // USE CASES - Shared - Tenants

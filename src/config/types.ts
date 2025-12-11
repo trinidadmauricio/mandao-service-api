@@ -81,6 +81,11 @@ export const TYPES = {
   I18nService: Symbol.for('I18nService'),
 
   // ============================================
+  // SERVICES - Push Notifications
+  // ============================================
+  FCMService: Symbol.for('FCMService'),
+
+  // ============================================
   // USE CASES - Shared - Tenants
   // ============================================
   CreateTenantUseCase: Symbol.for('CreateTenantUseCase'),
