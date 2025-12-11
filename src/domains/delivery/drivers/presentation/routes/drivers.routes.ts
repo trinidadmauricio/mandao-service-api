@@ -41,6 +41,69 @@ router.get(
 
 /**
  * @swagger
+ * /api/v1/drivers/me:
+ *   get:
+ *     summary: Obtener perfil del conductor actual
+ *     description: Obtiene el perfil completo del conductor autenticado, incluyendo datos del usuario y vehículo
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Perfil del conductor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     logistics_provider_id:
+ *                       type: string
+ *                       format: uuid
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         first_name:
+ *                           type: string
+ *                         last_name:
+ *                           type: string
+ *                     vehicle:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         vehicle_type:
+ *                           type: string
+ *                         license_plate:
+ *                           type: string
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Solo conductores pueden acceder
+ *       404:
+ *         description: Perfil de conductor no encontrado
+ */
+router.get(
+  '/me',
+  authMiddleware,
+  requireTenantMiddleware,
+  (req, res) => controller.getMe(req, res)
+);
+
+/**
+ * @swagger
  * /api/v1/drivers/{id}:
  *   get:
  *     summary: Obtener conductor por ID
