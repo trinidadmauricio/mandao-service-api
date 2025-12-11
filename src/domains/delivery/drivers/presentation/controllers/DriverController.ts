@@ -10,6 +10,7 @@ import { GetDriverUseCase } from '../../application/use-cases/GetDriverUseCase';
 import { ListDriversUseCase } from '../../application/use-cases/ListDriversUseCase';
 import { UpdateDriverUseCase } from '../../application/use-cases/UpdateDriverUseCase';
 import { DeleteDriverUseCase } from '../../application/use-cases/DeleteDriverUseCase';
+import { GetDriverLocationUseCase } from '../../application/use-cases/GetDriverLocationUseCase';
 import { createDriverSchema, updateDriverSchema } from '../../application/dto/CreateDriverDto';
 import { listDriversFiltersSchema } from '../../application/dto/ListDriversFiltersDto';
 import { logger } from '../../../../../shared/utils/logger';
@@ -25,6 +26,7 @@ export class DriverController {
     @inject(TYPES.ListDriversUseCase) private listUseCase: ListDriversUseCase,
     @inject(TYPES.UpdateDriverUseCase) private updateUseCase: UpdateDriverUseCase,
     @inject(TYPES.DeleteDriverUseCase) private deleteUseCase: DeleteDriverUseCase,
+    @inject(TYPES.GetDriverLocationUseCase) private getLocationUseCase: GetDriverLocationUseCase,
     @inject(TYPES.IUserRepository) private userRepository: IUserRepository
   ) {}
 
@@ -286,6 +288,64 @@ export class DriverController {
       res.status(204).send();
     } catch (error) {
       logger.error('Error deleting driver', { error });
+      if (error instanceof Error) {
+        if (error.message === 'Driver not found') {
+          res.status(404).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+        if (error.message.includes('permission')) {
+          res.status(403).json({
+            status: 'error',
+            message: error.message,
+          });
+          return;
+        }
+      }
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  /**
+   * GET /api/v1/drivers/:id/location
+   * Obtiene la última ubicación conocida de un driver desde cache
+   */
+  async getLocation(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const context = req.user
+        ? {
+            currentUserRole: req.user.role as string,
+            currentUserLogisticsProviderId: req.user.logistics_provider_id || null,
+            currentUserId: req.user.id,
+          }
+        : undefined;
+
+      const location = await this.getLocationUseCase.execute({ driverId: id }, context);
+
+      if (!location) {
+        res.status(200).json({
+          status: 'success',
+          data: {
+            driver_id: id,
+            is_online: false,
+            message: 'Driver location not available (offline or no recent updates)',
+          },
+        });
+        return;
+      }
+
+      res.status(200).json({
+        status: 'success',
+        data: location,
+      });
+    } catch (error) {
+      logger.error('Error getting driver location', { error });
       if (error instanceof Error) {
         if (error.message === 'Driver not found') {
           res.status(404).json({

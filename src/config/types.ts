@@ -190,6 +190,14 @@ export const TYPES = {
   ListDriversUseCase: Symbol.for('ListDriversUseCase'),
   UpdateDriverUseCase: Symbol.for('UpdateDriverUseCase'),
   DeleteDriverUseCase: Symbol.for('DeleteDriverUseCase'),
+  GetDriverLocationUseCase: Symbol.for('GetDriverLocationUseCase'),
+
+  // ============================================
+  // INFRASTRUCTURE - Redis
+  // ============================================
+  RedisClient: Symbol.for('RedisClient'),
+  LocationCache: Symbol.for('LocationCache'),
+  LocationPubSub: Symbol.for('LocationPubSub'),
 
   // ============================================
   // USE CASES - Delivery - Vehicles

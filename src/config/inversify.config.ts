@@ -177,6 +177,14 @@ import { GetDriverUseCase } from '../domains/delivery/drivers/application/use-ca
 import { ListDriversUseCase } from '../domains/delivery/drivers/application/use-cases/ListDriversUseCase';
 import { UpdateDriverUseCase } from '../domains/delivery/drivers/application/use-cases/UpdateDriverUseCase';
 import { DeleteDriverUseCase } from '../domains/delivery/drivers/application/use-cases/DeleteDriverUseCase';
+import { GetDriverLocationUseCase } from '../domains/delivery/drivers/application/use-cases/GetDriverLocationUseCase';
+
+// ============================================
+// INFRASTRUCTURE - Redis
+// ============================================
+import { RedisClient } from '../shared/infrastructure/redis/RedisClient';
+import { LocationCache } from '../shared/infrastructure/redis/LocationCache';
+import { LocationPubSub } from '../shared/infrastructure/redis/LocationPubSub';
 
 // ============================================
 // USE CASES - Delivery - Vehicles
@@ -638,6 +646,14 @@ container.bind<GetDriverUseCase>(TYPES.GetDriverUseCase).to(GetDriverUseCase);
 container.bind<ListDriversUseCase>(TYPES.ListDriversUseCase).to(ListDriversUseCase);
 container.bind<UpdateDriverUseCase>(TYPES.UpdateDriverUseCase).to(UpdateDriverUseCase);
 container.bind<DeleteDriverUseCase>(TYPES.DeleteDriverUseCase).to(DeleteDriverUseCase);
+container.bind<GetDriverLocationUseCase>(TYPES.GetDriverLocationUseCase).to(GetDriverLocationUseCase);
+
+// ============================================
+// INFRASTRUCTURE - Redis
+// ============================================
+container.bind<RedisClient>(TYPES.RedisClient).to(RedisClient).inSingletonScope();
+container.bind<LocationCache>(TYPES.LocationCache).to(LocationCache).inSingletonScope();
+container.bind<LocationPubSub>(TYPES.LocationPubSub).to(LocationPubSub).inSingletonScope();
 
 // ============================================
 // USE CASES - Delivery - Vehicles

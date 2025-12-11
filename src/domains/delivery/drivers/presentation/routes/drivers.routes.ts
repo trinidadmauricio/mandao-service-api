@@ -236,6 +236,79 @@ router.patch(
 
 /**
  * @swagger
+ * /api/v1/drivers/{id}/location:
+ *   get:
+ *     summary: Obtener última ubicación de un conductor
+ *     description: Obtiene la última ubicación conocida de un conductor desde cache (Redis). Retorna is_online=false si el conductor no tiene ubicación reciente.
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID del conductor
+ *     responses:
+ *       200:
+ *         description: Ubicación del conductor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     driver_id:
+ *                       type: string
+ *                       format: uuid
+ *                     lat:
+ *                       type: number
+ *                       example: -12.0464
+ *                     lng:
+ *                       type: number
+ *                       example: -77.0428
+ *                     accuracy:
+ *                       type: number
+ *                       example: 10.5
+ *                     speed:
+ *                       type: number
+ *                       example: 45.2
+ *                     heading:
+ *                       type: number
+ *                       example: 180
+ *                     order_id:
+ *                       type: string
+ *                       format: uuid
+ *                     recorded_at:
+ *                       type: string
+ *                       format: date-time
+ *                     is_online:
+ *                       type: boolean
+ *                       example: true
+ *       401:
+ *         description: No autenticado
+ *       403:
+ *         description: Sin permisos para ver esta ubicación
+ *       404:
+ *         description: Conductor no encontrado
+ */
+router.get(
+  '/:id/location',
+  authMiddleware,
+  requireTenantMiddleware,
+  requirePermission('drivers', 'read'),
+  (req, res) => controller.getLocation(req, res)
+);
+
+/**
+ * @swagger
  * /api/v1/drivers/{id}:
  *   delete:
  *     summary: Eliminar conductor
