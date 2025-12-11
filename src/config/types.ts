@@ -79,6 +79,7 @@ export const TYPES = {
   // ============================================
   CurrencyService: Symbol.for('CurrencyService'),
   I18nService: Symbol.for('I18nService'),
+  FCMService: Symbol.for('FCMService'),
 
   // ============================================
   // USE CASES - Shared - Tenants
@@ -97,6 +98,21 @@ export const TYPES = {
   ListUsersUseCase: Symbol.for('ListUsersUseCase'),
   UpdateUserUseCase: Symbol.for('UpdateUserUseCase'),
   DeleteUserUseCase: Symbol.for('DeleteUserUseCase'),
+
+  // ============================================
+  // REPOSITORIES - Device Tokens
+  // ============================================
+  IDeviceTokenRepository: Symbol.for('IDeviceTokenRepository'),
+
+  // ============================================
+  // USE CASES - Shared - Device Tokens
+  // ============================================
+  RegisterDeviceTokenUseCase: Symbol.for('RegisterDeviceTokenUseCase'),
+
+  // ============================================
+  // CONTROLLERS - Device Tokens
+  // ============================================
+  DeviceTokenController: Symbol.for('DeviceTokenController'),
 
   // ============================================
   // USE CASES - Shared - Customer Addresses

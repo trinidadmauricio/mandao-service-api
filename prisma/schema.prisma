@@ -116,8 +116,28 @@ model User {
   oauth_refresh_tokens      OAuthRefreshToken[]
   audit_logs                AuditLog[]
   addresses                 CustomerAddress[]
+  device_tokens             UserDeviceToken[]
 
   @@map("users")
+  @@schema("shared")
+}
+
+// Device tokens for push notifications (FCM)
+model UserDeviceToken {
+  id         String   @id @default(uuid())
+  user_id    String
+  token      String   @unique
+  platform   String   // 'ios' | 'android' | 'web'
+  device_info Json?   // Información adicional del dispositivo
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([token])
+  @@map("user_device_tokens")
   @@schema("shared")
 }
 

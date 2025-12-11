@@ -233,6 +233,7 @@ import paymentsRoutes from './domains/shared/payments/presentation/routes/paymen
 import subscriptionsRoutes from './domains/shared/subscription-plans/presentation/routes/subscriptions.routes';
 import reportsRoutes from './domains/shared/reports/presentation/routes/reports.routes';
 import geocodingRoutes from './domains/shared/geocoding/presentation/routes/geocoding.routes';
+import deviceTokensRoutes from './domains/shared/device-tokens/presentation/routes/device-tokens.routes';
 
 app.use('/api/v1/tenants', tenantsRoutes);
 app.use('/api/v1/subscription-plans', subscriptionPlansRoutes);
@@ -262,6 +263,7 @@ app.use('/api/v1/payments', paymentsRoutes);
 app.use('/api/v1/subscriptions', subscriptionsRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/geocoding', geocodingRoutes);
+app.use('/api/v1/device-tokens', deviceTokensRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

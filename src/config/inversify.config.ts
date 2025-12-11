@@ -107,6 +107,13 @@ import { StripeService } from '../domains/shared/payments/application/services/S
 // ============================================
 import { CurrencyService } from '../domains/shared/currency/CurrencyService';
 import { i18nService } from '../domains/shared/i18n/I18nService';
+import { FCMService } from '../shared/infrastructure/push/FCMService';
+
+// Device Tokens
+import { IDeviceTokenRepository } from '../domains/shared/device-tokens/domain/repositories/IDeviceTokenRepository';
+import { PrismaDeviceTokenRepository } from '../domains/shared/device-tokens/infrastructure/repositories/PrismaDeviceTokenRepository';
+import { RegisterDeviceTokenUseCase } from '../domains/shared/device-tokens/application/use-cases/RegisterDeviceTokenUseCase';
+import { DeviceTokenController } from '../domains/shared/device-tokens/presentation/controllers/DeviceTokenController';
 
 // ============================================
 // USE CASES - Shared - Tenants
@@ -526,6 +533,14 @@ container
 // ============================================
 container.bind<CurrencyService>(TYPES.CurrencyService).toConstantValue(new CurrencyService());
 container.bind<typeof i18nService>(TYPES.I18nService).toConstantValue(i18nService);
+container.bind<FCMService>(TYPES.FCMService).to(FCMService).inSingletonScope();
+
+// ============================================
+// Device Tokens
+// ============================================
+container.bind<IDeviceTokenRepository>(TYPES.IDeviceTokenRepository).to(PrismaDeviceTokenRepository);
+container.bind<RegisterDeviceTokenUseCase>(TYPES.RegisterDeviceTokenUseCase).to(RegisterDeviceTokenUseCase);
+container.bind<DeviceTokenController>(TYPES.DeviceTokenController).to(DeviceTokenController);
 
 // ============================================
 // USE CASES - Shared - Tenants
