@@ -61,6 +61,27 @@ export class CreateDriverUseCase {
           work_zone: dto.work_zone ?? null,
           availability_status: dto.availability_status ?? 'AVAILABLE',
           documents: dto.documents as Prisma.InputJsonValue,
+          delivery_zones:
+            dto.delivery_zone_ids && dto.delivery_zone_ids.length > 0
+              ? {
+                  createMany: {
+                    data: dto.delivery_zone_ids.map((delivery_zone_id) => ({
+                      delivery_zone_id,
+                    })),
+                    skipDuplicates: true,
+                  },
+                }
+              : undefined,
+        },
+        include: {
+          delivery_zones: {
+            include: {
+              delivery_zone: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+          vehicle: true,
         },
       });
 
@@ -73,6 +94,43 @@ export class CreateDriverUseCase {
       }
 
       // Convertir a dominio
+      const deliveryZones =
+        createdData.delivery_zones?.map((dz) => ({
+          id: dz.id,
+          delivery_zone_id: dz.delivery_zone_id,
+          created_at: dz.created_at,
+          delivery_zone: dz.delivery_zone ? { id: dz.delivery_zone.id, name: dz.delivery_zone.name } : undefined,
+        })) ?? [];
+
+      const vehicle = createdData.vehicle
+        ? {
+            id: createdData.vehicle.id,
+            logistics_provider_id: createdData.vehicle.logistics_provider_id,
+            driver_id: createdData.vehicle.driver_id,
+            vehicle_type: createdData.vehicle.vehicle_type as
+              | 'MOTORCYCLE'
+              | 'SEDAN'
+              | 'MINI_VAN'
+              | 'PANEL'
+              | 'TRUCK'
+              | 'PICKUP',
+            license_plate: createdData.vehicle.license_plate,
+            brand: createdData.vehicle.brand,
+            model: createdData.vehicle.model,
+            year: createdData.vehicle.year,
+            color: createdData.vehicle.color,
+            insurance_policy: createdData.vehicle.insurance_policy,
+            insurance_expires_at: createdData.vehicle.insurance_expires_at,
+            last_maintenance_at: createdData.vehicle.last_maintenance_at,
+            status: createdData.vehicle.status as 'AVAILABLE' | 'IN_SERVICE' | 'MAINTENANCE' | 'OUT_OF_SERVICE',
+            specifications: createdData.vehicle.specifications
+              ? (createdData.vehicle.specifications as Record<string, unknown>)
+              : null,
+            created_at: createdData.vehicle.created_at,
+            updated_at: createdData.vehicle.updated_at,
+          }
+        : null;
+
       return new Driver(
         createdData.id,
         createdData.logistics_provider_id,
@@ -90,7 +148,9 @@ export class CreateDriverUseCase {
         createdData.total_deliveries,
         createdData.documents as Record<string, unknown>,
         createdData.created_at,
-        createdData.updated_at
+        createdData.updated_at,
+        deliveryZones,
+        vehicle
       );
     });
   }

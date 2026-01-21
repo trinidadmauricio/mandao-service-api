@@ -73,9 +73,66 @@ export class DriverController {
         : undefined;
       const driver = await this.getUseCase.execute(id, context);
 
+      // Obtener el usuario asociado al driver
+      const user = await this.userRepository.findById(driver.user_id).catch(() => null);
+
+      // Construir la respuesta enriquecida con el usuario y el vehículo
+      const driverResponse = {
+        id: driver.id,
+        logistics_provider_id: driver.logistics_provider_id,
+        user_id: driver.user_id,
+        identity_document: driver.identity_document,
+        driving_license: driver.driving_license,
+        date_of_birth: driver.date_of_birth.toISOString(),
+        emergency_contact: driver.emergency_contact,
+        has_own_vehicle: driver.has_own_vehicle,
+        vehicle_id: driver.vehicle_id,
+        work_type: driver.work_type,
+        work_zone: driver.work_zone,
+        delivery_zones: driver.delivery_zones,
+        availability_status: driver.availability_status,
+        rating_avg: driver.rating_avg,
+        total_deliveries: driver.total_deliveries,
+        documents: driver.documents,
+        created_at: driver.created_at.toISOString(),
+        updated_at: driver.updated_at.toISOString(),
+        user: user
+          ? {
+              id: user.id,
+              email: user.email,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              phone: user.phone,
+              role: user.role,
+            }
+          : undefined,
+        vehicle: driver.vehicle
+          ? {
+              id: driver.vehicle.id,
+              logistics_provider_id: driver.vehicle.logistics_provider_id,
+              driver_id: driver.vehicle.driver_id,
+              vehicle_type: driver.vehicle.vehicle_type,
+              license_plate: driver.vehicle.license_plate,
+              brand: driver.vehicle.brand,
+              model: driver.vehicle.model,
+              year: driver.vehicle.year,
+              color: driver.vehicle.color,
+              insurance_policy: driver.vehicle.insurance_policy,
+              insurance_expires_at: driver.vehicle.insurance_expires_at.toISOString(),
+              last_maintenance_at: driver.vehicle.last_maintenance_at
+                ? driver.vehicle.last_maintenance_at.toISOString()
+                : null,
+              status: driver.vehicle.status,
+              specifications: driver.vehicle.specifications,
+              created_at: driver.vehicle.created_at.toISOString(),
+              updated_at: driver.vehicle.updated_at.toISOString(),
+            }
+          : undefined,
+      };
+
       res.status(200).json({
         status: 'success',
-        data: driver,
+        data: driverResponse,
       });
     } catch (error) {
       logger.error('Error getting driver', { error });
@@ -204,6 +261,7 @@ export class DriverController {
           vehicle_id: driver.vehicle_id,
           work_type: driver.work_type,
           work_zone: driver.work_zone,
+          delivery_zones: driver.delivery_zones,
           availability_status: driver.availability_status,
           rating_avg: driver.rating_avg,
           total_deliveries: driver.total_deliveries,

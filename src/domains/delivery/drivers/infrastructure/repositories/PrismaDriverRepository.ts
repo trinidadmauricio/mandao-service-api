@@ -22,6 +22,16 @@ export class PrismaDriverRepository implements IDriverRepository {
   async findById(id: string): Promise<Driver | null> {
     const data = await this.prisma.driver.findUnique({
       where: { id },
+      include: {
+        delivery_zones: {
+          include: {
+            delivery_zone: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        vehicle: true,
+      },
     });
 
     if (!data) {
@@ -53,6 +63,16 @@ export class PrismaDriverRepository implements IDriverRepository {
 
     const data = await this.prisma.driver.findMany({
       where,
+      include: {
+        delivery_zones: {
+          include: {
+            delivery_zone: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        vehicle: true,
+      },
     });
 
     return data.map((item) => this.toDomain(item));
@@ -171,6 +191,16 @@ export class PrismaDriverRepository implements IDriverRepository {
         orderBy: {
           created_at: 'desc',
         },
+        include: {
+          delivery_zones: {
+            include: {
+              delivery_zone: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+          vehicle: true,
+        },
       });
 
       return {
@@ -205,6 +235,27 @@ export class PrismaDriverRepository implements IDriverRepository {
         work_zone: data.work_zone ?? null,
         availability_status: data.availability_status ?? 'AVAILABLE',
         documents: data.documents as Prisma.InputJsonValue,
+        delivery_zones:
+          data.delivery_zone_ids && data.delivery_zone_ids.length > 0
+            ? {
+                createMany: {
+                  data: data.delivery_zone_ids.map((delivery_zone_id) => ({
+                    delivery_zone_id,
+                  })),
+                  skipDuplicates: true,
+                },
+              }
+            : undefined,
+      },
+      include: {
+        delivery_zones: {
+          include: {
+            delivery_zone: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        vehicle: true,
       },
     });
 
@@ -212,6 +263,23 @@ export class PrismaDriverRepository implements IDriverRepository {
   }
 
   async update(id: string, data: UpdateDriverData): Promise<Driver> {
+    const deliveryZonesUpdate =
+      data.delivery_zone_ids !== undefined
+        ? {
+            deleteMany: {},
+            ...(data.delivery_zone_ids.length > 0
+              ? {
+                  createMany: {
+                    data: data.delivery_zone_ids.map((delivery_zone_id) => ({
+                      delivery_zone_id,
+                    })),
+                    skipDuplicates: true,
+                  },
+                }
+              : {}),
+          }
+        : undefined;
+
     const updated = await this.prisma.driver.update({
       where: { id },
       data: {
@@ -222,11 +290,24 @@ export class PrismaDriverRepository implements IDriverRepository {
           ? (data.emergency_contact as Prisma.InputJsonValue)
           : undefined,
         has_own_vehicle: data.has_own_vehicle,
-        vehicle_id: data.vehicle_id ?? undefined,
+        // Permitir explicitamente limpiar el vehículo enviando null.
+        // Si no viene vehicle_id, no tocar el campo.
+        vehicle_id: data.vehicle_id === undefined ? undefined : data.vehicle_id,
         work_type: data.work_type,
         work_zone: data.work_zone ?? undefined,
+        delivery_zones: deliveryZonesUpdate,
         availability_status: data.availability_status,
         documents: data.documents ? (data.documents as Prisma.InputJsonValue) : undefined,
+      },
+      include: {
+        delivery_zones: {
+          include: {
+            delivery_zone: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+        vehicle: true,
       },
     });
 
@@ -257,7 +338,68 @@ export class PrismaDriverRepository implements IDriverRepository {
     documents: Prisma.JsonValue;
     created_at: Date;
     updated_at: Date;
+    delivery_zones?: Array<{
+      id: string;
+      delivery_zone_id: string;
+      created_at: Date;
+      delivery_zone?: { id: string; name: string } | null;
+    }>;
+    vehicle?: {
+      id: string;
+      logistics_provider_id: string | null;
+      driver_id: string | null;
+      vehicle_type: string;
+      license_plate: string;
+      brand: string;
+      model: string;
+      year: number;
+      color: string;
+      insurance_policy: string;
+      insurance_expires_at: Date;
+      last_maintenance_at: Date | null;
+      status: string;
+      specifications: Prisma.JsonValue | null;
+      created_at: Date;
+      updated_at: Date;
+    } | null;
   }): Driver {
+    const deliveryZones =
+      data.delivery_zones?.map((dz) => ({
+        id: dz.id,
+        delivery_zone_id: dz.delivery_zone_id,
+        created_at: dz.created_at,
+        delivery_zone: dz.delivery_zone ? { id: dz.delivery_zone.id, name: dz.delivery_zone.name } : undefined,
+      })) ?? [];
+
+    const vehicle = data.vehicle
+      ? {
+          id: data.vehicle.id,
+          logistics_provider_id: data.vehicle.logistics_provider_id,
+          driver_id: data.vehicle.driver_id,
+          vehicle_type: data.vehicle.vehicle_type as
+            | 'MOTORCYCLE'
+            | 'SEDAN'
+            | 'MINI_VAN'
+            | 'PANEL'
+            | 'TRUCK'
+            | 'PICKUP',
+          license_plate: data.vehicle.license_plate,
+          brand: data.vehicle.brand,
+          model: data.vehicle.model,
+          year: data.vehicle.year,
+          color: data.vehicle.color,
+          insurance_policy: data.vehicle.insurance_policy,
+          insurance_expires_at: data.vehicle.insurance_expires_at,
+          last_maintenance_at: data.vehicle.last_maintenance_at,
+          status: data.vehicle.status as 'AVAILABLE' | 'IN_SERVICE' | 'MAINTENANCE' | 'OUT_OF_SERVICE',
+          specifications: data.vehicle.specifications
+            ? (data.vehicle.specifications as Record<string, unknown>)
+            : null,
+          created_at: data.vehicle.created_at,
+          updated_at: data.vehicle.updated_at,
+        }
+      : null;
+
     return new Driver(
       data.id,
       data.logistics_provider_id,
@@ -275,7 +417,9 @@ export class PrismaDriverRepository implements IDriverRepository {
       data.total_deliveries,
       data.documents as Record<string, unknown>,
       data.created_at,
-      data.updated_at
+      data.updated_at,
+      deliveryZones,
+      vehicle
     );
   }
 }

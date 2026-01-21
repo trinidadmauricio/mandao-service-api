@@ -37,7 +37,9 @@ describe('GetDriverUseCase', () => {
       0,
       {},
       new Date(),
-      new Date()
+      new Date(),
+      [],
+      null
     );
 
     mockRepository.findById.mockResolvedValue(driver);
@@ -72,7 +74,9 @@ describe('GetDriverUseCase', () => {
       0,
       {},
       new Date(),
-      new Date()
+      new Date(),
+      [],
+      null
     );
 
     mockRepository.findById.mockResolvedValue(driver);
@@ -105,7 +109,9 @@ describe('GetDriverUseCase', () => {
       0,
       {},
       new Date(),
-      new Date()
+      new Date(),
+      [],
+      null
     );
 
     mockRepository.findById.mockResolvedValue(driver);
@@ -138,7 +144,9 @@ describe('GetDriverUseCase', () => {
       0,
       {},
       new Date(),
-      new Date()
+      new Date(),
+      [],
+      null
     );
 
     mockRepository.findById.mockResolvedValue(driver);
