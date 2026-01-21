@@ -46,7 +46,8 @@ export class DriverController {
     } catch (error) {
       logger.error('Error creating driver', { error });
       if (error instanceof Error) {
-        const isPermissionError = error.message.includes('permission') || error.message.includes('can only');
+        const isPermissionError =
+          error.message.includes('permission') || error.message.includes('can only');
         const statusCode = isPermissionError ? 403 : 400;
         res.status(statusCode).json({
           status: 'error',
@@ -103,6 +104,14 @@ export class DriverController {
 
   async list(req: Request, res: Response): Promise<void> {
     try {
+      // Obtener tenant_id del request (para SAAS_ADMIN)
+      const tenant_id = req.tenant?.id;
+      logger.info('Listing drivers', {
+        tenant_id,
+        user_role: req.user?.role,
+        query: req.query,
+      });
+
       // Si el usuario es LOGISTICS_PROVIDER o SUPERVISOR, filtrar automáticamente por su logistics_provider_id
       // Si no es LOGISTICS_PROVIDER/SUPERVISOR, usar el query parameter si se proporciona
       const autoLogisticsProviderId =
@@ -145,18 +154,31 @@ export class DriverController {
       // Determinar logistics_provider_id para pasar al UseCase
       const logistics_provider_id = filters?.logistics_provider_id || autoLogisticsProviderId;
 
-      // Ejecutar UseCase
-      const result = await this.listUseCase.execute(logistics_provider_id, filters);
+      logger.info('Executing list drivers use case', {
+        logistics_provider_id,
+        tenant_id,
+        filters,
+      });
+
+      // Ejecutar UseCase con tenant_id
+      const result = await this.listUseCase.execute(logistics_provider_id, filters, tenant_id);
 
       // Verificar si el resultado es DriversListResult (con paginación) o Driver[] (sin paginación)
-      const isPaginatedResult = result && typeof result === 'object' && 'data' in result && 'total' in result;
-      const driversList = isPaginatedResult ? (result as { data: any[]; total: number }).data : (result as any[]);
-      const total = isPaginatedResult ? (result as { data: any[]; total: number }).total : driversList.length;
+      const isPaginatedResult =
+        result && typeof result === 'object' && 'data' in result && 'total' in result;
+      const driversList = isPaginatedResult
+        ? (result as { data: any[]; total: number }).data
+        : (result as any[]);
+      const total = isPaginatedResult
+        ? (result as { data: any[]; total: number }).total
+        : driversList.length;
 
       // Obtener los usuarios únicos para todos los drivers
-      const uniqueUserIds = [...new Set(driversList.map((driver) => driver.user_id))];
+      const uniqueUserIds = [
+        ...new Set(driversList.map((driver) => driver.user_id).filter((id) => id)),
+      ];
       const users = await Promise.all(
-        uniqueUserIds.map((userId) => this.userRepository.findById(userId))
+        uniqueUserIds.map((userId) => this.userRepository.findById(userId).catch(() => null))
       );
 
       // Crear un mapa de user_id -> user para acceso rápido
@@ -215,7 +237,15 @@ export class DriverController {
         totalPages,
       });
     } catch (error) {
-      logger.error('Error listing drivers', { error });
+      logger.error('Error listing drivers', {
+        error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorName: error instanceof Error ? error.name : undefined,
+        tenant_id: req.tenant?.id,
+        user_role: req.user?.role,
+        query: req.query,
+      });
       if (error instanceof Error && error.name === 'ZodError') {
         res.status(400).json({
           status: 'error',
@@ -226,7 +256,7 @@ export class DriverController {
       }
       res.status(500).json({
         status: 'error',
-        message: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Internal server error',
       });
     }
   }
@@ -309,4 +339,3 @@ export class DriverController {
     }
   }
 }
-

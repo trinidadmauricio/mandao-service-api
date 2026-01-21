@@ -31,17 +31,26 @@ export class PrismaDriverRepository implements IDriverRepository {
     return this.toDomain(data);
   }
 
-  async findAll(logistics_provider_id?: string, availability_status?: DriverStatus): Promise<Driver[]> {
+  async findAll(
+    logistics_provider_id?: string,
+    availability_status?: DriverStatus,
+    tenant_id?: string
+  ): Promise<Driver[]> {
     const where: Prisma.DriverWhereInput = {};
-    
+
+    // Si hay un logistics_provider_id específico, usarlo directamente
+    // (un logistics_provider ya está asociado a un tenant específico)
     if (logistics_provider_id) {
       where.logistics_provider_id = logistics_provider_id;
+    } else if (tenant_id) {
+      // Si no hay logistics_provider_id pero hay tenant_id, filtrar por tenant
+      where.logistics_provider = { tenant_id };
     }
-    
+
     if (availability_status) {
       where.availability_status = availability_status;
     }
-    
+
     const data = await this.prisma.driver.findMany({
       where,
     });
@@ -51,14 +60,24 @@ export class PrismaDriverRepository implements IDriverRepository {
 
   async findAllWithFilters(
     logistics_provider_id: string | undefined,
-    filters: ListDriversFiltersDto
+    filters: ListDriversFiltersDto,
+    tenant_id?: string
   ): Promise<DriversListResult> {
     const where: Prisma.DriverWhereInput = {};
 
     // Filtro por logistics_provider_id (puede venir del parámetro o del filtro)
     const providerId = filters.logistics_provider_id || logistics_provider_id;
+
+    // Si hay un logistics_provider_id específico, usarlo directamente
+    // (un logistics_provider ya está asociado a un tenant específico)
     if (providerId) {
       where.logistics_provider_id = providerId;
+    } else if (tenant_id) {
+      // Si no hay logistics_provider_id pero hay tenant_id, filtrar por tenant
+      // Usar la relación logistics_provider para filtrar por tenant_id
+      where.logistics_provider = {
+        tenant_id: tenant_id,
+      };
     }
 
     // Filtro por availability_status
@@ -74,43 +93,52 @@ export class PrismaDriverRepository implements IDriverRepository {
     // Búsqueda de texto (case-insensitive) en User (first_name, last_name, email), driving_license, identity_document
     if (filters.search && filters.search.trim()) {
       const searchTerm = filters.search.trim();
-      
-      // Buscar usuarios que coincidan con el término de búsqueda
-      const matchingUsers = await this.prisma.user.findMany({
-        where: {
-          OR: [
-            { first_name: { contains: searchTerm, mode: 'insensitive' } },
-            { last_name: { contains: searchTerm, mode: 'insensitive' } },
-            { email: { contains: searchTerm, mode: 'insensitive' } },
-          ],
-        },
-        select: { id: true },
-      });
-      
-      const matchingUserIds = matchingUsers.map((u) => u.id);
-      
-      // Condiciones de búsqueda: campos del driver Y user_ids encontrados
-      const searchConditions: Prisma.DriverWhereInput[] = [
-        { driving_license: { contains: searchTerm, mode: 'insensitive' } },
-        { identity_document: { contains: searchTerm, mode: 'insensitive' } },
-      ];
-      
-      // Si hay usuarios que coinciden, agregar condición para user_id
-      if (matchingUserIds.length > 0) {
-        searchConditions.push({ user_id: { in: matchingUserIds } });
-      }
 
-      // Combinar condiciones de búsqueda con otros filtros
-      if (where.AND) {
-        const andArray = Array.isArray(where.AND) ? where.AND : [where.AND];
-        where.AND = [...andArray, { OR: searchConditions }];
-      } else {
-        if (where.OR) {
-          where.AND = [{ OR: where.OR }, { OR: searchConditions }];
-          delete where.OR;
-        } else {
-          where.OR = searchConditions;
+      try {
+        // Buscar usuarios que coincidan con el término de búsqueda
+        const matchingUsers = await this.prisma.user.findMany({
+          where: {
+            OR: [
+              { first_name: { contains: searchTerm, mode: 'insensitive' } },
+              { last_name: { contains: searchTerm, mode: 'insensitive' } },
+              { email: { contains: searchTerm, mode: 'insensitive' } },
+            ],
+          },
+          select: { id: true },
+        });
+
+        const matchingUserIds = matchingUsers.map((u) => u.id);
+
+        // Condiciones de búsqueda: campos del driver Y user_ids encontrados
+        const searchConditions: Prisma.DriverWhereInput[] = [
+          { driving_license: { contains: searchTerm, mode: 'insensitive' } },
+          { identity_document: { contains: searchTerm, mode: 'insensitive' } },
+        ];
+
+        // Si hay usuarios que coinciden, agregar condición para user_id
+        if (matchingUserIds.length > 0) {
+          searchConditions.push({ user_id: { in: matchingUserIds } });
         }
+
+        // Combinar condiciones de búsqueda con otros filtros
+        if (where.AND) {
+          const andArray = Array.isArray(where.AND) ? where.AND : [where.AND];
+          where.AND = [...andArray, { OR: searchConditions }];
+        } else {
+          if (where.OR) {
+            where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+            delete where.OR;
+          } else {
+            where.OR = searchConditions;
+          }
+        }
+      } catch (error) {
+        console.error('Error searching users', {
+          error: error instanceof Error ? error.message : String(error),
+          searchTerm,
+        });
+        // Si falla la búsqueda de usuarios, continuar solo con búsqueda en campos del driver
+        // No agregar condición de user_id
       }
     }
 
@@ -119,23 +147,47 @@ export class PrismaDriverRepository implements IDriverRepository {
     const limit = filters.limit || 10;
     const skip = (page - 1) * limit;
 
-    // Obtener total de registros (sin paginación)
-    const total = await this.prisma.driver.count({ where });
+    try {
+      // Log del where clause para debugging
+      console.log(
+        'PrismaDriverRepository.findAllWithFilters - where clause:',
+        JSON.stringify(where, null, 2)
+      );
+      console.log('PrismaDriverRepository.findAllWithFilters - tenant_id:', tenant_id);
+      console.log(
+        'PrismaDriverRepository.findAllWithFilters - logistics_provider_id:',
+        logistics_provider_id
+      );
+      console.log('PrismaDriverRepository.findAllWithFilters - filters:', filters);
 
-    // Obtener datos con paginación
-    const data = await this.prisma.driver.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
+      // Obtener total de registros (sin paginación)
+      const total = await this.prisma.driver.count({ where });
 
-    return {
-      data: data.map((item) => this.toDomain(item)),
-      total,
-    };
+      // Obtener datos con paginación
+      const data = await this.prisma.driver.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+
+      return {
+        data: data.map((item) => this.toDomain(item)),
+        total,
+      };
+    } catch (error) {
+      // Log del error con detalles del where clause para debugging
+      console.error('Error in findAllWithFilters', {
+        error: error instanceof Error ? error.message : String(error),
+        where: JSON.stringify(where, null, 2),
+        tenant_id,
+        logistics_provider_id,
+        filters,
+      });
+      throw error;
+    }
   }
 
   async create(data: CreateDriverData): Promise<Driver> {
@@ -227,4 +279,3 @@ export class PrismaDriverRepository implements IDriverRepository {
     );
   }
 }
-

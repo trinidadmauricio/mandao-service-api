@@ -12,10 +12,15 @@ export interface DriversListResult {
 
 export interface IDriverRepository {
   findById(id: string): Promise<Driver | null>;
-  findAll(logistics_provider_id?: string, availability_status?: DriverStatus): Promise<Driver[]>;
+  findAll(
+    logistics_provider_id?: string,
+    availability_status?: DriverStatus,
+    tenant_id?: string
+  ): Promise<Driver[]>;
   findAllWithFilters(
     logistics_provider_id: string | undefined,
-    filters: ListDriversFiltersDto
+    filters: ListDriversFiltersDto,
+    tenant_id?: string
   ): Promise<DriversListResult>;
   create(data: CreateDriverData): Promise<Driver>;
   update(id: string, data: UpdateDriverData): Promise<Driver>;
@@ -49,4 +54,3 @@ export interface UpdateDriverData {
   availability_status?: 'AVAILABLE' | 'BUSY' | 'OFFLINE' | 'SUSPENDED';
   documents?: Record<string, unknown>;
 }
-

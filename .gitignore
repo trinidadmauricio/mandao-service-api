@@ -48,3 +48,4 @@ docker-compose.override.yml
 # Photon data (OSM files are large)
 photon_data/
 *.osm.pbf
+local-docs

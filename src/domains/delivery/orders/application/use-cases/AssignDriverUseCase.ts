@@ -76,14 +76,29 @@ export class AssignDriverUseCase {
         throw new Error('Order must be assigned to a LOGISTICS_PROVIDER before assigning a driver');
       }
 
-      // Validar permisos: Solo roles SAAS pueden asignar drivers
-      // Nota: En el futuro habrá un sistema automático de asignación donde el rol no importará
-      if (currentRole !== UserRole.SAAS_ADMIN && currentRole !== UserRole.SAAS_EDITOR) {
+      // Validar permisos según el rol
+      // SAAS roles pueden asignar cualquier driver a cualquier orden (sin restricciones)
+      if (currentRole === UserRole.SAAS_ADMIN || currentRole === UserRole.SAAS_EDITOR) {
+        // Sin restricciones adicionales
+      } else if (
+        currentRole === UserRole.LOGISTICS_PROVIDER ||
+        currentRole === UserRole.SUPERVISOR
+      ) {
+        // Validar que la orden está asignada al mismo logistics_provider del usuario
+        if (currentOrderDriver.logistics_provider_id !== context.currentUserLogisticsProviderId) {
+          throw new Error(
+            'User can only assign drivers to orders assigned to their logistics provider'
+          );
+        }
+        // Validar que el driver pertenece al mismo logistics_provider del usuario
+        if (driver.logistics_provider_id !== context.currentUserLogisticsProviderId) {
+          throw new Error('User can only assign drivers from their own logistics provider fleet');
+        }
+      } else {
         throw new Error(
-          `Users with role ${currentRole} cannot assign drivers. Only SAAS roles can assign drivers.`
+          `Users with role ${currentRole} cannot assign drivers. Only SAAS roles, LOGISTICS_PROVIDER, and SUPERVISOR can assign drivers.`
         );
       }
-      // SAAS roles pueden asignar cualquier driver a cualquier orden (sin restricciones)
     }
 
     // Crear snapshot del driver
